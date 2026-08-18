@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Astaro-Next WebAdmin - WAF Settings</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Axios CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- vue3-sfc-loader for direct in-browser .vue SFC execution -->
+  <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader/dist/vue3-sfc-loader.js"></script>
+</head>
+<body class="bg-[#0f172a] text-slate-100 antialiased selection:bg-[#2563eb] selection:text-white">
+  <div id="app"></div>
+
+  <script>
+    const { loadModule } = window['vue3-sfc-loader'];
+
+    const options = {
+      moduleCache: {
+        vue: Vue
+      },
+      async getFile(url) {
+        const res = await fetch(url);
+        if (!res.ok)
+          throw Object.assign(new Error(res.statusText + ' ' + url), { res });
+        return {
+          getContentData: asBinary => asBinary ? res.arrayBuffer() : res.text(),
+        };
+      },
+      addStyle(textContent) {
+        const style = document.createElement('style');
+        style.textContent = textContent;
+        const ref = document.head.getElementsByTagName('style')[0] || null;
+        document.head.insertBefore(style, ref);
+      },
+    };
+
+    const app = Vue.createApp({
+      components: {
+        'firewall-rules': Vue.defineAsyncComponent(() => loadModule('./FirewallRules.vue', options)),
+        'waf-settings': Vue.defineAsyncComponent(() => loadModule('./WafSettings.vue', options)),
+        'interfaces-view': Vue.defineAsyncComponent(() => loadModule('./Interfaces.vue', options)),
+        'control-center': Vue.defineAsyncComponent(() => loadModule('./ControlCenter.vue', options)),
+        'web-protection': Vue.defineAsyncComponent(() => loadModule('./WebProtection.vue', options)),
+        'mail-manager': Vue.defineAsyncComponent(() => loadModule('./MailManager.vue', options)),
+        'setup-wizard': Vue.defineAsyncComponent(() => loadModule('./SetupWizard.vue', options)),
+        'vpn-settings': Vue.defineAsyncComponent(() => loadModule('./VpnSettings.vue', options)),
+        'main-layout': Vue.defineAsyncComponent(() => loadModule('./MainLayout.vue', options))
+      },
+      data() {
+        return {
+          currentSection: 'protect',
+          currentItem: 'web'
+        }
+      },
+      template: `
+        <setup-wizard
+          v-if="currentItem === 'setup_wizard' || currentItem === 'wizard'"
+          @completed="currentItem = 'control_center'"
+        />
+        <main-layout
+          v-else
+          :initialSection="currentSection"
+          :initialItem="currentItem"
+          @navigate="handleNavigate"
+        >
+          <web-protection
+            v-if="currentItem === 'web' || currentItem === 'web_protection' || currentItem === 'zenarmor' || currentItem === 'zenarmor_profiles'"
+          />
+          <mail-manager
+            v-else-if="currentItem === 'email' || currentItem === 'mail_manager' || currentItem === 'mail' || currentItem === 'mail_quarantine' || currentItem === 'postfix'"
+          />
+          <firewall-rules
+            v-else-if="currentItem === 'rules_policies' || currentItem === 'firewall_rules' || currentItem === 'firewall'"
+          />
+          <interfaces-view
+            v-else-if="currentItem === 'network' || currentItem === 'interfaces'"
+          />
+          <vpn-settings
+            v-else-if="currentItem === 'vpn' || currentItem === 'vpn_settings' || currentItem === 'wireguard' || currentItem === 'wireguard_vpn' || currentItem === 'ipsec' || currentItem === 'openvpn'"
+          />
+          <control-center
+            v-else-if="currentItem === 'control_center'"
+          />
+          <waf-settings
+            v-else-if="currentItem === 'web_server' || currentItem === 'waf_reverse_proxy'"
+            @close="currentItem = 'rules_policies'"
+          />
+          <firewall-rules v-else />
+        </main-layout>
+      `,
+      methods: {
+        handleNavigate(navEvent) {
+          if (typeof navEvent === 'string') {
+            this.currentItem = navEvent;
+          } else if (navEvent && navEvent.itemId) {
+            this.currentItem = navEvent.itemId;
+            this.currentSection = navEvent.groupId;
+          }
+        },
+        handleClose() {
+          console.log('Close action requested');
+        }
+      }
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>

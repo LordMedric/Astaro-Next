@@ -1,0 +1,25 @@
+[Unit]
+Description=Astaro-Next Appliance Configuration Middleware Daemon
+After=network.target local-fs.target
+Wants=nftables.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/astaro/middleware
+ExecStart=/opt/astaro/middleware/venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 4444 --ssl-keyfile /etc/astaro/ssl/middleware.key --ssl-certfile /etc/astaro/ssl/middleware.crt
+Restart=always
+RestartSec=3
+KillMode=process
+LimitNOFILE=65536
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_DAC_OVERRIDE
+
+# Environment Variables
+Environment="ASTARO_LISTEN_HOST=0.0.0.0"
+Environment="ASTARO_LISTEN_PORT=4444"
+Environment="ASTARO_NFTABLES_CONF=/etc/nftables.conf"
+Environment="ASTARO_WIREGUARD_DIR=/etc/wireguard"
+Environment="ASTARO_AUTH_TOKEN_FILE=/etc/astaro/middleware.token"
+
+[Install]
+WantedBy=multi-user.target
