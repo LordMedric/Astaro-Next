@@ -22,10 +22,18 @@ echo "===================================================================="
 echo "[+] Step 1/5: Cleaning apt sources and installing Linux packages..."
 export DEBIAN_FRONTEND=noninteractive
 
-# Automatically disable cdrom sources leftover from offline installer ISO
+# Automatically purge any cdrom sources leftover from offline installer ISO
 sed -i 's/^[[:space:]]*deb[[:space:]]*cdrom/# deb cdrom/g' /etc/apt/sources.list 2>/dev/null || true
+sed -i '/cdrom:/d' /etc/apt/sources.list 2>/dev/null || true
+
 if [ -d /etc/apt/sources.list.d ]; then
-  sed -i 's/^[[:space:]]*deb[[:space:]]*cdrom/# deb cdrom/g' /etc/apt/sources.list.d/*.list 2>/dev/null || true
+  for f in /etc/apt/sources.list.d/*.sources /etc/apt/sources.list.d/*.list; do
+    if [ -f "$f" ]; then
+      sed -i '/cdrom:/d' "$f" 2>/dev/null || true
+      sed -i '/URIs:.*cdrom/d' "$f" 2>/dev/null || true
+      sed -i 's/^[[:space:]]*deb[[:space:]]*cdrom/# deb cdrom/g' "$f" 2>/dev/null || true
+    fi
+  done
 fi
 
 apt-get update -y
