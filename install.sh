@@ -59,15 +59,17 @@ apt-get install -y --no-install-recommends \
 INSTALL_DIR="/opt/astaro"
 echo "[+] Step 2/5: Deploying Astaro-Next codebase to ${INSTALL_DIR}..."
 
+# Ensure we are in a safe directory outside of INSTALL_DIR
+cd /root 2>/dev/null || cd /tmp
+
 if [ -d "${INSTALL_DIR}/.git" ]; then
   echo "    Existing repository found, pulling latest main branch..."
   cd "${INSTALL_DIR}"
   git fetch --all
   git reset --hard origin/main
 else
-  echo "    Cloning Astaro-Next from GitHub..."
+  echo "    Cloning Astaro-Next from GitHub into ${INSTALL_DIR}..."
   rm -rf "${INSTALL_DIR}"
-  mkdir -p "${INSTALL_DIR}"
   git clone https://github.com/LordMedric/Astaro-Next.git "${INSTALL_DIR}"
 fi
 
