@@ -128,7 +128,7 @@
               <div class="flex items-center gap-2 font-mono">
                 <span class="text-slate-400 text-[11px]">{{ systemMetrics.cpuCores }} Cores @ {{ systemMetrics.cpuFrequency }}</span>
                 <span :class="['font-bold text-xs', getLoadTextColor(systemMetrics.cpuPercent)]">
-                  {{ systemMetrics.cpuPercent.toFixed(1) }}%
+                  {{ (Number(systemMetrics.cpuPercent) || 0).toFixed(1) }}%
                 </span>
               </div>
             </div>
@@ -138,14 +138,14 @@
               <div
                 class="h-full rounded-full transition-all duration-500 ease-out"
                 :class="getProgressColor(systemMetrics.cpuPercent)"
-                :style="{ width: `${Math.min(Math.max(systemMetrics.cpuPercent, 0), 100)}%` }"
+                :style="{ width: `${Math.min(Math.max(Number(systemMetrics.cpuPercent) || 0, 0), 100)}%` }"
               ></div>
             </div>
 
             <!-- Detailed Sub-metrics -->
             <div class="flex justify-between text-[11px] text-slate-500 pt-0.5">
-              <span>Load Avg: {{ systemMetrics.loadAvg.join(', ') }}</span>
-              <span>Temp: {{ systemMetrics.cpuTemp }}°C</span>
+              <span>Load Avg: {{ (Array.isArray(systemMetrics.loadAvg) ? systemMetrics.loadAvg : [0.2, 0.3, 0.4]).join(', ') }}</span>
+              <span>Temp: {{ systemMetrics.cpuTemp || 40 }}°C</span>
             </div>
           </div>
 
@@ -159,9 +159,9 @@
                 <span class="font-semibold text-slate-700">Memory Allocation (RAM)</span>
               </div>
               <div class="flex items-center gap-2 font-mono">
-                <span class="text-slate-400 text-[11px]">{{ systemMetrics.memoryUsedGb.toFixed(1) }} / {{ systemMetrics.memoryTotalGb.toFixed(1) }} GB</span>
+                <span class="text-slate-400 text-[11px]">{{ (Number(systemMetrics.memoryUsedGb) || 0).toFixed(1) }} / {{ (Number(systemMetrics.memoryTotalGb) || 8).toFixed(1) }} GB</span>
                 <span :class="['font-bold text-xs', getLoadTextColor(systemMetrics.memoryPercent)]">
-                  {{ systemMetrics.memoryPercent.toFixed(1) }}%
+                  {{ (Number(systemMetrics.memoryPercent) || 0).toFixed(1) }}%
                 </span>
               </div>
             </div>
@@ -171,14 +171,14 @@
               <div
                 class="h-full rounded-full transition-all duration-500 ease-out"
                 :class="getProgressColor(systemMetrics.memoryPercent)"
-                :style="{ width: `${Math.min(Math.max(systemMetrics.memoryPercent, 0), 100)}%` }"
+                :style="{ width: `${Math.min(Math.max(Number(systemMetrics.memoryPercent) || 0, 0), 100)}%` }"
               ></div>
             </div>
 
             <!-- Detailed Sub-metrics -->
             <div class="flex justify-between text-[11px] text-slate-500 pt-0.5">
-              <span>Free: {{ (systemMetrics.memoryTotalGb - systemMetrics.memoryUsedGb).toFixed(1) }} GB</span>
-              <span>Buffer/Cached: {{ systemMetrics.memoryCachedGb.toFixed(1) }} GB</span>
+              <span>Free: {{ ((Number(systemMetrics.memoryTotalGb) || 8) - (Number(systemMetrics.memoryUsedGb) || 0)).toFixed(1) }} GB</span>
+              <span>Buffer/Cached: {{ (Number(systemMetrics.memoryCachedGb) || 1.5).toFixed(1) }} GB</span>
             </div>
           </div>
 
@@ -192,9 +192,9 @@
                 <span class="font-semibold text-slate-700">Storage Allocation (NVMe / SSD)</span>
               </div>
               <div class="flex items-center gap-2 font-mono">
-                <span class="text-slate-400 text-[11px]">{{ systemMetrics.storageUsedGb.toFixed(1) }} / {{ systemMetrics.storageTotalGb.toFixed(1) }} GB</span>
+                <span class="text-slate-400 text-[11px]">{{ (Number(systemMetrics.storageUsedGb) || 0).toFixed(1) }} / {{ (Number(systemMetrics.storageTotalGb) || 100).toFixed(1) }} GB</span>
                 <span :class="['font-bold text-xs', getLoadTextColor(systemMetrics.storagePercent)]">
-                  {{ systemMetrics.storagePercent.toFixed(1) }}%
+                  {{ (Number(systemMetrics.storagePercent) || 0).toFixed(1) }}%
                 </span>
               </div>
             </div>
@@ -204,14 +204,14 @@
               <div
                 class="h-full rounded-full transition-all duration-500 ease-out"
                 :class="getProgressColor(systemMetrics.storagePercent)"
-                :style="{ width: `${Math.min(Math.max(systemMetrics.storagePercent, 0), 100)}%` }"
+                :style="{ width: `${Math.min(Math.max(Number(systemMetrics.storagePercent) || 0, 0), 100)}%` }"
               ></div>
             </div>
 
             <!-- Detailed Sub-metrics -->
             <div class="flex justify-between text-[11px] text-slate-500 pt-0.5">
-              <span>Log Partition: {{ systemMetrics.storageLogUsedGb }} GB used</span>
-              <span>Available: {{ (systemMetrics.storageTotalGb - systemMetrics.storageUsedGb).toFixed(1) }} GB</span>
+              <span>Log Partition: {{ (Number(systemMetrics.storageLogUsedGb) || 4).toFixed(1) }} GB used</span>
+              <span>Available: {{ ((Number(systemMetrics.storageTotalGb) || 100) - (Number(systemMetrics.storageUsedGb) || 0)).toFixed(1) }} GB</span>
             </div>
           </div>
 
@@ -423,16 +423,17 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, h } from 'vue'
 
-// Import axios safely; in browser environments without bundler, fallback to window.axios or fetch
-let axiosInstance
-try {
-  const axiosModule = await import('axios')
-  axiosInstance = axiosModule.default || axiosModule
-} catch (err) {
+let axiosInstance = null
+
+const initAxios = async () => {
   if (typeof window !== 'undefined' && window.axios) {
     axiosInstance = window.axios
-  } else {
-    // Lightweight axios-compatible fallback wrapper using native fetch
+    return
+  }
+  try {
+    const axiosModule = await import('axios')
+    axiosInstance = axiosModule.default || axiosModule
+  } catch (err) {
     axiosInstance = {
       async get(url, config = {}) {
         const headers = config.headers || {}
@@ -696,6 +697,10 @@ const fetchTelemetry = async (isManual = false) => {
     isLoading.value = true
   }
 
+  if (!axiosInstance) {
+    await initAxios()
+  }
+
   // Cancel previous flight if any
   if (abortController) {
     abortController.abort()
@@ -724,10 +729,24 @@ const fetchTelemetry = async (isManual = false) => {
 
       // Sync Card 1: Performance
       if (data.performance || data.system) {
-        const perf = data.performance || data.system
+        const perf = data.performance || data.system || {}
         systemMetrics.value = {
           ...systemMetrics.value,
-          ...perf
+          ...perf,
+          cpuPercent: Number(perf.cpuPercent ?? perf.cpu ?? systemMetrics.value.cpuPercent ?? 0),
+          cpuCores: perf.cpuCores ?? systemMetrics.value.cpuCores ?? 4,
+          cpuFrequency: perf.cpuFrequency ?? systemMetrics.value.cpuFrequency ?? '2.8 GHz',
+          cpuTemp: perf.cpuTemp ?? systemMetrics.value.cpuTemp ?? 40,
+          loadAvg: Array.isArray(perf.loadAvg) ? perf.loadAvg : (systemMetrics.value.loadAvg || [0.2, 0.3, 0.4]),
+          memoryPercent: Number(perf.memoryPercent ?? perf.memory ?? systemMetrics.value.memoryPercent ?? 0),
+          memoryUsedGb: Number(perf.memoryUsedGb ?? (parseFloat(perf.memoryUsed) || systemMetrics.value.memoryUsedGb || 0)),
+          memoryTotalGb: Number(perf.memoryTotalGb ?? (parseFloat(perf.memoryTotal) || systemMetrics.value.memoryTotalGb || 8.0)),
+          memoryCachedGb: Number(perf.memoryCachedGb ?? systemMetrics.value.memoryCachedGb ?? 1.5),
+          storagePercent: Number(perf.storagePercent ?? perf.storage ?? systemMetrics.value.storagePercent ?? 0),
+          storageUsedGb: Number(perf.storageUsedGb ?? (parseFloat(perf.storageUsed) || systemMetrics.value.storageUsedGb || 0)),
+          storageTotalGb: Number(perf.storageTotalGb ?? (parseFloat(perf.storageTotal) || systemMetrics.value.storageTotalGb || 100.0)),
+          storageLogUsedGb: Number(perf.storageLogUsedGb ?? systemMetrics.value.storageLogUsedGb ?? 4.0),
+          uptime: (data.system && data.system.uptime) || perf.uptime || systemMetrics.value.uptime || '0m'
         }
       }
 
