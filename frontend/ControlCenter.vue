@@ -415,8 +415,127 @@
           </div>
         </div>
       </section>
-
     </div>
+
+    <!-- ========================================================================= -->
+    <!-- CARD 4: LIVE NETWORK BANDWIDTH & TRAFFIC THROUGHPUT                       -->
+    <!-- ========================================================================= -->
+    <section class="mt-6 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden transition-shadow hover:shadow-md">
+      <!-- Card Header with Astaro Orange Accent Tag -->
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-[#f4f6f9]/50">
+        <div class="flex items-center gap-2.5">
+          <span class="w-1 h-4 bg-[#ee7f00] rounded-full"></span>
+          <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Live Network Bandwidth & Traffic Throughput</h2>
+        </div>
+        <div class="flex items-center gap-3 text-xs font-mono">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Total Throughput: {{ bandwidthMetrics.total_throughput_mbps || '0.0' }} Mbps
+          </span>
+        </div>
+      </div>
+
+      <div class="p-5">
+        <!-- Top Metrics Row: Inbound / Outbound / Cumulative -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+          <!-- Inbound (Rx) -->
+          <div class="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/80 flex items-center justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+                Inbound (Download)
+              </div>
+              <div class="text-xl font-black text-emerald-900 font-mono mt-1">
+                {{ bandwidthMetrics.rx_rate_formatted || '0.0 KB/s' }}
+              </div>
+              <div class="text-[10px] text-emerald-700 font-mono mt-0.5">
+                {{ bandwidthMetrics.rx_rate_mbps || 0 }} Mbps live
+              </div>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+              <span class="text-xs font-mono">Rx</span>
+            </div>
+          </div>
+
+          <!-- Outbound (Tx) -->
+          <div class="p-4 rounded-xl bg-blue-50/60 border border-blue-200/80 flex items-center justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-[#005299] uppercase tracking-wider flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-[#005299]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+                Outbound (Upload)
+              </div>
+              <div class="text-xl font-black text-blue-900 font-mono mt-1">
+                {{ bandwidthMetrics.tx_rate_formatted || '0.0 KB/s' }}
+              </div>
+              <div class="text-[10px] text-[#005299] font-mono mt-0.5">
+                {{ bandwidthMetrics.tx_rate_mbps || 0 }} Mbps live
+              </div>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-blue-100 text-[#005299] flex items-center justify-center font-bold">
+              <span class="text-xs font-mono">Tx</span>
+            </div>
+          </div>
+
+          <!-- Total Transferred Rx -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Total Received</div>
+              <div class="text-xl font-black text-slate-900 font-mono mt-1">
+                {{ bandwidthMetrics.total_rx_gb || '0.0' }} GB
+              </div>
+              <div class="text-[10px] text-slate-500 font-mono mt-0.5">Session Cumulative</div>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center font-bold">
+              <span class="text-xs font-mono">In</span>
+            </div>
+          </div>
+
+          <!-- Total Transferred Tx -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Total Sent</div>
+              <div class="text-xl font-black text-slate-900 font-mono mt-1">
+                {{ bandwidthMetrics.total_tx_gb || '0.0' }} GB
+              </div>
+              <div class="text-[10px] text-slate-500 font-mono mt-0.5">Session Cumulative</div>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center font-bold">
+              <span class="text-xs font-mono">Out</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Per-Interface Live Bandwidth Table -->
+        <div v-if="bandwidthMetrics.interfaces && bandwidthMetrics.interfaces.length" class="border border-slate-200 rounded-lg overflow-hidden">
+          <div class="p-3 bg-[#f4f6f9] border-b border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Live Adapter Throughput</span>
+            <span class="text-[10px] text-slate-500 font-mono">Real-time sampling every 5s</span>
+          </div>
+          <table class="w-full text-left text-xs border-collapse font-mono">
+            <thead class="bg-white text-slate-500 text-[11px] font-bold border-b border-slate-200">
+              <tr>
+                <th class="p-2.5 pl-4 font-sans uppercase">Adapter</th>
+                <th class="p-2.5 font-sans uppercase text-emerald-700">Inbound (Rx)</th>
+                <th class="p-2.5 font-sans uppercase text-blue-700">Outbound (Tx)</th>
+                <th class="p-2.5 font-sans uppercase">Total Data Transferred</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white text-slate-700">
+              <tr v-for="bIface in bandwidthMetrics.interfaces" :key="bIface.interface" class="hover:bg-slate-50">
+                <td class="p-2.5 pl-4 font-bold text-slate-900">{{ bIface.interface }}</td>
+                <td class="p-2.5 text-emerald-700 font-bold">{{ bIface.rx_formatted }} ({{ bIface.rx_mbps }} Mbps)</td>
+                <td class="p-2.5 text-blue-700 font-bold">{{ bIface.tx_formatted }} ({{ bIface.tx_mbps }} Mbps)</td>
+                <td class="p-2.5 text-slate-500">Rx: {{ (bIface.bytes_rx_total / (1024*1024)).toFixed(1) }} MB &bull; Tx: {{ (bIface.bytes_tx_total / (1024*1024)).toFixed(1) }} MB</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -550,6 +669,18 @@ const servicesList = ref([
 
 // 3. Network Interfaces Reactive Model
 const interfacesList = ref([])
+
+// 4. Live Bandwidth & Throughput Reactive Model
+const bandwidthMetrics = ref({
+  rx_rate_mbps: 0.0,
+  tx_rate_mbps: 0.0,
+  rx_rate_formatted: '0.0 KB/s',
+  tx_rate_formatted: '0.0 KB/s',
+  total_throughput_mbps: 0.0,
+  total_rx_gb: 0.0,
+  total_tx_gb: 0.0,
+  interfaces: []
+})
 
 // -----------------------------------------------------------------------------
 // Computed Helpers
@@ -768,6 +899,14 @@ const fetchTelemetry = async (isManual = false) => {
           ...i,
           linkState: (i.linkState || i.linkStatus || 'down').toUpperCase()
         }))
+      }
+
+      // Sync Card 4: Live Bandwidth & Throughput
+      if (data.bandwidth) {
+        bandwidthMetrics.value = {
+          ...bandwidthMetrics.value,
+          ...data.bandwidth
+        }
       }
 
       lastUpdated.value = new Date()

@@ -678,11 +678,74 @@ def initialize_system(config: SetupWizardConfig):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Global state for calculating network throughput rates
+_last_net_io = None
+_last_net_time = None
+
+def get_live_bandwidth() -> Dict[str, Any]:
+    global _last_net_io, _last_net_time
+    now = time.time()
+    rx_rate_bps = 0.0
+    tx_rate_bps = 0.0
+    total_bytes_rx = 0
+    total_bytes_tx = 0
+    per_interface_bandwidth = []
+
+    if HAS_PSUTIL:
+        try:
+            current_io = psutil.net_io_counters(pernic=True)
+            total_io = psutil.net_io_counters(pernic=False)
+            total_bytes_rx = total_io.bytes_recv
+            total_bytes_tx = total_io.bytes_sent
+
+            if _last_net_io is not None and _last_net_time is not None:
+                dt = max(now - _last_net_time, 0.1)
+                for iface_name, cur in current_io.items():
+                    if iface_name == "lo":
+                        continue
+                    prev = _last_net_io.get(iface_name)
+                    if prev:
+                        iface_rx_bps = max((cur.bytes_recv - prev.bytes_recv) / dt, 0)
+                        iface_tx_bps = max((cur.bytes_sent - prev.bytes_sent) / dt, 0)
+                        rx_rate_bps += iface_rx_bps
+                        tx_rate_bps += iface_tx_bps
+                        per_interface_bandwidth.append({
+                            "interface": iface_name,
+                            "rx_mbps": round((iface_rx_bps * 8) / 1_000_000, 2),
+                            "tx_mbps": round((iface_tx_bps * 8) / 1_000_000, 2),
+                            "rx_formatted": f"{round(iface_rx_bps / 1024, 1)} KB/s" if iface_rx_bps < 1024*1024 else f"{round(iface_rx_bps / (1024*1024), 2)} MB/s",
+                            "tx_formatted": f"{round(iface_tx_bps / 1024, 1)} KB/s" if iface_tx_bps < 1024*1024 else f"{round(iface_tx_bps / (1024*1024), 2)} MB/s",
+                            "bytes_rx_total": cur.bytes_recv,
+                            "bytes_tx_total": cur.bytes_sent,
+                        })
+
+            _last_net_io = current_io
+            _last_net_time = now
+        except Exception as e:
+            logger.warning(f"Error gathering net io: {e}")
+
+    rx_mbps = round((rx_rate_bps * 8) / 1_000_000, 2)
+    tx_mbps = round((tx_rate_bps * 8) / 1_000_000, 2)
+    rx_formatted = f"{round(rx_rate_bps / 1024, 1)} KB/s" if rx_rate_bps < 1024*1024 else f"{round(rx_rate_bps / (1024*1024), 2)} MB/s"
+    tx_formatted = f"{round(tx_rate_bps / 1024, 1)} KB/s" if tx_rate_bps < 1024*1024 else f"{round(tx_rate_bps / (1024*1024), 2)} MB/s"
+
+    return {
+        "rx_rate_mbps": rx_mbps,
+        "tx_rate_mbps": tx_mbps,
+        "rx_rate_formatted": rx_formatted,
+        "tx_rate_formatted": tx_formatted,
+        "total_throughput_mbps": round(rx_mbps + tx_mbps, 2),
+        "total_rx_gb": round(total_bytes_rx / (1024**3), 2),
+        "total_tx_gb": round(total_bytes_tx / (1024**3), 2),
+        "interfaces": per_interface_bandwidth
+    }
+
+
 @app.get("/api/system/control-center", tags=["System"])
 def get_control_center_data(_: Optional[str] = Depends(verify_admin_auth)):
     """
     Fetches real-time system metrics for the Sophos XGS style Control Center dashboard.
-    Gathers CPU utilization, memory pressure, storage utilization, and service states.
+    Gathers CPU utilization, memory pressure, storage utilization, service states, and live network bandwidth.
     """
     try:
         if HAS_PSUTIL:
@@ -746,8 +809,9 @@ def get_control_center_data(_: Optional[str] = Depends(verify_admin_auth)):
             "storageLogUsedGb": round(disk_used_gb * 0.15, 1)
         }
 
-        # Query live interface catalog
+        # Query live interface catalog and bandwidth
         interfaces_list = query_system_interfaces()
+        bandwidth_data = get_live_bandwidth()
 
         return {
             "system": {
@@ -758,6 +822,7 @@ def get_control_center_data(_: Optional[str] = Depends(verify_admin_auth)):
             "performance": performance_data,
             "services": services_status,
             "interfaces": interfaces_list,
+            "bandwidth": bandwidth_data,
             "threats": {
                 "blocked_today": 1248,
                 "web_scanned": 84520,
