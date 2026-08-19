@@ -303,30 +303,48 @@
                 </div>
               </td>
 
-              <!-- 2. Source Zone (e.g., LAN, WAN, VPN, DMZ) -->
+              <!-- 2. Source Zone & Base Object (Host, Network, Range, DNS Host, IP) -->
               <td class="py-3.5 px-4 border-r border-slate-200/80">
-                <span
-                  :class="[
-                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border shadow-2xs',
-                    getZoneBadgeClasses(rule.src_zone)
-                  ]"
-                >
-                  <component :is="getZoneIcon(rule.src_zone)" class="w-3 h-3" />
-                  <span>{{ rule.src_zone }}</span>
-                </span>
+                <div class="flex flex-col gap-1">
+                  <span
+                    :class="[
+                      'inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-2xs w-fit',
+                      getZoneBadgeClasses(rule.src_zone)
+                    ]"
+                  >
+                    <component :is="getZoneIcon(rule.src_zone)" class="w-3 h-3" />
+                    <span>{{ rule.src_zone || 'LAN' }}</span>
+                  </span>
+                  <div v-if="rule.source_type && rule.source_type !== 'Any'" class="font-mono text-[11px] text-slate-800 font-semibold flex items-center gap-1.5 mt-0.5">
+                    <span class="px-1.5 py-0.5 rounded text-[9px] bg-blue-50 text-[#005299] border border-blue-200 font-bold uppercase">
+                      {{ rule.source_type }}
+                    </span>
+                    <span class="truncate max-w-[170px]" :title="rule.source_value">{{ rule.source_value }}</span>
+                  </div>
+                  <span v-else class="text-[10px] text-slate-400 font-mono mt-0.5">&lt;&lt; Any Source &gt;&gt;</span>
+                </div>
               </td>
 
-              <!-- 3. Destination Zone (e.g., WAN, LAN, DMZ, Any) -->
+              <!-- 3. Destination Zone & Base Object (Host, Network, Range, DNS Host, IP) -->
               <td class="py-3.5 px-4 border-r border-slate-200/80">
-                <span
-                  :class="[
-                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border shadow-2xs',
-                    getZoneBadgeClasses(rule.dest_zone)
-                  ]"
-                >
-                  <component :is="getZoneIcon(rule.dest_zone)" class="w-3 h-3" />
-                  <span>{{ rule.dest_zone }}</span>
-                </span>
+                <div class="flex flex-col gap-1">
+                  <span
+                    :class="[
+                      'inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-2xs w-fit',
+                      getZoneBadgeClasses(rule.dest_zone)
+                    ]"
+                  >
+                    <component :is="getZoneIcon(rule.dest_zone)" class="w-3 h-3" />
+                    <span>{{ rule.dest_zone || 'WAN' }}</span>
+                  </span>
+                  <div v-if="rule.dest_type && rule.dest_type !== 'Any'" class="font-mono text-[11px] text-slate-800 font-semibold flex items-center gap-1.5 mt-0.5">
+                    <span class="px-1.5 py-0.5 rounded text-[9px] bg-amber-50 text-amber-800 border border-amber-200 font-bold uppercase">
+                      {{ rule.dest_type }}
+                    </span>
+                    <span class="truncate max-w-[170px]" :title="rule.dest_value">{{ rule.dest_value }}</span>
+                  </div>
+                  <span v-else class="text-[10px] text-slate-400 font-mono mt-0.5">&lt;&lt; Any Destination &gt;&gt;</span>
+                </div>
               </td>
 
               <!-- 4. Services / Ports -->
@@ -529,60 +547,101 @@
               <p class="text-[10px] text-slate-400 mt-1">Specify a unique descriptive name for identifying this rule in log traces.</p>
             </div>
 
-            <!-- 2. Dropdown Elements: Source Zone & Destination Zone -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <!-- Source Zone Dropdown -->
-              <div>
-                <label for="rule-src-zone" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Source Zone <span class="text-rose-500">*</span>
-                </label>
-                <div class="relative">
-                  <select
-                    id="rule-src-zone"
-                    v-model="formData.src_zone"
-                    required
-                    class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium appearance-none"
-                  >
-                    <option value="LAN">LAN (Internal Network)</option>
-                    <option value="WAN">WAN (External / Internet)</option>
-                    <option value="VPN">VPN (WireGuard / IPSec)</option>
-                    <option value="DMZ">DMZ (Demilitarized Zone)</option>
-                    <option value="Any">Any Zone (*)</option>
-                  </select>
-                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
-                <p class="text-[10px] text-slate-400 mt-1">Originating traffic security zone.</p>
+            <!-- 2. Source Configuration (Zone & Base Object Type) -->
+            <div class="p-3.5 bg-[#f4f6f9] rounded-xl border border-slate-200 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-[#005299]"></span> Source Configuration
+                </span>
+                <span class="text-[10px] text-slate-400 font-mono">UTM Base Object</span>
               </div>
-
-              <!-- Destination Zone Dropdown -->
-              <div>
-                <label for="rule-dest-zone" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Destination Zone <span class="text-rose-500">*</span>
-                </label>
-                <div class="relative">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Source Zone</label>
                   <select
-                    id="rule-dest-zone"
-                    v-model="formData.dest_zone"
-                    required
-                    class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium appearance-none"
+                    v-model="formData.src_zone"
+                    class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
                   >
-                    <option value="WAN">WAN (External / Internet)</option>
-                    <option value="LAN">LAN (Internal Network)</option>
-                    <option value="DMZ">DMZ (Demilitarized Zone)</option>
-                    <option value="VPN">VPN (WireGuard / IPSec)</option>
-                    <option value="Any">Any Zone (*)</option>
+                    <option value="LAN">LAN (Internal)</option>
+                    <option value="WAN">WAN (External)</option>
+                    <option value="VPN">VPN</option>
+                    <option value="DMZ">DMZ</option>
+                    <option value="Any">Any Zone</option>
                   </select>
-                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
                 </div>
-                <p class="text-[10px] text-slate-400 mt-1">Target destination security zone.</p>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Object Type</label>
+                  <select
+                    v-model="formData.source_type"
+                    class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
+                  >
+                    <option value="Any">&lt;&lt; Any Source &gt;&gt;</option>
+                    <option value="Host">Host (Single IP)</option>
+                    <option value="Network">Network (Subnet/CIDR)</option>
+                    <option value="Range">IP Range</option>
+                    <option value="DNS Host">DNS Host (FQDN)</option>
+                    <option value="IP">Direct IP</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Address / Object</label>
+                  <input
+                    v-model="formData.source_value"
+                    type="text"
+                    :disabled="formData.source_type === 'Any'"
+                    :placeholder="formData.source_type === 'Network' ? '192.168.1.0/24' : (formData.source_type === 'Range' ? '192.168.1.10-50' : (formData.source_type === 'DNS Host' ? 'host.example.com' : '192.168.1.100'))"
+                    class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-mono disabled:bg-slate-100 disabled:text-slate-400"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Destination Configuration (Zone & Base Object Type) -->
+            <div class="p-3.5 bg-amber-50/40 rounded-xl border border-amber-200/80 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-[#ee7f00]"></span> Destination Configuration
+                </span>
+                <span class="text-[10px] text-slate-400 font-mono">UTM Base Object</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Destination Zone</label>
+                  <select
+                    v-model="formData.dest_zone"
+                    class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
+                  >
+                    <option value="WAN">WAN (External)</option>
+                    <option value="LAN">LAN (Internal)</option>
+                    <option value="DMZ">DMZ</option>
+                    <option value="VPN">VPN</option>
+                    <option value="Any">Any Zone</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Object Type</label>
+                  <select
+                    v-model="formData.dest_type"
+                    class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
+                  >
+                    <option value="Any">&lt;&lt; Any Destination &gt;&gt;</option>
+                    <option value="Host">Host (Single IP)</option>
+                    <option value="Network">Network (Subnet/CIDR)</option>
+                    <option value="Range">IP Range</option>
+                    <option value="DNS Host">DNS Host (FQDN)</option>
+                    <option value="IP">Direct IP</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Address / Target</label>
+                  <input
+                    v-model="formData.dest_value"
+                    type="text"
+                    :disabled="formData.dest_type === 'Any'"
+                    :placeholder="formData.dest_type === 'Network' ? '10.0.0.0/8' : (formData.dest_type === 'Range' ? '10.0.0.1-100' : (formData.dest_type === 'DNS Host' ? 'api.github.com' : '8.8.8.8'))"
+                    class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-mono disabled:bg-slate-100 disabled:text-slate-400"
+                  />
+                </div>
               </div>
             </div>
 
@@ -828,10 +887,16 @@ const toasts = ref([])
 const formData = reactive({
   name: '',
   src_zone: 'LAN',
+  source_type: 'Any',
+  source_value: 'Any',
   dest_zone: 'WAN',
+  dest_type: 'Any',
+  dest_value: 'Any',
   services: 'HTTP, HTTPS',
   action: 'accept',
-  enabled: true
+  log_traffic: false,
+  enabled: true,
+  comment: ''
 })
 
 // Baseline Rules Matrix Data (Matching standard Sophos UTM 9 deployment)
@@ -1042,10 +1107,16 @@ const openAddRuleModal = () => {
   validationError.value = ''
   formData.name = ''
   formData.src_zone = 'LAN'
+  formData.source_type = 'Any'
+  formData.source_value = 'Any'
   formData.dest_zone = 'WAN'
+  formData.dest_type = 'Any'
+  formData.dest_value = 'Any'
   formData.services = 'HTTP, HTTPS'
   formData.action = 'accept'
+  formData.log_traffic = false
   formData.enabled = true
+  formData.comment = ''
   isModalOpen.value = true
 }
 
@@ -1148,10 +1219,16 @@ const handleSubmit = async () => {
   const payload = {
     name: formData.name.trim(),
     src_zone: formData.src_zone,
+    source_type: formData.source_type,
+    source_value: formData.source_type === 'Any' ? 'Any' : (formData.source_value || 'Any'),
     dest_zone: formData.dest_zone,
+    dest_type: formData.dest_type,
+    dest_value: formData.dest_type === 'Any' ? 'Any' : (formData.dest_value || 'Any'),
     services: formData.services,
     action: formData.action.toLowerCase(),
-    enabled: formData.enabled
+    log_traffic: formData.log_traffic,
+    enabled: formData.enabled,
+    comment: formData.comment || ''
   }
 
   const config = {
@@ -1167,12 +1244,10 @@ const handleSubmit = async () => {
   }
 
   try {
-    // Execute asynchronous axios.post payload delivery query dispatch
     const response = await axiosInstance.post(props.saveEndpoint, payload, config)
     const resData = response.data || {}
 
-    // Add new rule to active list
-    const newId = rulesList.value.length > 0 ? Math.max(...rulesList.value.map(r => r.id || 0)) + 1 : 1
+    const newId = rulesList.value.length > 0 ? Math.max(...rulesList.value.map(r => Number(r.id) || 0)) + 1 : 1
     const committedRule = {
       id: newId,
       ...payload

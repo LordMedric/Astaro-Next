@@ -399,14 +399,21 @@ class NFTablesApplyResponse(BaseModel):
 
 
 class FirewallRule(BaseModel):
-    """High-level zone-based firewall rule schema (Sophos SFOS style)."""
-    id: Optional[int] = None
+    """Sophos UTM / Astaro base rule schema supporting Host, DNS Host, Network, Range, IP objects."""
+    id: Optional[Union[int, str]] = None
     name: str = Field(..., description="Descriptive name of the firewall policy rule")
-    src_zone: str = Field(default="LAN", description="Source zone: 'LAN', 'WAN', 'VPN', 'DMZ'")
-    dest_zone: str = Field(default="WAN", description="Destination zone: 'LAN', 'WAN', 'VPN', 'DMZ'")
+    src_zone: Optional[str] = Field(default="LAN", description="Source zone: 'LAN', 'WAN', 'VPN', 'DMZ', 'Any'")
+    dest_zone: Optional[str] = Field(default="WAN", description="Destination zone: 'LAN', 'WAN', 'VPN', 'DMZ', 'Any'")
+    source_type: Optional[str] = Field(default="Any", description="Source Object Type: 'Any', 'Host', 'DNS Host', 'Network', 'Range', 'IP'")
+    source_value: Optional[str] = Field(default="Any", description="Source Object definition address / FQDN")
+    dest_type: Optional[str] = Field(default="Any", description="Destination Object Type: 'Any', 'Host', 'DNS Host', 'Network', 'Range', 'IP'")
+    dest_value: Optional[str] = Field(default="Any", description="Destination Object definition address / FQDN")
     services: str = Field(default="Any", description="Target service definition: 'Any', 'HTTP', 'HTTPS', 'SSH', etc.")
-    action: str = Field(default="accept", description="Rule verdict: 'accept' or 'drop'")
+    action: str = Field(default="accept", description="Rule verdict: 'accept', 'drop', 'reject'")
+    log_traffic: Optional[bool] = Field(default=False, description="Log matching packets to live firewall log")
+    comment: Optional[str] = Field(default="", description="Rule documentation notes")
     enabled: bool = Field(default=True, description="Whether the rule is active")
+    position: Optional[int] = Field(default=1, description="Evaluation priority order index")
 
 
 # --- WireGuard Models ---
@@ -1247,45 +1254,138 @@ async def apply_network_rules(
             temp_nft.unlink(missing_ok=True)
 
 
-# Default zone-based firewall rules
+# Default zone-based firewall rules with Sophos UTM Base Objects
 _DEFAULT_FIREWALL_RULES = [
-    {"id": 1, "name": "Default Outbound Internet", "src_zone": "LAN", "dest_zone": "WAN", "services": "Any", "action": "accept", "enabled": True},
-    {"id": 2, "name": "Drop Inbound Remote Scan", "src_zone": "WAN", "dest_zone": "LAN", "services": "Any", "action": "drop", "enabled": True},
-    {"id": 3, "name": "WireGuard VPN Access", "src_zone": "VPN", "dest_zone": "LAN", "services": "SSH", "action": "accept", "enabled": False}
+    {
+        "id": 1,
+        "name": "Default Outbound Internet",
+        "src_zone": "LAN",
+        "source_type": "Network",
+        "source_value": "Internal (Network) [192.168.1.0/24]",
+        "dest_zone": "WAN",
+        "dest_type": "Any",
+        "dest_value": "Any (Internet)",
+        "services": "Web (HTTP, HTTPS), DNS",
+        "action": "accept",
+        "log_traffic": False,
+        "enabled": True,
+        "position": 1
+    },
+    {
+        "id": 2,
+        "name": "Drop Inbound Remote Scans",
+        "src_zone": "WAN",
+        "source_type": "Any",
+        "source_value": "Any (Uplink)",
+        "dest_zone": "LAN",
+        "dest_type": "Network",
+        "dest_value": "Internal (Network) [192.168.1.0/24]",
+        "services": "Any",
+        "action": "drop",
+        "log_traffic": True,
+        "enabled": True,
+        "position": 2
+    },
+    {
+        "id": 3,
+        "name": "Allow DNS to Cloudflare Resolver",
+        "src_zone": "LAN",
+        "source_type": "Network",
+        "source_value": "192.168.1.0/24",
+        "dest_zone": "WAN",
+        "dest_type": "DNS Host",
+        "dest_value": "one.one.one.one",
+        "services": "DNS (UDP/TCP 53)",
+        "action": "accept",
+        "log_traffic": False,
+        "enabled": True,
+        "position": 3
+    },
+    {
+        "id": 4,
+        "name": "Branch Office IP Range Access",
+        "src_zone": "VPN",
+        "source_type": "Range",
+        "source_value": "10.200.0.50 - 10.200.0.100",
+        "dest_zone": "LAN",
+        "dest_type": "Host",
+        "dest_value": "192.168.1.50",
+        "services": "SSH, HTTPS",
+        "action": "accept",
+        "log_traffic": True,
+        "enabled": False,
+        "position": 4
+    }
 ]
 
 @app.get("/api/firewall/rules", tags=["Network Firewall"])
 def get_firewall_rules(_: Optional[str] = Depends(verify_admin_auth)):
-    """Reads saved custom zone-based firewall rules (Sophos SFOS style)."""
+    """Reads saved custom zone-based firewall rules (Sophos UTM style)."""
     return _DEFAULT_FIREWALL_RULES
 
 
 @app.post("/api/firewall/rules/save", tags=["Network Firewall"])
 def save_firewall_rule(rule: FirewallRule, _: Optional[str] = Depends(verify_admin_auth)):
     """Translates UI form definitions directly into standard Linux nftables script syntax."""
+    global _DEFAULT_FIREWALL_RULES
     try:
+        rule_dict = rule.model_dump()
+        if not rule_dict.get("id"):
+            rule_dict["id"] = len(_DEFAULT_FIREWALL_RULES) + 1
+        
+        # Check if existing rule should be updated
+        existing_idx = next((i for i, r in enumerate(_DEFAULT_FIREWALL_RULES) if str(r.get("id")) == str(rule_dict["id"])), -1)
+        if existing_idx >= 0:
+            _DEFAULT_FIREWALL_RULES[existing_idx] = rule_dict
+        else:
+            _DEFAULT_FIREWALL_RULES.append(rule_dict)
+
         # Convert user settings to raw nftables formatting
-        nft_rule_string = f"    # Rule: {rule.name}\n"
+        nft_rule_string = f"    # Rule: {rule.name} ({rule.source_type} -> {rule.dest_type})\n"
         
         # Build mapping logic based on standard network zone setups
-        src_if = 'iifname "port2"' if rule.src_zone == "LAN" else 'iifname "port1"'
-        dest_if = 'oifname "port1"' if rule.dest_zone == "WAN" else 'oifname "port2"'
-        action_verb = "accept" if rule.action == "accept" else "drop"
+        src_match = ""
+        if rule.source_type == "Host" or rule.source_type == "IP":
+            clean_ip = rule.source_value.split()[0]
+            src_match = f"ip saddr {clean_ip}"
+        elif rule.source_type == "Network" and "/" in rule.source_value:
+            clean_net = next((w for w in rule.source_value.split() if "/" in w), rule.source_value)
+            src_match = f"ip saddr {clean_net}"
+        elif rule.source_type == "Range" and "-" in rule.source_value:
+            clean_range = rule.source_value.replace(" ", "")
+            src_match = f"ip saddr {clean_range}"
+        else:
+            src_match = 'iifname "lan0"' if rule.src_zone == "LAN" else 'iifname != "lo"'
+
+        dest_match = ""
+        if rule.dest_type == "Host" or rule.dest_type == "IP":
+            clean_ip = rule.dest_value.split()[0]
+            dest_match = f"ip daddr {clean_ip}"
+        elif rule.dest_type == "Network" and "/" in rule.dest_value:
+            clean_net = next((w for w in rule.dest_value.split() if "/" in w), rule.dest_value)
+            dest_match = f"ip daddr {clean_net}"
+        elif rule.dest_type == "Range" and "-" in rule.dest_value:
+            clean_range = rule.dest_value.replace(" ", "")
+            dest_match = f"ip daddr {clean_range}"
+
+        log_prefix = f'log prefix "[FW-{rule.action.upper()}] " ' if rule.log_traffic else ""
+        action_verb = "accept" if rule.action == "accept" else ("reject" if rule.action == "reject" else "drop")
         
-        nft_rule_string += f"    {src_if} {dest_if} {action_verb}\n"
+        nft_rule_string += f"    {src_match} {dest_match} {log_prefix}{action_verb}\n"
         
         # Append rule to modular nftables rule list configuration file
         NFTABLES_D_DIR.mkdir(parents=True, exist_ok=True)
         with open(NFT_CUSTOM_RULES_FILE, "a", encoding="utf-8") as f:
             f.write(nft_rule_string + "\n")
             
-        # Execute system atomic configuration reload via Linux core binaries
         if shutil.which("nft"):
             run_system_command(["nft", "-f", str(NFTABLES_CONF_PATH)], check=False)
 
-        return {"status": "success", "message": f"Firewall rule '{rule.name}' saved and applied."}
+        return {"status": "success", "message": f"Firewall rule '{rule.name}' saved and applied.", "rule": rule_dict}
         
     except Exception as e:
+        logger.error(f"Error saving firewall rule: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
         logger.error(f"Error saving firewall rule: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
