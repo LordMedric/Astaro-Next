@@ -77,7 +77,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Security, Depends, status, Query, Path as FPath, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 import uvicorn
 
@@ -2103,6 +2104,84 @@ def save_waf_rule(config: WafRuleConfig, _: Optional[str] = Depends(verify_admin
     except Exception as e:
         logger.error(f"Failed to deploy WAF rule: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# -----------------------------------------------------------------------------
+# Section 13.5: Static Frontend Serving (Direct WebAdmin Console)
+# -----------------------------------------------------------------------------
+def get_frontend_directory() -> Optional[Path]:
+    """Dynamically resolves the frontend directory across various deployment layouts."""
+    env_dir = os.getenv("ASTARO_FRONTEND_DIR")
+    candidates = [
+        Path(env_dir) if env_dir else None,
+        Path(__file__).resolve().parent.parent / "frontend",
+        Path(__file__).resolve().parent / "frontend",
+        Path("/opt/astaro/frontend"),
+        Path("/opt/astaro/middleware/frontend"),
+        Path.cwd() / "frontend",
+        Path.cwd().parent / "frontend",
+    ]
+    for candidate in candidates:
+        if candidate and candidate.exists() and (candidate / "index.html").exists():
+            return candidate.resolve()
+    return None
+
+FRONTEND_DIR = get_frontend_directory()
+
+@app.get("/", tags=["WebAdmin UI"])
+async def serve_webadmin_index():
+    """Serves the primary WebAdmin single-page application entrypoint or diagnostic dashboard."""
+    f_dir = get_frontend_directory()
+    if f_dir and (f_dir / "index.html").exists():
+        return FileResponse(str(f_dir / "index.html"))
+
+    # Diagnostic page shown when backend is active but frontend directory is missing
+    diag_html = f"""<!DOCTYPE html>
+<html lang="en" style="background:#0f172a;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;">
+<head>
+  <meta charset="UTF-8"><title>Astaro-Next Appliance Core Active</title>
+</head>
+<body style="display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;">
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:32px;max-width:620px;box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div style="width:12px;height:12px;background:#10b981;border-radius:50%;box-shadow:0 0 10px #10b981;"></div>
+      <h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-0.5px;">Astaro-Next Daemon Online</h2>
+    </div>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;">
+      The FastAPI configuration middleware (Port 4444) is running on Debian 12.
+    </p>
+    <div style="background:#0f172a;padding:16px;border-radius:8px;border:1px solid #334155;margin:20px 0;font-family:monospace;font-size:12px;color:#38bdf8;">
+      <div>Status: 🟢 Daemon Core Active</div>
+      <div style="margin-top:6px;">Searched frontend paths: /opt/astaro/frontend, ./frontend</div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:24px;">
+      <a href="/api/docs" style="background:#2563eb;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Open REST API Docs (/api/docs)</a>
+      <a href="/api/system/init-status" style="background:#334155;color:#f8fafc;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Init Status</a>
+    </div>
+  </div>
+</body>
+</html>"""
+    return HTMLResponse(content=diag_html, status_code=200)
+
+@app.get("/{filename:path}", tags=["WebAdmin UI"])
+async def serve_static_asset(filename: str):
+    """Dynamically serves Vue components and static assets requested by the frontend."""
+    # Never intercept backend /api/ or /docs endpoints
+    if filename.startswith("api/") or filename.startswith("docs") or filename.startswith("openapi.json"):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+        
+    f_dir = get_frontend_directory()
+    if f_dir:
+        target_file = (f_dir / filename).resolve()
+        if target_file.is_file() and str(target_file).startswith(str(f_dir)):
+            return FileResponse(str(target_file))
+    raise HTTPException(status_code=404, detail=f"File '{filename}' not found.")
+
+if FRONTEND_DIR:
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+    logger.info(f"Mounted WebAdmin frontend from {FRONTEND_DIR}")
+else:
+    logger.warning("Frontend directory not located at startup. WebAdmin static UI will resolve dynamically on request.")
 
 
 # -----------------------------------------------------------------------------

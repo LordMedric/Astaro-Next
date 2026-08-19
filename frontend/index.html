@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Astaro-Next WebAdmin - WAF Settings</title>
+  <title>Astaro-Next Firewall OS - WebAdmin Console</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Axios CDN -->
@@ -39,6 +39,17 @@
       },
     };
 
+    // Global Administrative Authentication Credentials
+    const DEFAULT_TOKEN = 'astaro-admin-sec-key-9982441';
+    if (typeof localStorage !== 'undefined' && !localStorage.getItem('astaro_token')) {
+      localStorage.setItem('astaro_token', DEFAULT_TOKEN);
+    }
+    const currentToken = (typeof localStorage !== 'undefined' ? localStorage.getItem('astaro_token') : null) || DEFAULT_TOKEN;
+    if (window.axios) {
+      window.axios.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
+      window.axios.defaults.headers.common['X-API-Key'] = currentToken;
+    }
+
     const app = Vue.createApp({
       components: {
         'firewall-rules': Vue.defineAsyncComponent(() => loadModule('./FirewallRules.vue', options)),
@@ -53,14 +64,16 @@
       },
       data() {
         return {
-          currentSection: 'protect',
-          currentItem: 'web'
+          currentSection: 'monitor_analyze',
+          currentItem: 'control_center',
+          authToken: currentToken
         }
       },
       template: `
         <setup-wizard
           v-if="currentItem === 'setup_wizard' || currentItem === 'wizard'"
-          @completed="currentItem = 'control_center'"
+          :authToken="authToken"
+          @completed="currentItem = 'control_center'; currentSection = 'monitor_analyze'"
         />
         <main-layout
           v-else
@@ -68,31 +81,48 @@
           :initialItem="currentItem"
           @navigate="handleNavigate"
         >
+          <control-center
+            v-if="currentItem === 'control_center' || currentItem === 'dashboard'"
+            :authToken="authToken"
+          />
           <web-protection
-            v-if="currentItem === 'web' || currentItem === 'web_protection' || currentItem === 'zenarmor' || currentItem === 'zenarmor_profiles'"
+            v-else-if="currentItem === 'web' || currentItem === 'web_protection' || currentItem === 'zenarmor' || currentItem === 'zenarmor_profiles'"
+            :authToken="authToken"
           />
           <mail-manager
             v-else-if="currentItem === 'email' || currentItem === 'mail_manager' || currentItem === 'mail' || currentItem === 'mail_quarantine' || currentItem === 'postfix'"
+            :authToken="authToken"
           />
           <firewall-rules
             v-else-if="currentItem === 'rules_policies' || currentItem === 'firewall_rules' || currentItem === 'firewall'"
+            :authToken="authToken"
           />
           <interfaces-view
-            v-else-if="currentItem === 'network' || currentItem === 'interfaces'"
+            v-else-if="currentItem === 'network' || currentItem === 'interfaces' || currentItem === 'network_interfaces'"
+            :authToken="authToken"
           />
           <vpn-settings
             v-else-if="currentItem === 'vpn' || currentItem === 'vpn_settings' || currentItem === 'wireguard' || currentItem === 'wireguard_vpn' || currentItem === 'ipsec' || currentItem === 'openvpn'"
-          />
-          <control-center
-            v-else-if="currentItem === 'control_center'"
+            :authToken="authToken"
           />
           <waf-settings
-            v-else-if="currentItem === 'web_server' || currentItem === 'waf_reverse_proxy'"
+            v-else-if="currentItem === 'web_server' || currentItem === 'waf_reverse_proxy' || currentItem === 'waf'"
+            :authToken="authToken"
             @close="currentItem = 'rules_policies'"
           />
-          <firewall-rules v-else />
+          <control-center v-else :authToken="authToken" />
         </main-layout>
       `,
+      async mounted() {
+        try {
+          const res = await axios.get('/api/system/init-status');
+          if (res.data && res.data.initialized === false) {
+            this.currentItem = 'setup_wizard';
+          }
+        } catch (e) {
+          // Backend offline or unreachable during initial load - retain default control center
+        }
+      },
       methods: {
         handleNavigate(navEvent) {
           if (typeof navEvent === 'string') {
