@@ -1,17 +1,17 @@
 <template>
-  <div class="min-h-full bg-slate-50 text-slate-800 font-sans antialiased selection:bg-[#2563eb] selection:text-white">
+  <div class="min-h-full bg-[#f4f6f9] text-slate-800 font-sans antialiased selection:bg-[#0072ce] selection:text-white">
     <!-- Top Action & Telemetry Header Ribbon -->
     <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
       <!-- Title & Live Appliance Pulse -->
       <div class="flex items-center gap-3.5">
-        <div class="w-10 h-10 rounded-lg bg-[#2563eb] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black">
+        <div class="w-10 h-10 rounded-lg bg-[#0072ce] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
           </svg>
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-lg font-bold text-slate-900 tracking-tight">SFOS Control Center</h1>
+            <h1 class="text-lg font-bold text-slate-900 tracking-tight">Astaro-Next Control Center</h1>
             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               Live Telemetry
@@ -37,7 +37,7 @@
             :class="[
               'px-2 py-1 rounded text-xs font-semibold transition-all',
               pollIntervalSeconds === interval
-                ? 'bg-white text-[#2563eb] shadow-xs border border-slate-200/80 font-bold'
+                ? 'bg-white text-[#0072ce] shadow-xs border border-slate-200/80 font-bold'
                 : 'text-slate-600 hover:text-slate-900'
             ]"
           >
@@ -62,10 +62,10 @@
           type="button"
           @click="fetchTelemetry(true)"
           :disabled="isLoading"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-[#f4f6f9] hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
         >
           <svg
-            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#2563eb]' : '']"
+            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#0072ce]' : '']"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -96,21 +96,21 @@
       <button @click="errorMessage = null" class="text-rose-500 hover:text-rose-700 font-bold px-1.5 cursor-pointer">✕</button>
     </div>
 
-    <!-- ENTERPRISE 3-COLUMN GRID STRUCTURE (Sophos XGS Standard) -->
+    <!-- ENTERPRISE 3-COLUMN GRID STRUCTURE (Sophos UTM Standard) -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
       
       <!-- ========================================================================= -->
       <!-- CARD 1: SYSTEM PERFORMANCE                                                -->
       <!-- ========================================================================= -->
       <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden transition-shadow hover:shadow-md">
-        <!-- Card Header with Sophos Blue Accent Tag -->
-        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <!-- Card Header with Sophos UTM Blue Accent Tag -->
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-[#f4f6f9]/50">
           <div class="flex items-center gap-2.5">
-            <span class="w-1 h-4 bg-[#2563eb] rounded-full"></span>
+            <span class="w-1 h-4 bg-[#0072ce] rounded-full"></span>
             <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">System Performance</h2>
           </div>
-          <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-blue-50 text-[#2563eb] border border-blue-100">
-            XGS Engine
+          <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-blue-50 text-[#0072ce] border border-blue-100">
+            UTM Engine
           </span>
         </div>
 
@@ -217,11 +217,11 @@
 
           <!-- Bottom Telemetry Badges Strip -->
           <div class="pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-center">
-            <div class="p-2 rounded-lg bg-slate-50 border border-slate-100">
+            <div class="p-2 rounded-lg bg-[#f4f6f9] border border-slate-100">
               <span class="text-[10px] text-slate-400 uppercase font-semibold block">System Uptime</span>
               <span class="text-xs font-mono font-bold text-slate-800">{{ systemMetrics.uptime }}</span>
             </div>
-            <div class="p-2 rounded-lg bg-slate-50 border border-slate-100">
+            <div class="p-2 rounded-lg bg-[#f4f6f9] border border-slate-100">
               <span class="text-[10px] text-slate-400 uppercase font-semibold block">FastPath Acceleration</span>
               <span class="text-xs font-mono font-bold text-emerald-600">Hardware Xstream</span>
             </div>
@@ -234,9 +234,9 @@
       <!-- ========================================================================= -->
       <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden transition-shadow hover:shadow-md">
         <!-- Card Header -->
-        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-[#f4f6f9]/50">
           <div class="flex items-center gap-2.5">
-            <span class="w-1 h-4 bg-[#2563eb] rounded-full"></span>
+            <span class="w-1 h-4 bg-[#0072ce] rounded-full"></span>
             <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Services Status</h2>
           </div>
           <div class="flex items-center gap-1 text-[11px] font-medium text-slate-500">
@@ -254,7 +254,7 @@
               class="p-3 rounded-lg border transition-all duration-150 flex flex-col justify-between group"
               :class="[
                 service.status === 'running'
-                  ? 'bg-slate-50/70 border-slate-200/80 hover:bg-slate-50 hover:border-slate-300'
+                  ? 'bg-[#f4f6f9]/70 border-slate-200/80 hover:bg-[#f4f6f9] hover:border-slate-300'
                   : 'bg-rose-50/40 border-rose-200 hover:bg-rose-50'
               ]"
             >
@@ -300,7 +300,7 @@
                 <button
                   type="button"
                   @click="toggleServiceState(service)"
-                  class="text-[10px] font-sans font-semibold text-[#2563eb] hover:text-blue-800 hover:underline flex items-center gap-0.5 cursor-pointer"
+                  class="text-[10px] font-sans font-semibold text-[#0072ce] hover:text-blue-800 hover:underline flex items-center gap-0.5 cursor-pointer"
                 >
                   <span>{{ service.status === 'running' ? 'Restart' : 'Start' }}</span>
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -314,7 +314,7 @@
           <!-- Services Quick Summary Note -->
           <div class="mt-4 p-3 rounded-lg bg-blue-50/50 border border-blue-100 text-[11px] text-blue-900 flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-[#0072ce] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>All essential deep packet inspection subsystems operating within SLA thresholds.</span>
@@ -328,9 +328,9 @@
       <!-- ========================================================================= -->
       <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden transition-shadow hover:shadow-md">
         <!-- Card Header -->
-        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-[#f4f6f9]/50">
           <div class="flex items-center gap-2.5">
-            <span class="w-1 h-4 bg-[#2563eb] rounded-full"></span>
+            <span class="w-1 h-4 bg-[#0072ce] rounded-full"></span>
             <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Network Interfaces</h2>
           </div>
           <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
@@ -347,7 +347,7 @@
             :class="[
               iface.linkState === 'UP'
                 ? 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
-                : 'bg-slate-50/60 border-slate-200/80 opacity-80'
+                : 'bg-[#f4f6f9]/60 border-slate-200/80 opacity-80'
             ]"
           >
             <!-- Port Header: Physical Port Jack Representation & Speed Badge -->
@@ -392,7 +392,7 @@
             </div>
 
             <!-- IP Addressing & Live Traffic Throughput Strip -->
-            <div class="p-2 rounded bg-slate-50 border border-slate-100 flex items-center justify-between text-xs font-mono">
+            <div class="p-2 rounded bg-[#f4f6f9] border border-slate-100 flex items-center justify-between text-xs font-mono">
               <div class="flex items-center gap-1.5 text-slate-700 truncate">
                 <span class="text-[10px] text-slate-400 font-sans uppercase font-bold">IP:</span>
                 <span class="font-bold text-slate-900 truncate">{{ iface.ipAddress || 'Unassigned / DHCP Pending' }}</span>
@@ -547,65 +547,8 @@ const servicesList = ref([
   }
 ])
 
-// 3. Network Interfaces Reactive Model Mirroring Sophos Ports
-const interfacesList = ref([
-  {
-    id: 'port1',
-    portNumber: 'P1',
-    name: 'Port1 (WAN)',
-    hwName: 'eth0',
-    zone: 'WAN',
-    macAddress: '00:0C:29:A1:B2:01',
-    ipAddress: '203.0.113.45/29',
-    linkState: 'UP',
-    speed: '1000 Mbps',
-    duplex: 'Full',
-    rxRate: '4.8 MB/s',
-    txRate: '1.2 MB/s'
-  },
-  {
-    id: 'port2',
-    portNumber: 'P2',
-    name: 'Port2 (LAN)',
-    hwName: 'eth1',
-    zone: 'LAN',
-    macAddress: '00:0C:29:A1:B2:02',
-    ipAddress: '192.168.1.1/24',
-    linkState: 'UP',
-    speed: '2.5 Gbps',
-    duplex: 'Full',
-    rxRate: '18.4 MB/s',
-    txRate: '34.1 MB/s'
-  },
-  {
-    id: 'port3',
-    portNumber: 'P3',
-    name: 'Port3 (DMZ)',
-    hwName: 'eth2',
-    zone: 'DMZ',
-    macAddress: '00:0C:29:A1:B2:03',
-    ipAddress: '10.10.50.1/24',
-    linkState: 'UP',
-    speed: '1000 Mbps',
-    duplex: 'Full',
-    rxRate: '820 KB/s',
-    txRate: '1.4 MB/s'
-  },
-  {
-    id: 'port4',
-    portNumber: 'P4',
-    name: 'Port4 (HA/Aux)',
-    hwName: 'eth3',
-    zone: 'HA',
-    macAddress: '00:0C:29:A1:B2:04',
-    ipAddress: '172.16.99.1/30',
-    linkState: 'DOWN',
-    speed: 'Auto',
-    duplex: 'None',
-    rxRate: '0 B/s',
-    txRate: '0 B/s'
-  }
-])
+// 3. Network Interfaces Reactive Model
+const interfacesList = ref([])
 
 // -----------------------------------------------------------------------------
 // Computed Helpers
@@ -629,7 +572,7 @@ const lastUpdatedFormatted = computed(() => {
 const getProgressColor = (percentage) => {
   if (percentage >= 90) return 'bg-rose-500 shadow-sm shadow-rose-500/50'
   if (percentage >= 75) return 'bg-amber-500 shadow-sm shadow-amber-500/50'
-  return 'bg-[#2563eb] shadow-sm shadow-blue-500/50'
+  return 'bg-[#0072ce] shadow-sm shadow-blue-500/50'
 }
 
 const getLoadTextColor = (percentage) => {
@@ -802,7 +745,10 @@ const fetchTelemetry = async (isManual = false) => {
 
       // Sync Card 3: Interfaces
       if (Array.isArray(data.interfaces)) {
-        interfacesList.value = data.interfaces
+        interfacesList.value = data.interfaces.map(i => ({
+          ...i,
+          linkState: (i.linkState || i.linkStatus || 'down').toUpperCase()
+        }))
       }
 
       lastUpdated.value = new Date()

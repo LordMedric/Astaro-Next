@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(37,99,235,0.18),rgba(15,23,42,0))] flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 font-sans antialiased text-slate-100 selection:bg-[#2563eb] selection:text-white relative overflow-hidden">
+  <div class="min-h-screen bg-slate-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(0,114,206,0.18),rgba(15,23,42,0))] flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 font-sans antialiased text-slate-100 selection:bg-[#0072ce] selection:text-white relative overflow-hidden">
     
     <!-- Ambient Technical Background Pattern -->
     <div class="absolute inset-0 bg-[linear-gradient(to_right,#1e293b0a_1px,transparent_1px),linear-gradient(to_bottom,#1e293b0a_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none"></div>
@@ -64,14 +64,14 @@
     <main class="w-full max-w-3xl bg-slate-900/90 border border-slate-800/90 rounded-2xl shadow-2xl backdrop-blur-xl flex flex-col relative z-10 overflow-hidden">
       
       <!-- Top Corporate High-Contrast Accent Bar -->
-      <div class="h-1.5 w-full bg-gradient-to-r from-blue-600 via-[#2563eb] to-cyan-500"></div>
+      <div class="h-1.5 w-full bg-gradient-to-r from-blue-600 via-[#0072ce] to-cyan-500"></div>
 
       <!-- Prominent Header Layout -->
       <header class="px-6 pt-8 pb-6 border-b border-slate-800/80 bg-slate-900/50">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <!-- Logo & Brand Header -->
           <div class="flex items-center gap-3.5">
-            <div class="w-12 h-12 rounded-xl bg-[#2563eb] flex items-center justify-center shadow-lg shadow-blue-500/25 ring-1 ring-blue-400/40 text-white flex-shrink-0">
+            <div class="w-12 h-12 rounded-xl bg-[#0072ce] flex items-center justify-center shadow-lg shadow-blue-500/25 ring-1 ring-blue-400/40 text-white flex-shrink-0">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
@@ -79,7 +79,7 @@
             <div>
               <div class="flex items-center gap-2.5">
                 <h1 class="text-xl font-extrabold tracking-tight text-white uppercase">
-                  Astaro<span class="text-[#2563eb]">-Next</span>
+                  Astaro<span class="text-[#0072ce]">-Next</span>
                 </h1>
                 <span class="text-[10px] bg-blue-950/80 text-blue-400 font-mono font-bold px-2 py-0.5 rounded-full border border-blue-800/60 uppercase tracking-wide">
                   First-Run Provisioning
@@ -95,9 +95,9 @@
           <div class="hidden sm:flex flex-col items-end text-right font-mono text-[11px] text-slate-400 bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800">
             <span class="text-slate-200 font-semibold flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-              XGS APPLIANCE OS
+              UTM 9 APPLIANCE OS
             </span>
-            <span class="text-[10px] text-slate-500">v2.4.0 (Bookworm)</span>
+            <span class="text-[10px] text-slate-500">v9.7 (Bookworm)</span>
           </div>
         </div>
 
@@ -113,7 +113,7 @@
                 :class="[
                   'w-full flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all',
                   currentStep === 1
-                    ? 'bg-blue-600/10 border-[#2563eb] text-white shadow-sm ring-1 ring-[#2563eb]/40'
+                    ? 'bg-blue-600/10 border-[#0072ce] text-white shadow-sm ring-1 ring-[#0072ce]/40'
                     : currentStep > 1
                       ? 'bg-slate-950/40 border-emerald-500/40 text-emerald-300 hover:bg-slate-800/60 cursor-pointer'
                       : 'bg-slate-950/20 border-slate-800/60 text-slate-500 opacity-60 cursor-not-allowed'
@@ -123,7 +123,7 @@
                   :class="[
                     'w-7 h-7 rounded-lg flex items-center justify-center font-mono text-xs font-bold transition-all flex-shrink-0',
                     currentStep === 1
-                      ? 'bg-[#2563eb] text-white shadow-xs'
+                      ? 'bg-[#0072ce] text-white shadow-xs'
                       : currentStep > 1
                         ? 'bg-emerald-500 text-slate-950 font-black'
                         : 'bg-slate-800 text-slate-400'
@@ -150,7 +150,7 @@
                 :class="[
                   'w-full flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all',
                   currentStep === 2
-                    ? 'bg-blue-600/10 border-[#2563eb] text-white shadow-sm ring-1 ring-[#2563eb]/40'
+                    ? 'bg-blue-600/10 border-[#0072ce] text-white shadow-sm ring-1 ring-[#0072ce]/40'
                     : currentStep > 2
                       ? 'bg-slate-950/40 border-emerald-500/40 text-emerald-300 hover:bg-slate-800/60 cursor-pointer'
                       : 'bg-slate-950/20 border-slate-800/60 text-slate-500 opacity-60 cursor-not-allowed'
@@ -160,7 +160,7 @@
                   :class="[
                     'w-7 h-7 rounded-lg flex items-center justify-center font-mono text-xs font-bold transition-all flex-shrink-0',
                     currentStep === 2
-                      ? 'bg-[#2563eb] text-white shadow-xs'
+                      ? 'bg-[#0072ce] text-white shadow-xs'
                       : currentStep > 2
                         ? 'bg-emerald-500 text-slate-950 font-black'
                         : 'bg-slate-800 text-slate-400'
@@ -187,7 +187,7 @@
                 :class="[
                   'w-full flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all',
                   currentStep === 3
-                    ? 'bg-blue-600/10 border-[#2563eb] text-white shadow-sm ring-1 ring-[#2563eb]/40'
+                    ? 'bg-blue-600/10 border-[#0072ce] text-white shadow-sm ring-1 ring-[#0072ce]/40'
                     : 'bg-slate-950/20 border-slate-800/60 text-slate-500 opacity-60 cursor-not-allowed'
                 ]"
               >
@@ -195,7 +195,7 @@
                   :class="[
                     'w-7 h-7 rounded-lg flex items-center justify-center font-mono text-xs font-bold transition-all flex-shrink-0',
                     currentStep === 3
-                      ? 'bg-[#2563eb] text-white shadow-xs'
+                      ? 'bg-[#0072ce] text-white shadow-xs'
                       : 'bg-slate-800 text-slate-400'
                   ]"
                 >
@@ -290,7 +290,7 @@
                   :type="showPassword ? 'text' : 'password'"
                   placeholder="Enter secure password"
                   autocomplete="new-password"
-                  class="w-full bg-slate-950/80 text-slate-100 text-xs px-3.5 py-2.5 pr-10 rounded-lg border border-slate-700/80 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-600 transition-colors font-mono"
+                  class="w-full bg-slate-950/80 text-slate-100 text-xs px-3.5 py-2.5 pr-10 rounded-lg border border-slate-700/80 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-600 transition-colors font-mono"
                   @input="validatePasswordStrength"
                 />
                 <button
@@ -323,7 +323,7 @@
                   :type="showConfirmPassword ? 'text' : 'password'"
                   placeholder="Re-enter secure password"
                   autocomplete="new-password"
-                  class="w-full bg-slate-950/80 text-slate-100 text-xs px-3.5 py-2.5 pr-10 rounded-lg border border-slate-700/80 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-600 transition-colors font-mono"
+                  class="w-full bg-slate-950/80 text-slate-100 text-xs px-3.5 py-2.5 pr-10 rounded-lg border border-slate-700/80 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-600 transition-colors font-mono"
                   :class="{
                     'border-emerald-500/80 focus:border-emerald-500': passwordsMatch && formData.confirmPassword.length > 0,
                     'border-rose-500/80 focus:border-rose-500': !passwordsMatch && formData.confirmPassword.length > 0
@@ -462,7 +462,7 @@
                   v-model="formData.lanIp"
                   type="text"
                   placeholder="10.0.0.1"
-                  class="w-full bg-slate-950/80 text-slate-100 text-xs px-3.5 py-2.5 rounded-lg border border-slate-700/80 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-600 transition-colors font-mono"
+                  class="w-full bg-slate-950/80 text-slate-100 text-xs px-3.5 py-2.5 rounded-lg border border-slate-700/80 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-600 transition-colors font-mono"
                   :class="{
                     'border-emerald-500/80 focus:border-emerald-500': isIpValid(formData.lanIp),
                     'border-rose-500/80 focus:border-rose-500': formData.lanIp.length > 0 && !isIpValid(formData.lanIp)
@@ -503,7 +503,7 @@
                   v-model="formData.subnetMask"
                   type="text"
                   placeholder="255.255.255.0"
-                  class="w-full bg-slate-950/80 text-slate-100 text-xs px-3.5 py-2.5 rounded-lg border border-slate-700/80 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-600 transition-colors font-mono"
+                  class="w-full bg-slate-950/80 text-slate-100 text-xs px-3.5 py-2.5 rounded-lg border border-slate-700/80 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-600 transition-colors font-mono"
                   :class="{
                     'border-emerald-500/80 focus:border-emerald-500': isSubnetMaskValid(formData.subnetMask),
                     'border-rose-500/80 focus:border-rose-500': formData.subnetMask.length > 0 && !isSubnetMaskValid(formData.subnetMask)
@@ -534,7 +534,7 @@
                 v-model="formData.hostname"
                 type="text"
                 placeholder="astaro-gateway.internal"
-                class="w-full bg-slate-950/80 text-slate-200 text-xs px-3.5 py-2 rounded-lg border border-slate-700/80 focus:outline-none focus:border-[#2563eb] font-mono placeholder:text-slate-600"
+                class="w-full bg-slate-950/80 text-slate-200 text-xs px-3.5 py-2 rounded-lg border border-slate-700/80 focus:outline-none focus:border-[#0072ce] font-mono placeholder:text-slate-600"
               />
             </div>
 
@@ -548,7 +548,7 @@
                 v-model="formData.gateway"
                 type="text"
                 placeholder="10.0.0.254"
-                class="w-full bg-slate-950/80 text-slate-200 text-xs px-3.5 py-2 rounded-lg border border-slate-700/80 focus:outline-none focus:border-[#2563eb] font-mono placeholder:text-slate-600"
+                class="w-full bg-slate-950/80 text-slate-200 text-xs px-3.5 py-2 rounded-lg border border-slate-700/80 focus:outline-none focus:border-[#0072ce] font-mono placeholder:text-slate-600"
               />
             </div>
           </div>
@@ -645,7 +645,7 @@
           <!-- WebAdmin Management Access Preview -->
           <div class="bg-blue-950/40 border border-blue-800/60 rounded-xl p-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-[#2563eb] text-white flex items-center justify-center font-bold">
+              <div class="w-8 h-8 rounded-lg bg-[#0072ce] text-white flex items-center justify-center font-bold">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                 </svg>
@@ -682,7 +682,7 @@
             </div>
             <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
               <div
-                class="bg-[#2563eb] h-full transition-all duration-300"
+                class="bg-[#0072ce] h-full transition-all duration-300"
                 :style="{ width: `${activationProgress}%` }"
               ></div>
             </div>
@@ -716,7 +716,7 @@
             type="button"
             @click="nextStep"
             :disabled="currentStep === 1 ? !isStep1Valid : !isStep2Valid"
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#2563eb] hover:bg-blue-600 active:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#0072ce] hover:bg-blue-600 active:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             <span>{{ currentStep === 1 ? 'Continue to Network Config' : 'Continue to Verification' }}</span>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -730,7 +730,7 @@
             type="button"
             @click="applyAndActivateAppliance"
             :disabled="isSubmitting || !isStep1Valid || !isStep2Valid"
-            class="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-lg bg-[#2563eb] hover:bg-blue-600 active:bg-blue-700 text-white text-xs font-bold shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer ring-1 ring-blue-400/40"
+            class="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-lg bg-[#0072ce] hover:bg-blue-600 active:bg-blue-700 text-white text-xs font-bold shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer ring-1 ring-blue-400/40"
           >
             <!-- Loading Spinner Element -->
             <svg

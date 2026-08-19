@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-full bg-slate-50 text-slate-800 font-sans antialiased selection:bg-[#2563eb] selection:text-white">
+  <div class="min-h-full bg-[#f4f6f9] text-slate-800 font-sans antialiased selection:bg-[#0072ce] selection:text-white">
     <!-- Notification Toasts Floating Stack -->
     <div class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-md w-full pointer-events-none" aria-live="polite">
       <transition-group
@@ -58,7 +58,7 @@
     <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
       <!-- Title & Subtitle with Sophos Blue Accent -->
       <div class="flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-lg bg-[#2563eb] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
+        <div class="w-11 h-11 rounded-lg bg-[#0072ce] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
@@ -70,8 +70,8 @@
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               {{ activeInterfacesCount }}/{{ interfacesList.length }} Ports Active
             </span>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#2563eb] border border-blue-100 uppercase">
-              SFOS XGS Engine
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#0072ce] border border-blue-100 uppercase">
+              UTM 9 Engine
             </span>
           </div>
           <p class="text-xs text-slate-500 mt-0.5">Configure physical Ethernet ports, IP assignments (DHCP / Static), zone routing, and link parameters.</p>
@@ -86,7 +86,7 @@
             v-model="searchQuery"
             type="text"
             placeholder="Filter interfaces..."
-            class="w-full bg-slate-50 text-slate-800 text-xs px-3 py-1.5 pl-8 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-400 transition-colors"
+            class="w-full bg-[#f4f6f9] text-slate-800 text-xs px-3 py-1.5 pl-8 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-400 transition-colors"
           />
           <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -103,7 +103,7 @@
         <!-- Zone Selector Filter -->
         <select
           v-model="selectedZoneFilter"
-          class="bg-slate-50 text-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] font-medium"
+          class="bg-[#f4f6f9] text-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] font-medium"
         >
           <option value="ALL">All Zones</option>
           <option value="WAN">WAN</option>
@@ -117,11 +117,11 @@
           type="button"
           @click="fetchInterfaces(true)"
           :disabled="isLoading"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-[#f4f6f9] hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
           title="Reload interface states and hardware telemetry"
         >
           <svg
-            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#2563eb]' : '']"
+            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#0072ce]' : '']"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -136,9 +136,9 @@
     <!-- ENTERPRISE DATA TABLE CANVAS -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
       <!-- Table Header Action Strip -->
-      <div class="px-5 py-3.5 border-b border-slate-200 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div class="px-5 py-3.5 border-b border-slate-200 bg-[#f4f6f9]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div class="flex items-center gap-2">
-          <span class="w-1.5 h-4 bg-[#2563eb] rounded-full"></span>
+          <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
           <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Physical Hardware Interfaces</h2>
           <span class="text-[11px] text-slate-400 font-mono">({{ filteredInterfaces.length }} configured)</span>
         </div>
@@ -156,7 +156,7 @@
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse" role="table">
           <thead>
-            <tr class="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            <tr class="border-b border-slate-200 bg-[#f4f6f9] text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Interface Name</th>
               <th scope="col" class="py-3 px-4 border-r border-slate-200/80">IP Address</th>
               <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Netmask</th>
@@ -172,7 +172,7 @@
               :key="iface.id"
               :class="[
                 'transition-colors duration-150',
-                index % 2 === 0 ? 'bg-white hover:bg-blue-50/30' : 'bg-slate-50/60 hover:bg-blue-50/40'
+                index % 2 === 0 ? 'bg-white hover:bg-blue-50/30' : 'bg-[#f4f6f9]/60 hover:bg-blue-50/40'
               ]"
             >
               <!-- 1. Interface Name & Hardware Details -->
@@ -301,7 +301,7 @@
                 <button
                   type="button"
                   @click="openConfigureModal(iface)"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-[#2563eb] hover:text-white hover:border-[#2563eb] active:bg-blue-700 transition-all shadow-2xs cursor-pointer group"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-[#0072ce] hover:text-white hover:border-[#0072ce] active:bg-blue-700 transition-all shadow-2xs cursor-pointer group"
                   :title="`Configure ${iface.name}`"
                 >
                   <svg class="w-3.5 h-3.5 text-slate-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -324,7 +324,7 @@
                 <button
                   type="button"
                   @click="resetFilters"
-                  class="mt-3 inline-flex items-center px-3 py-1.5 text-xs font-semibold text-[#2563eb] hover:underline"
+                  class="mt-3 inline-flex items-center px-3 py-1.5 text-xs font-semibold text-[#0072ce] hover:underline"
                 >
                   Clear all filters
                 </button>
@@ -335,7 +335,7 @@
       </div>
 
       <!-- Table Bottom Footer Summary -->
-      <div class="px-5 py-3 border-t border-slate-200 bg-slate-50 text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div class="px-5 py-3 border-t border-slate-200 bg-[#f4f6f9] text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           Showing <span class="font-bold text-slate-700">{{ filteredInterfaces.length }}</span> of
           <span class="font-bold text-slate-700">{{ interfacesList.length }}</span> physical interfaces
@@ -372,10 +372,10 @@
           class="w-full max-w-xl bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col my-8"
           @click.stop
         >
-          <!-- Modal Top Header Ribbon (Sophos SFOS Style) -->
+          <!-- Modal Top Header Ribbon (Sophos UTM 9 Style) -->
           <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
             <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-mono font-black text-sm shadow-md">
+              <div class="w-9 h-9 rounded-lg bg-[#0072ce] flex items-center justify-center text-white font-mono font-black text-sm shadow-md">
                 {{ activeInterface?.portNumber || 'ETH' }}
               </div>
               <div>
@@ -432,7 +432,7 @@
                   type="text"
                   required
                   placeholder="e.g. Port1 (WAN)"
-                  class="w-full bg-slate-50 text-slate-900 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] font-medium"
+                  class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium"
                 />
               </div>
 
@@ -443,7 +443,7 @@
                 <select
                   id="iface-zone"
                   v-model="formData.zone"
-                  class="w-full bg-slate-50 text-slate-900 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] font-medium"
+                  class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium"
                 >
                   <option value="WAN">WAN (External / Internet)</option>
                   <option value="LAN">LAN (Internal Network)</option>
@@ -466,17 +466,17 @@
                   :class="[
                     'p-3.5 rounded-xl border-2 text-left transition-all flex flex-col justify-between cursor-pointer',
                     formData.mode === 'dhcp'
-                      ? 'border-[#2563eb] bg-blue-50/60 shadow-sm ring-1 ring-blue-500/30'
-                      : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 text-slate-600'
+                      ? 'border-[#0072ce] bg-blue-50/60 shadow-sm ring-1 ring-blue-500/30'
+                      : 'border-slate-200 bg-[#f4f6f9]/50 hover:bg-[#f4f6f9] text-slate-600'
                   ]"
                 >
                   <div class="flex items-center justify-between mb-1.5">
-                    <span class="font-bold text-xs" :class="formData.mode === 'dhcp' ? 'text-[#2563eb]' : 'text-slate-900'">
+                    <span class="font-bold text-xs" :class="formData.mode === 'dhcp' ? 'text-[#0072ce]' : 'text-slate-900'">
                       DHCP Client
                     </span>
                     <span
                       class="w-4 h-4 rounded-full border-2 flex items-center justify-center"
-                      :class="formData.mode === 'dhcp' ? 'border-[#2563eb] bg-[#2563eb]' : 'border-slate-300'"
+                      :class="formData.mode === 'dhcp' ? 'border-[#0072ce] bg-[#0072ce]' : 'border-slate-300'"
                     >
                       <span v-if="formData.mode === 'dhcp'" class="w-1.5 h-1.5 rounded-full bg-white"></span>
                     </span>
@@ -493,17 +493,17 @@
                   :class="[
                     'p-3.5 rounded-xl border-2 text-left transition-all flex flex-col justify-between cursor-pointer',
                     formData.mode === 'static'
-                      ? 'border-[#2563eb] bg-blue-50/60 shadow-sm ring-1 ring-blue-500/30'
-                      : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 text-slate-600'
+                      ? 'border-[#0072ce] bg-blue-50/60 shadow-sm ring-1 ring-blue-500/30'
+                      : 'border-slate-200 bg-[#f4f6f9]/50 hover:bg-[#f4f6f9] text-slate-600'
                   ]"
                 >
                   <div class="flex items-center justify-between mb-1.5">
-                    <span class="font-bold text-xs" :class="formData.mode === 'static' ? 'text-[#2563eb]' : 'text-slate-900'">
+                    <span class="font-bold text-xs" :class="formData.mode === 'static' ? 'text-[#0072ce]' : 'text-slate-900'">
                       Static IP
                     </span>
                     <span
                       class="w-4 h-4 rounded-full border-2 flex items-center justify-center"
-                      :class="formData.mode === 'static' ? 'border-[#2563eb] bg-[#2563eb]' : 'border-slate-300'"
+                      :class="formData.mode === 'static' ? 'border-[#0072ce] bg-[#0072ce]' : 'border-slate-300'"
                     >
                       <span v-if="formData.mode === 'static'" class="w-1.5 h-1.5 rounded-full bg-white"></span>
                     </span>
@@ -526,10 +526,10 @@
             >
               <div
                 v-if="formData.mode === 'static'"
-                class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-4 shadow-2xs"
+                class="p-4 rounded-xl bg-[#f4f6f9] border border-slate-200 space-y-4 shadow-2xs"
               >
                 <div class="flex items-center gap-2 pb-2 border-b border-slate-200 text-xs font-bold text-slate-800">
-                  <span class="w-1 h-3.5 bg-[#2563eb] rounded-full"></span>
+                  <span class="w-1 h-3.5 bg-[#0072ce] rounded-full"></span>
                   <span>Static IPv4 Addressing Details</span>
                 </div>
 
@@ -545,7 +545,7 @@
                       type="text"
                       required
                       placeholder="e.g. 192.168.1.1 or 203.0.113.45"
-                      class="w-full bg-white text-slate-900 text-xs font-mono px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb]"
+                      class="w-full bg-white text-slate-900 text-xs font-mono px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce]"
                     />
                   </div>
                   <p class="text-[10px] text-slate-400 mt-1">Host IPv4 address assigned to this network interface.</p>
@@ -563,12 +563,12 @@
                       type="text"
                       required
                       placeholder="e.g. 255.255.255.0 or 255.255.255.248"
-                      class="w-full bg-white text-slate-900 text-xs font-mono px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb]"
+                      class="w-full bg-white text-slate-900 text-xs font-mono px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce]"
                     />
                     <!-- Quick Netmask Helper -->
                     <select
                       @change="applyQuickNetmask($event.target.value)"
-                      class="bg-white text-slate-700 text-xs px-2.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb]"
+                      class="bg-white text-slate-700 text-xs px-2.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce]"
                       title="Quick Subnet Helper"
                     >
                       <option value="">Presets</option>
@@ -595,7 +595,7 @@
                     v-model="formData.gateway"
                     type="text"
                     placeholder="e.g. 192.168.1.254 or 203.0.113.41"
-                    class="w-full bg-white text-slate-900 text-xs font-mono px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb]"
+                    class="w-full bg-white text-slate-900 text-xs font-mono px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce]"
                   />
                   <p class="text-[10px] text-slate-400 mt-1">Upstream next-hop router IP for routing WAN/External traffic.</p>
                 </div>
@@ -615,7 +615,7 @@
                   min="576"
                   max="9000"
                   placeholder="1500"
-                  class="w-full bg-slate-50 text-slate-900 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] font-mono"
+                  class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] font-mono"
                 />
               </div>
 
@@ -626,7 +626,7 @@
                 <select
                   id="iface-speed"
                   v-model="formData.speed"
-                  class="w-full bg-slate-50 text-slate-900 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] font-medium"
+                  class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] font-medium"
                 >
                   <option value="Auto">Auto-Negotiate</option>
                   <option value="1000 Mbps">1000 Mbps Full Duplex (1 GbE)</option>
@@ -639,7 +639,7 @@
           </form>
 
           <!-- Modal Action Footer -->
-          <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+          <div class="px-6 py-4 bg-[#f4f6f9] border-t border-slate-200 flex items-center justify-between gap-3">
             <button
               type="button"
               @click="closeModal"
@@ -654,7 +654,7 @@
                 type="button"
                 @click="handleSubmit"
                 :disabled="isSubmitting"
-                class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#2563eb] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
+                class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
               >
                 <svg
                   v-if="isSubmitting"
@@ -772,74 +772,9 @@ const formData = reactive({
 })
 
 // -----------------------------------------------------------------------------
-// Mock Physical Network Interfaces Catalog (SFOS Default Set)
+// Live Network Interfaces Store
 // -----------------------------------------------------------------------------
-const interfacesList = ref([
-  {
-    id: 'port1',
-    portNumber: 'P1',
-    name: 'Port1 (WAN)',
-    hwName: 'eth0',
-    zone: 'WAN',
-    macAddress: '00:0C:29:A1:B2:01',
-    mode: 'static',
-    ipAddress: '203.0.113.45',
-    netmask: '255.255.255.248',
-    gateway: '203.0.113.41',
-    linkStatus: 'up',
-    speed: '1000 Mbps',
-    duplex: 'Full',
-    mtu: 1500
-  },
-  {
-    id: 'port2',
-    portNumber: 'P2',
-    name: 'Port2 (LAN)',
-    hwName: 'eth1',
-    zone: 'LAN',
-    macAddress: '00:0C:29:A1:B2:02',
-    mode: 'static',
-    ipAddress: '192.168.1.1',
-    netmask: '255.255.255.0',
-    gateway: '',
-    linkStatus: 'up',
-    speed: '2.5 Gbps',
-    duplex: 'Full',
-    mtu: 1500
-  },
-  {
-    id: 'port3',
-    portNumber: 'P3',
-    name: 'Port3 (DMZ)',
-    hwName: 'eth2',
-    zone: 'DMZ',
-    macAddress: '00:0C:29:A1:B2:03',
-    mode: 'static',
-    ipAddress: '10.10.50.1',
-    netmask: '255.255.255.0',
-    gateway: '',
-    linkStatus: 'up',
-    speed: '1000 Mbps',
-    duplex: 'Full',
-    mtu: 1500
-  },
-  {
-    id: 'port4',
-    portNumber: 'P4',
-    name: 'Port4 (HA/Aux)',
-    hwName: 'eth3',
-    zone: 'HA',
-    macAddress: '00:0C:29:A1:B2:04',
-    mode: 'dhcp',
-    ipAddress: '',
-    netmask: '',
-    gateway: '',
-    linkStatus: 'down',
-    speed: 'Auto',
-    duplex: 'None',
-    mtu: 1500
-  }
-])
+const interfacesList = ref([])
 
 // -----------------------------------------------------------------------------
 // Computed Filtering & Helpers
@@ -1034,7 +969,7 @@ const handleSubmit = async () => {
 
     showToast(
       'Interface Configured',
-      `Successfully updated ${formData.name} (${formData.hwName}) configuration via SFOS Middleware.`,
+      `Successfully updated ${formData.name} (${formData.hwName}) configuration via UTM Middleware.`,
       'success'
     )
 
@@ -1107,6 +1042,7 @@ const fetchInterfaces = async (showNotification = false) => {
 // -----------------------------------------------------------------------------
 onMounted(async () => {
   await initAxios()
+  await fetchInterfaces()
 })
 </script>
 

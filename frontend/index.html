@@ -3,9 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Astaro-Next Firewall OS - WebAdmin Console</title>
+  <title>Sophos UTM 9 - WebAdmin Console</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            utm: {
+              DEFAULT: '#0072ce',
+              blue: '#0072ce',
+              navy: '#1b232e',
+              slate: '#222b38',
+              accent: '#0088d2',
+              green: '#22c55e',
+            },
+            sophos: {
+              DEFAULT: '#0072ce',
+              50: '#f0f7ff',
+              100: '#e0effe',
+              200: '#bae0fd',
+              300: '#7cc7fb',
+              400: '#36abf7',
+              500: '#0072ce',
+              600: '#0064b8',
+              700: '#005299',
+              800: '#00467f',
+              900: '#063b68',
+              950: '#042544',
+            }
+          }
+        }
+      }
+    }
+  </script>
   <!-- Axios CDN -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <!-- Vue 3 CDN -->
@@ -13,7 +45,7 @@
   <!-- vue3-sfc-loader for direct in-browser .vue SFC execution -->
   <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader/dist/vue3-sfc-loader.js"></script>
 </head>
-<body class="bg-[#0f172a] text-slate-100 antialiased selection:bg-[#2563eb] selection:text-white">
+<body class="bg-[#161e29] text-slate-100 antialiased selection:bg-[#0072ce] selection:text-white">
   <div id="app"></div>
 
   <script>

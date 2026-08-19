@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-full bg-slate-50 text-slate-800 font-sans antialiased selection:bg-[#2563eb] selection:text-white relative pb-24">
+  <div class="min-h-full bg-[#f4f6f9] text-slate-800 font-sans antialiased selection:bg-[#0072ce] selection:text-white relative pb-24">
     <!-- Notification Toasts Stack Overlay -->
     <div class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-md w-full pointer-events-none" aria-live="polite">
       <transition-group
@@ -58,7 +58,7 @@
     <div class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
       <!-- Title & Subtitle with Sophos Blue Accent -->
       <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-[#2563eb] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
+        <div class="w-12 h-12 rounded-xl bg-[#0072ce] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
@@ -70,8 +70,8 @@
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               SMTP/POP3 Proxy Active
             </span>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#2563eb] border border-blue-100 uppercase">
-              SFOS 20.0 Engine
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#0072ce] border border-blue-100 uppercase">
+              UTM 9.7 Engine
             </span>
             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
               MTA v3.8
@@ -86,7 +86,7 @@
       <!-- Quick Telemetry Badges & Utilities -->
       <div class="flex items-center flex-wrap gap-2.5">
         <!-- Live Status Indicators -->
-        <div class="hidden sm:flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono">
+        <div class="hidden sm:flex items-center gap-3 bg-[#f4f6f9] px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono">
           <div class="flex items-center gap-1.5 text-slate-600">
             <span class="text-slate-400">PROXY:</span>
             <span class="text-emerald-600 font-bold">PORT 25/587</span>
@@ -108,11 +108,11 @@
           type="button"
           @click="fetchQuarantine(true)"
           :disabled="isLoading"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-[#f4f6f9] hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
           title="Reload live quarantine and spool records"
         >
           <svg
-            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#2563eb]' : '']"
+            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#0072ce]' : '']"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -151,7 +151,7 @@
           </div>
           <p class="text-[11px] text-slate-400 mt-0.5 font-mono">Avg: 18.4 msgs/min</p>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-blue-50 text-[#2563eb] flex items-center justify-center border border-blue-200">
+        <div class="w-10 h-10 rounded-lg bg-blue-50 text-[#0072ce] flex items-center justify-center border border-blue-200">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
           </svg>
@@ -203,15 +203,15 @@
             :class="[
               'px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-150 flex items-center gap-2 whitespace-nowrap cursor-pointer border',
               activeTab === tab.id
-                ? 'bg-blue-50 text-[#2563eb] border-blue-200 shadow-2xs font-bold'
-                : 'bg-transparent text-slate-600 border-transparent hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-blue-50 text-[#0072ce] border-blue-200 shadow-2xs font-bold'
+                : 'bg-transparent text-slate-600 border-transparent hover:text-slate-900 hover:bg-[#f4f6f9]'
             ]"
           >
             <!-- Tab Icon -->
             <component
               :is="tab.icon"
               class="w-4 h-4"
-              :class="activeTab === tab.id ? 'text-[#2563eb]' : 'text-slate-400'"
+              :class="activeTab === tab.id ? 'text-[#0072ce]' : 'text-slate-400'"
             />
             <span>{{ tab.label }}</span>
             <!-- Tab Badge Count -->
@@ -220,7 +220,7 @@
               :class="[
                 'text-[10px] font-mono px-2 py-0.5 rounded-full font-bold',
                 activeTab === tab.id
-                  ? 'bg-[#2563eb] text-white'
+                  ? 'bg-[#0072ce] text-white'
                   : 'bg-slate-100 text-slate-600 border border-slate-200'
               ]"
             >
@@ -231,7 +231,7 @@
       </nav>
 
       <!-- ACTIVE TAB CONTENT CANVAS -->
-      <div class="p-5 md:p-6 bg-slate-50/50">
+      <div class="p-5 md:p-6 bg-[#f4f6f9]/50">
 
         <!-- ========================================================================= -->
         <!-- TAB 1: GENERAL SETTINGS                                                   -->
@@ -242,7 +242,7 @@
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
               <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div class="flex items-center gap-2">
-                  <span class="w-1.5 h-4 bg-[#2563eb] rounded-full"></span>
+                  <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
                   <h3 class="font-bold text-sm text-slate-900 uppercase tracking-wider">SMTP Proxy Operation Mode</h3>
                 </div>
                 <span class="text-xs font-mono font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
@@ -252,7 +252,7 @@
 
               <div class="space-y-3.5 text-xs">
                 <!-- Smart Host -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
                   <div>
                     <div class="font-bold text-slate-800">Upstream Mail Relay (Smart Host)</div>
                     <div class="text-slate-500 text-[11px]">Forward outbound messages through dedicated external smart host</div>
@@ -261,12 +261,12 @@
                     v-model="smtpConfig.smartHost"
                     type="text"
                     placeholder="mail-relay.internal:587"
-                    class="bg-white border border-slate-300 rounded-md px-3 py-1.5 text-slate-800 font-mono text-xs w-full sm:w-56 focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] focus:outline-none shadow-2xs"
+                    class="bg-white border border-slate-300 rounded-md px-3 py-1.5 text-slate-800 font-mono text-xs w-full sm:w-56 focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] focus:outline-none shadow-2xs"
                   />
                 </div>
 
                 <!-- Max Size -->
-                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <div class="flex items-center justify-between p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
                   <div>
                     <div class="font-bold text-slate-800">Max Message Size Limit</div>
                     <div class="text-slate-500 text-[11px]">Reject inbound payloads larger than threshold</div>
@@ -275,21 +275,21 @@
                     <input
                       v-model.number="smtpConfig.maxMessageSizeMB"
                       type="number"
-                      class="bg-white border border-slate-300 rounded-md px-2.5 py-1 text-slate-800 text-xs w-20 text-right focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] focus:outline-none shadow-2xs"
+                      class="bg-white border border-slate-300 rounded-md px-2.5 py-1 text-slate-800 text-xs w-20 text-right focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] focus:outline-none shadow-2xs"
                     />
                     <span class="text-slate-500 font-semibold">MB</span>
                   </div>
                 </div>
 
                 <!-- TLS Enforcement -->
-                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <div class="flex items-center justify-between p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
                   <div>
                     <div class="font-bold text-slate-800">Enforce TLS / STARTTLS Encryption</div>
                     <div class="text-slate-500 text-[11px]">Mandatory TLS 1.3 encryption on standard SMTP / submission ports</div>
                   </div>
                   <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" v-model="smtpConfig.enforceTLS" class="sr-only peer">
-                    <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#2563eb]"></div>
+                    <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0072ce]"></div>
                   </label>
                 </div>
               </div>
@@ -299,7 +299,7 @@
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
               <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div class="flex items-center gap-2">
-                  <span class="w-1.5 h-4 bg-[#2563eb] rounded-full"></span>
+                  <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
                   <h3 class="font-bold text-sm text-slate-900 uppercase tracking-wider">Antispam Verification Engine</h3>
                 </div>
                 <span class="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
@@ -309,31 +309,31 @@
 
               <div class="space-y-3.5 text-xs">
                 <!-- SPF / DKIM / DMARC -->
-                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <div class="flex items-center justify-between p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
                   <div>
                     <div class="font-bold text-slate-800">SPF / DKIM / DMARC Validation</div>
                     <div class="text-slate-500 text-[11px]">Hard reject spoofed sender domains and invalid cryptographic DKIM records</div>
                   </div>
                   <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" v-model="smtpConfig.enforceSPF_DKIM" class="sr-only peer">
-                    <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#2563eb]"></div>
+                    <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0072ce]"></div>
                   </label>
                 </div>
 
                 <!-- RBL Realtime Blackhole Lists -->
-                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <div class="flex items-center justify-between p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
                   <div>
                     <div class="font-bold text-slate-800">Realtime Blackhole Lists (RBL)</div>
                     <div class="text-slate-500 text-[11px]">zen.spamhaus.org, bl.spamcop.net reputation verification</div>
                   </div>
                   <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" v-model="smtpConfig.enableRBL" class="sr-only peer">
-                    <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#2563eb]"></div>
+                    <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0072ce]"></div>
                   </label>
                 </div>
 
                 <!-- Spam Quarantine Threshold Slider -->
-                <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+                <div class="p-3 bg-[#f4f6f9] rounded-lg border border-slate-200 space-y-2">
                   <div class="flex items-center justify-between">
                     <div>
                       <div class="font-bold text-slate-800">Spam Quarantine Threshold Score</div>
@@ -349,7 +349,7 @@
                     max="10"
                     step="0.5"
                     v-model.number="smtpConfig.spamScoreThreshold"
-                    class="w-full accent-[#2563eb] cursor-pointer bg-slate-200 h-2 rounded-lg"
+                    class="w-full accent-[#0072ce] cursor-pointer bg-slate-200 h-2 rounded-lg"
                   />
                 </div>
               </div>
@@ -361,14 +361,14 @@
             <button
               @click="resetSmtpConfig"
               type="button"
-              class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 shadow-2xs transition-colors cursor-pointer"
+              class="px-4 py-2 bg-white hover:bg-[#f4f6f9] text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 shadow-2xs transition-colors cursor-pointer"
             >
               Reset Defaults
             </button>
             <button
               @click="saveSmtpConfig"
               type="button"
-              class="px-5 py-2 bg-[#2563eb] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-lg border border-blue-600 shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
+              class="px-5 py-2 bg-[#0072ce] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-lg border border-blue-600 shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -384,9 +384,9 @@
         <div v-if="activeTab === 'policies'" class="space-y-6">
           <!-- Policy Grid Overview -->
           <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/60">
+            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#f4f6f9]/60">
               <div class="flex items-center gap-2.5">
-                <span class="w-1.5 h-4 bg-[#2563eb] rounded-full"></span>
+                <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
                 <div>
                   <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Email Security &amp; Protection Policies</h2>
                   <p class="text-[11px] text-slate-500">Heuristic threat scanning rules, quarantine conditions, and attachment filters</p>
@@ -395,7 +395,7 @@
               <button
                 type="button"
                 @click="showToast('Policy Designer', 'Custom rule creation engine ready.', 'info')"
-                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#2563eb] hover:bg-blue-700 text-white rounded-lg text-xs font-bold border border-blue-600 shadow-sm transition-all cursor-pointer"
+                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold border border-blue-600 shadow-sm transition-all cursor-pointer"
               >
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -408,7 +408,7 @@
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+                  <tr class="bg-[#f4f6f9] border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
                     <th class="p-3.5 pl-5">Status</th>
                     <th class="p-3.5">Policy Name</th>
                     <th class="p-3.5">Direction</th>
@@ -419,11 +419,11 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                  <tr v-for="policy in emailPolicies" :key="policy.id" class="hover:bg-slate-50/80 transition-colors">
+                  <tr v-for="policy in emailPolicies" :key="policy.id" class="hover:bg-[#f4f6f9]/80 transition-colors">
                     <td class="p-3.5 pl-5">
                       <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="policy.enabled" class="sr-only peer">
-                        <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#2563eb]"></div>
+                        <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0072ce]"></div>
                       </label>
                     </td>
                     <td class="p-3.5 font-bold text-slate-800">
@@ -434,7 +434,7 @@
                       <span
                         :class="[
                           'px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border',
-                          policy.direction === 'Inbound' ? 'bg-blue-50 text-[#2563eb] border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'
+                          policy.direction === 'Inbound' ? 'bg-blue-50 text-[#0072ce] border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'
                         ]"
                       >
                         {{ policy.direction }}
@@ -456,7 +456,7 @@
                       <button
                         type="button"
                         @click="showToast('Policy Settings', `Configuring policy: ${policy.name}`, 'info')"
-                        class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-md border border-slate-300 shadow-2xs transition-colors cursor-pointer"
+                        class="px-2.5 py-1 bg-white hover:bg-[#f4f6f9] text-slate-700 text-xs font-semibold rounded-md border border-slate-300 shadow-2xs transition-colors cursor-pointer"
                       >
                         Configure
                       </button>
@@ -481,7 +481,7 @@
                   v-model="quarantineSearch"
                   type="text"
                   placeholder="Filter by sender, recipient, subject, or threat score..."
-                  class="w-full bg-slate-50 text-slate-800 text-xs px-3 py-2 pl-9 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-400 shadow-2xs"
+                  class="w-full bg-[#f4f6f9] text-slate-800 text-xs px-3 py-2 pl-9 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-400 shadow-2xs"
                 />
                 <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -529,14 +529,14 @@
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+                  <tr class="bg-[#f4f6f9] border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
                     <!-- Select All Checkbox -->
                     <th class="p-3.5 pl-4 w-10 text-center">
                       <input
                         type="checkbox"
                         :checked="isAllQuarantineSelected"
                         @change="toggleSelectAllQuarantine"
-                        class="rounded bg-white border-slate-300 text-[#2563eb] focus:ring-0 cursor-pointer"
+                        class="rounded bg-white border-slate-300 text-[#0072ce] focus:ring-0 cursor-pointer"
                       />
                     </th>
                     <th class="p-3.5 font-bold">Date/Time Received</th>
@@ -551,7 +551,7 @@
                   <tr
                     v-for="item in filteredQuarantine"
                     :key="item.id"
-                    class="hover:bg-slate-50/80 transition-colors group"
+                    class="hover:bg-[#f4f6f9]/80 transition-colors group"
                   >
                     <!-- Checkbox -->
                     <td class="p-3.5 pl-4 text-center">
@@ -559,7 +559,7 @@
                         type="checkbox"
                         :value="item.id"
                         v-model="selectedQuarantineIds"
-                        class="rounded bg-white border-slate-300 text-[#2563eb] focus:ring-0 cursor-pointer"
+                        class="rounded bg-white border-slate-300 text-[#0072ce] focus:ring-0 cursor-pointer"
                       />
                     </td>
 
@@ -671,7 +671,7 @@
             </div>
 
             <!-- Table Footer -->
-            <div class="bg-slate-50 border-t border-slate-200 p-3.5 px-5 flex items-center justify-between text-xs text-slate-500">
+            <div class="bg-[#f4f6f9] border-t border-slate-200 p-3.5 px-5 flex items-center justify-between text-xs text-slate-500">
               <div>
                 Showing <span class="text-slate-900 font-bold">{{ filteredQuarantine.length }}</span> of {{ quarantineItems.length }} quarantined items
               </div>
@@ -704,7 +704,7 @@
               <button
                 @click="flushSpoolQueue"
                 :disabled="isFlushingQueue || spoolItems.length === 0"
-                class="px-4 py-2 bg-[#2563eb] hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 text-white text-xs font-bold rounded-lg border border-blue-600 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                class="px-4 py-2 bg-[#0072ce] hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 text-white text-xs font-bold rounded-lg border border-blue-600 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <svg class="w-3.5 h-3.5" :class="{ 'animate-spin': isFlushingQueue }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -719,7 +719,7 @@
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+                  <tr class="bg-[#f4f6f9] border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
                     <th class="p-3.5 pl-5 font-bold w-28">Queue ID</th>
                     <th class="p-3.5 font-bold w-32">Arrival Time</th>
                     <th class="p-3.5 font-bold">Sender</th>
@@ -733,10 +733,10 @@
                   <tr
                     v-for="item in spoolItems"
                     :key="item.queue_id"
-                    class="hover:bg-slate-50/80 transition-colors"
+                    class="hover:bg-[#f4f6f9]/80 transition-colors"
                   >
                     <!-- Queue ID -->
-                    <td class="p-3.5 pl-5 font-mono font-bold text-[#2563eb]">
+                    <td class="p-3.5 pl-5 font-mono font-bold text-[#0072ce]">
                       {{ item.queue_id }}
                     </td>
 
@@ -785,7 +785,7 @@
                         <button
                           type="button"
                           @click="retrySpoolItem(item.queue_id)"
-                          class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-md border border-slate-300 shadow-2xs transition-colors cursor-pointer"
+                          class="px-2.5 py-1 bg-white hover:bg-[#f4f6f9] text-slate-700 text-xs font-semibold rounded-md border border-slate-300 shadow-2xs transition-colors cursor-pointer"
                           title="Retry delivery immediately"
                         >
                           Retry
@@ -820,7 +820,7 @@
             </div>
 
             <!-- Footer -->
-            <div class="bg-slate-50 border-t border-slate-200 p-3 px-5 flex items-center justify-between text-xs text-slate-500 font-mono">
+            <div class="bg-[#f4f6f9] border-t border-slate-200 p-3 px-5 flex items-center justify-between text-xs text-slate-500 font-mono">
               <span>Endpoint: POST /api/mail/queue/flush</span>
               <span>Backend Daemon: /usr/sbin/postfix</span>
             </div>
@@ -843,7 +843,7 @@
                 <label class="text-[11px] text-slate-500 font-semibold">Filter:</label>
                 <select
                   v-model="logFilterLevel"
-                  class="bg-slate-50 text-slate-800 text-xs px-2.5 py-1 rounded-md border border-slate-300 font-mono focus:outline-none focus:border-[#2563eb]"
+                  class="bg-[#f4f6f9] text-slate-800 text-xs px-2.5 py-1 rounded-md border border-slate-300 font-mono focus:outline-none focus:border-[#0072ce]"
                 >
                   <option value="ALL">ALL LEVELS</option>
                   <option value="INFO">INFO ONLY</option>
@@ -857,7 +857,7 @@
                   v-model="logSearchQuery"
                   type="text"
                   placeholder="Grep regex / text..."
-                  class="w-full bg-slate-50 text-slate-800 text-xs px-2.5 py-1 rounded-md border border-slate-300 font-mono focus:outline-none focus:border-[#2563eb] placeholder:text-slate-400"
+                  class="w-full bg-[#f4f6f9] text-slate-800 text-xs px-2.5 py-1 rounded-md border border-slate-300 font-mono focus:outline-none focus:border-[#0072ce] placeholder:text-slate-400"
                 />
               </div>
             </div>
@@ -883,7 +883,7 @@
                 type="button"
                 :class="[
                   'px-2.5 py-1 text-xs font-mono rounded-lg border transition-colors cursor-pointer',
-                  autoScroll ? 'bg-blue-50 text-[#2563eb] border-blue-300' : 'bg-slate-100 text-slate-600 border-slate-300'
+                  autoScroll ? 'bg-blue-50 text-[#0072ce] border-blue-300' : 'bg-slate-100 text-slate-600 border-slate-300'
                 ]"
                 title="Toggle Auto Scroll to Bottom"
               >
@@ -893,7 +893,7 @@
               <button
                 @click="clearLogBuffer"
                 type="button"
-                class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 text-xs font-mono rounded-lg border border-slate-300 transition-colors cursor-pointer"
+                class="px-2.5 py-1 bg-white hover:bg-[#f4f6f9] text-slate-700 text-xs font-mono rounded-lg border border-slate-300 transition-colors cursor-pointer"
                 title="Clear Terminal Window"
               >
                 Clear
@@ -902,7 +902,7 @@
               <button
                 @click="downloadLogs"
                 type="button"
-                class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 text-xs font-mono rounded-lg border border-slate-300 transition-colors cursor-pointer"
+                class="px-2.5 py-1 bg-white hover:bg-[#f4f6f9] text-slate-700 text-xs font-mono rounded-lg border border-slate-300 transition-colors cursor-pointer"
                 title="Export text log"
               >
                 Export
@@ -939,7 +939,7 @@
       </div>
     </div>
 
-    <!-- Inline Inspect Details Drawer/Modal (SFOS Integrated Modal) -->
+    <!-- Inline Inspect Details Drawer/Modal (UTM Integrated Modal) -->
     <div
       v-if="inspectModalOpen"
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
@@ -947,9 +947,9 @@
     >
       <div class="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         <!-- Header -->
-        <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div class="bg-[#f4f6f9] px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <div class="flex items-center gap-2.5">
-            <span class="w-1.5 h-4 bg-[#2563eb] rounded-full"></span>
+            <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
             <div>
               <h3 class="font-bold text-sm text-slate-900">Message Threat Inspection Details</h3>
               <p class="text-[11px] text-slate-500 font-mono">ID: {{ activeInspectItem?.id }}</p>
@@ -969,22 +969,22 @@
         <!-- Body -->
         <div class="p-6 space-y-4 overflow-y-auto text-xs">
           <div class="grid grid-cols-2 gap-4">
-            <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
               <span class="text-slate-400 uppercase text-[10px] font-bold">Sender</span>
               <p class="font-semibold text-slate-800 mt-0.5 break-all">{{ activeInspectItem?.sender }}</p>
             </div>
-            <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
               <span class="text-slate-400 uppercase text-[10px] font-bold">Recipient</span>
               <p class="font-semibold text-slate-800 mt-0.5 break-all">{{ activeInspectItem?.recipient }}</p>
             </div>
           </div>
 
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+          <div class="p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
             <span class="text-slate-400 uppercase text-[10px] font-bold">Subject</span>
             <p class="font-semibold text-slate-900 mt-0.5">{{ activeInspectItem?.subject }}</p>
           </div>
 
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+          <div class="p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
             <div class="flex items-center justify-between">
               <span class="text-slate-400 uppercase text-[10px] font-bold">Spam Threat Score</span>
               <span class="font-mono font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
@@ -1004,7 +1004,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex items-center justify-between">
+        <div class="bg-[#f4f6f9] px-6 py-3 border-t border-slate-200 flex items-center justify-between">
           <button
             type="button"
             @click="executeQuarantineAction('whitelist', activeInspectItem)"
@@ -1152,7 +1152,7 @@ function resetSmtpConfig() {
     enableRBL: true,
     spamScoreThreshold: 5.0
   }
-  showToast('Reset Complete', 'SMTP proxy settings restored to Sophos XGS baseline.', 'info')
+  showToast('Reset Complete', 'SMTP proxy settings restored to Astaro-Next baseline.', 'info')
 }
 
 // -----------------------------------------------------------------------------
@@ -1538,13 +1538,13 @@ const navigationTabs = computed(() => [
 function getThreatBadgeClass(score) {
   if (score >= 8.5) return 'bg-rose-50 text-rose-700 border-rose-200'
   if (score >= 5.0) return 'bg-amber-50 text-amber-700 border-amber-200'
-  return 'bg-blue-50 text-[#2563eb] border-blue-200'
+  return 'bg-blue-50 text-[#0072ce] border-blue-200'
 }
 
 function getThreatDotClass(score) {
   if (score >= 8.5) return 'bg-rose-500'
   if (score >= 5.0) return 'bg-amber-500'
-  return 'bg-[#2563eb]'
+  return 'bg-[#0072ce]'
 }
 
 function formatBytes(bytes) {

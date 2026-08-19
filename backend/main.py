@@ -540,7 +540,7 @@ class WebProtectionPolicyPayload(BaseModel):
     total_blocked_categories: Optional[int] = Field(default=5)
     action_mode: str = Field(default="block_and_log", description="Action to take on violation: block_and_log, warn, allow_log")
     custom_block_page_message: Optional[str] = Field(
-        default="Access to this web resource is blocked by Sophos XGS Corporate Security Policy.",
+        default="Access to this web resource is blocked by Astaro-Next Corporate Security Policy.",
         description="Block page banner notification message"
     )
 
@@ -740,139 +740,138 @@ def get_control_center_data(_: Optional[str] = Depends(verify_admin_auth)):
 # -----------------------------------------------------------------------------
 # Section 8: Physical & Virtual Network Interfaces Subsystem
 # -----------------------------------------------------------------------------
-# Default hardware interface inventory baseline
-_DEFAULT_INTERFACES_CATALOG = [
-    {
-        "id": "port1",
-        "portNumber": "P1",
-        "name": "Port1 (WAN)",
-        "hwName": "eth0",
-        "zone": "WAN",
-        "macAddress": "00:0C:29:A1:B2:01",
-        "mode": "static",
-        "ipAddress": "203.0.113.45",
-        "netmask": "255.255.255.248",
-        "gateway": "203.0.113.41",
-        "linkStatus": "up",
-        "speed": "1000 Mbps",
-        "duplex": "Full",
-        "mtu": 1500
-    },
-    {
-        "id": "port2",
-        "portNumber": "P2",
-        "name": "Port2 (LAN)",
-        "hwName": "eth1",
-        "zone": "LAN",
-        "macAddress": "00:0C:29:A1:B2:02",
-        "mode": "static",
-        "ipAddress": "192.168.1.1",
-        "netmask": "255.255.255.0",
-        "gateway": "",
-        "linkStatus": "up",
-        "speed": "2.5 Gbps",
-        "duplex": "Full",
-        "mtu": 1500
-    },
-    {
-        "id": "port3",
-        "portNumber": "P3",
-        "name": "Port3 (DMZ)",
-        "hwName": "eth2",
-        "zone": "DMZ",
-        "macAddress": "00:0C:29:A1:B2:03",
-        "mode": "static",
-        "ipAddress": "10.10.50.1",
-        "netmask": "255.255.255.0",
-        "gateway": "",
-        "linkStatus": "up",
-        "speed": "1000 Mbps",
-        "duplex": "Full",
-        "mtu": 1500
-    },
-    {
-        "id": "port4",
-        "portNumber": "P4",
-        "name": "Port4 (HA/Aux)",
-        "hwName": "eth3",
-        "zone": "HA",
-        "macAddress": "00:0C:29:A1:B2:04",
-        "mode": "dhcp",
-        "ipAddress": "",
-        "netmask": "",
-        "gateway": "",
-        "linkStatus": "down",
-        "speed": "Auto",
-        "duplex": "None",
-        "mtu": 1500
-    }
-]
-
 def query_system_interfaces() -> List[Dict[str, Any]]:
     """
-    Discovers live system network adapters on Debian GNU/Linux using psutil / sysfs
-    and maps them into the structured SFOS interface specification.
+    Discovers live system network adapters directly from Linux sysfs (/sys/class/net)
+    and psutil, retrieving actual MAC addresses, real carrier link states, and assigned IPs.
     """
-    if not HAS_PSUTIL:
-        return _DEFAULT_INTERFACES_CATALOG
+    interfaces = []
+    
+    # 1. Probe Linux sysfs /sys/class/net directory
+    sys_net_dir = Path("/sys/class/net")
+    net_addrs = psutil.net_if_addrs() if HAS_PSUTIL else {}
+    net_stats = psutil.net_if_stats() if HAS_PSUTIL else {}
+    
+    # Enumerate physical & virtual network device names
+    device_names = []
+    if sys_net_dir.exists():
+        device_names = [p.name for p in sys_net_dir.iterdir() if p.name != "lo"]
+    elif HAS_PSUTIL:
+        device_names = [k for k in net_addrs.keys() if k != "lo"]
 
-    try:
-        net_addrs = psutil.net_if_addrs()
-        net_stats = psutil.net_if_stats()
+    device_names = sorted(device_names)
+
+    for idx, name in enumerate(device_names, start=1):
+        dev_path = sys_net_dir / name if sys_net_dir.exists() else None
         
-        # If no physical/virtual ethernet interfaces discovered, fallback to standard catalog
-        matching_keys = [k for k in net_addrs.keys() if k.startswith(('en', 'eth', 'port', 'vmx', 'wl', 'wg'))]
-        if not matching_keys:
-            return _DEFAULT_INTERFACES_CATALOG
+        # Read physical hardware MAC address directly from sysfs
+        mac = ""
+        if dev_path and (dev_path / "address").exists():
+            try:
+                mac_raw = (dev_path / "address").read_text(encoding="utf-8").strip()
+                if mac_raw and mac_raw != "00:00:00:00:00:00":
+                    mac = mac_raw.upper()
+            except Exception:
+                pass
 
-        result = []
-        for idx, (name, addrs) in enumerate(net_addrs.items(), start=1):
-            if name == "lo":
-                continue
+        # Extract live IPv4 address and netmask
+        addrs = net_addrs.get(name, [])
+        ip = ""
+        netmask = ""
+        for addr in addrs:
+            if addr.family == 2:  # AF_INET (IPv4)
+                ip = addr.address
+                netmask = addr.netmask or "255.255.255.0"
+            elif not mac and (addr.family == 17 or getattr(addr, 'family', None) == getattr(psutil, 'AF_LINK', -1)):
+                if addr.address and ":" in addr.address and addr.address != "00:00:00:00:00:00":
+                    mac = addr.address.upper()
 
-            ip = ""
-            netmask = ""
-            mac = ""
-            for addr in addrs:
-                if addr.family == 2:  # AF_INET (IPv4)
-                    ip = addr.address
-                    netmask = addr.netmask or ""
-                elif addr.family == 17 or "PACKET" in str(addr.family):  # MAC Address
-                    mac = addr.address
-
+        # Link status / carrier detection
+        is_up = False
+        if dev_path and (dev_path / "carrier").exists():
+            try:
+                is_up = (dev_path / "carrier").read_text(encoding="utf-8").strip() == "1"
+            except Exception:
+                pass
+        elif dev_path and (dev_path / "operstate").exists():
+            try:
+                is_up = (dev_path / "operstate").read_text(encoding="utf-8").strip().lower() in ("up", "unknown")
+            except Exception:
+                pass
+        else:
             stat = net_stats.get(name)
             is_up = stat.isup if stat else False
-            speed_val = stat.speed if stat else 0
-            speed_str = f"{speed_val} Mbps" if speed_val > 0 else "Auto"
-            duplex_str = "Full" if (stat and stat.duplex == 2) else "Auto"
 
-            zone = "WAN" if ("0" in name or "wan" in name.lower()) else "LAN"
-            if "dmz" in name.lower() or "2" in name:
-                zone = "DMZ"
-            elif "wg" in name.lower():
-                zone = "VPN"
+        # Link Speed
+        speed_str = "1000 Mbps"
+        if dev_path and (dev_path / "speed").exists():
+            try:
+                sp_val = int((dev_path / "speed").read_text(encoding="utf-8").strip())
+                if sp_val > 0:
+                    speed_str = f"{sp_val} Mbps" if sp_val < 1000 else f"{sp_val // 1000} Gbps"
+            except Exception:
+                pass
 
-            result.append({
-                "id": f"port{idx}",
-                "portNumber": f"P{idx}",
-                "name": f"Port{idx} ({name.upper()})",
-                "hwName": name,
-                "zone": zone,
-                "macAddress": mac or f"00:0C:29:A1:B2:0{idx}",
-                "mode": "dhcp" if not ip else "static",
-                "ipAddress": ip,
-                "netmask": netmask or "255.255.255.0",
-                "gateway": "",
-                "linkStatus": "up" if is_up else "down",
-                "speed": speed_str,
-                "duplex": duplex_str,
-                "mtu": stat.mtu if stat else 1500
-            })
-        return result if result else _DEFAULT_INTERFACES_CATALOG
+        # Duplex
+        duplex_str = "Full"
+        if dev_path and (dev_path / "duplex").exists():
+            try:
+                dup_val = (dev_path / "duplex").read_text(encoding="utf-8").strip()
+                if dup_val:
+                    duplex_str = dup_val.capitalize()
+            except Exception:
+                pass
 
-    except Exception as err:
-        logger.warning(f"psutil network interface discovery fallback triggered: {err}")
-        return _DEFAULT_INTERFACES_CATALOG
+        # MTU
+        mtu = 1500
+        if dev_path and (dev_path / "mtu").exists():
+            try:
+                mtu = int((dev_path / "mtu").read_text(encoding="utf-8").strip())
+            except Exception:
+                pass
+
+        # Gateway discovery
+        gateway = ""
+        if shutil.which("ip"):
+            try:
+                proc = subprocess.run(["ip", "-4", "route", "show", "dev", name], stdout=subprocess.PIPE, text=True, timeout=2)
+                for line in proc.stdout.splitlines():
+                    if line.startswith("default via"):
+                        parts = line.split()
+                        if len(parts) >= 3:
+                            gateway = parts[2]
+                            break
+            except Exception:
+                pass
+
+        # Zone classification
+        if gateway or idx == 1 or "wan" in name.lower():
+            zone = "WAN"
+        elif "wg" in name.lower() or "vpn" in name.lower():
+            zone = "VPN"
+        elif "dmz" in name.lower() or idx == 3:
+            zone = "DMZ"
+        else:
+            zone = "LAN"
+
+        interfaces.append({
+            "id": f"port{idx}",
+            "portNumber": f"P{idx}",
+            "name": f"Port{idx} ({name.upper()})",
+            "hwName": name,
+            "zone": zone,
+            "macAddress": mac or "N/A",
+            "mode": "static" if ip else "dhcp",
+            "ipAddress": ip,
+            "netmask": netmask if ip else "",
+            "gateway": gateway,
+            "linkStatus": "up" if is_up else "down",
+            "speed": speed_str,
+            "duplex": duplex_str,
+            "mtu": mtu
+        })
+
+    return interfaces
 
 
 @app.get("/api/network/interfaces", tags=["Network Interfaces"])
@@ -1984,7 +1983,7 @@ _ACTIVE_WEB_POLICY: Dict[str, Any] = {
     ],
     "total_blocked_categories": 5,
     "action_mode": "block_and_log",
-    "custom_block_page_message": "Access to this web resource is blocked by Sophos XGS Corporate Security Policy."
+    "custom_block_page_message": "Access to this web resource is blocked by Astaro-Next Corporate Security Policy."
 }
 
 

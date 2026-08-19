@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-full bg-slate-50 text-slate-800 font-sans antialiased selection:bg-[#2563eb] selection:text-white">
+  <div class="min-h-full bg-[#f4f6f9] text-slate-800 font-sans antialiased selection:bg-[#0072ce] selection:text-white">
     <!-- Notification Toasts Floating Stack -->
     <div class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-md w-full pointer-events-none" aria-live="polite">
       <transition-group
@@ -58,7 +58,7 @@
     <div class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
       <!-- Title & Subtitle with Sophos Blue Accent -->
       <div class="flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-lg bg-[#2563eb] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
+        <div class="w-11 h-11 rounded-lg bg-[#0072ce] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
@@ -70,8 +70,8 @@
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               {{ activeRulesCount }}/{{ rulesList.length }} Rules Active
             </span>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#2563eb] border border-blue-100 uppercase">
-              SFOS XGS Engine
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#0072ce] border border-blue-100 uppercase">
+              UTM 9 Engine
             </span>
           </div>
           <p class="text-xs text-slate-500 mt-0.5">Configure stateful firewall filtering, source/destination zone routing policies, service inspection, and rule actions.</p>
@@ -86,7 +86,7 @@
             v-model="searchQuery"
             type="text"
             placeholder="Filter firewall rules..."
-            class="w-full bg-slate-50 text-slate-800 text-xs px-3 py-2 pl-8 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-400 transition-colors"
+            class="w-full bg-[#f4f6f9] text-slate-800 text-xs px-3 py-2 pl-8 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-400 transition-colors"
           />
           <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -103,7 +103,7 @@
         <!-- Zone Selector Filter -->
         <select
           v-model="selectedZoneFilter"
-          class="bg-slate-50 text-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] font-medium"
+          class="bg-[#f4f6f9] text-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] font-medium"
         >
           <option value="ALL">All Zones</option>
           <option value="LAN">Zone: LAN</option>
@@ -115,7 +115,7 @@
         <!-- Action Selector Filter -->
         <select
           v-model="selectedActionFilter"
-          class="bg-slate-50 text-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] font-medium"
+          class="bg-[#f4f6f9] text-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] font-medium"
         >
           <option value="ALL">All Actions</option>
           <option value="accept">Action: Accept</option>
@@ -127,11 +127,11 @@
           type="button"
           @click="fetchRules(true)"
           :disabled="isLoading"
-          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-[#f4f6f9] hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
           title="Reload active rules from NFTables engine"
         >
           <svg
-            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#2563eb]' : '']"
+            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#0072ce]' : '']"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -141,11 +141,11 @@
           <span class="hidden sm:inline">Refresh</span>
         </button>
 
-        <!-- Primary "Add Firewall Rule" Button (Matching Sophos SFOS Header) -->
+        <!-- Primary "Add Firewall Rule" Button (Matching Sophos UTM 9 Header) -->
         <button
           type="button"
           @click="openAddRuleModal"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2563eb] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer"
           title="Create a new firewall security policy rule"
         >
           <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,10 +156,10 @@
       </div>
     </div>
 
-    <!-- Telemetry Statistics Strip (Sophos XGS Style) -->
+    <!-- Telemetry Statistics Strip (Sophos UTM 9 Style) -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
       <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-blue-50 text-[#2563eb] flex items-center justify-center font-bold">
+        <div class="w-9 h-9 rounded-lg bg-blue-50 text-[#0072ce] flex items-center justify-center font-bold">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
@@ -210,9 +210,9 @@
     <!-- HIGH-CONTRAST ENTERPRISE DATA TABLE BLOCK WRAPPER CONTAINER -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
       <!-- Table Header Action Strip -->
-      <div class="px-5 py-3.5 border-b border-slate-200 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div class="px-5 py-3.5 border-b border-slate-200 bg-[#f4f6f9]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div class="flex items-center gap-2">
-          <span class="w-1.5 h-4 bg-[#2563eb] rounded-full"></span>
+          <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
           <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Firewall Rule Matrix</h2>
           <span class="text-[11px] text-slate-400 font-mono">({{ filteredRules.length }} matched)</span>
         </div>
@@ -233,7 +233,7 @@
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse" role="table">
           <thead>
-            <tr class="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider select-none">
+            <tr class="border-b border-slate-200 bg-[#f4f6f9] text-[11px] font-bold text-slate-500 uppercase tracking-wider select-none">
               <th scope="col" class="py-3 px-4 border-r border-slate-200/80 w-12 text-center">#</th>
               <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[220px]">Rule Name</th>
               <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[130px]">Source Zone</th>
@@ -249,7 +249,7 @@
               :key="rule.id || index"
               :class="[
                 'transition-colors duration-150',
-                rule.enabled ? (index % 2 === 0 ? 'bg-white hover:bg-blue-50/30' : 'bg-slate-50/60 hover:bg-blue-50/40') : 'bg-slate-100/60 opacity-75 hover:bg-slate-100'
+                rule.enabled ? (index % 2 === 0 ? 'bg-white hover:bg-blue-50/30' : 'bg-[#f4f6f9]/60 hover:bg-blue-50/40') : 'bg-slate-100/60 opacity-75 hover:bg-slate-100'
               ]"
             >
               <!-- 0. Rule Index / Priority Order -->
@@ -362,8 +362,8 @@
                     :aria-checked="rule.enabled"
                     :aria-label="`Toggle rule ${rule.name}`"
                     @click="toggleRuleStatus(rule)"
-                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:ring-offset-2"
-                    :class="rule.enabled ? 'bg-[#2563eb]' : 'bg-slate-300'"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#0072ce] focus:ring-offset-2"
+                    :class="rule.enabled ? 'bg-[#0072ce]' : 'bg-slate-300'"
                   >
                     <span class="sr-only">Enable or disable rule</span>
                     <span
@@ -395,7 +395,7 @@
                 <button
                   type="button"
                   @click="resetFilters"
-                  class="mt-3 inline-flex items-center px-3 py-1.5 text-xs font-semibold text-[#2563eb] hover:underline cursor-pointer"
+                  class="mt-3 inline-flex items-center px-3 py-1.5 text-xs font-semibold text-[#0072ce] hover:underline cursor-pointer"
                 >
                   Clear all filters
                 </button>
@@ -406,7 +406,7 @@
       </div>
 
       <!-- Table Bottom Footer Summary -->
-      <div class="px-5 py-3 border-t border-slate-200 bg-slate-50 text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div class="px-5 py-3 border-t border-slate-200 bg-[#f4f6f9] text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           Showing <span class="font-bold text-slate-700">{{ filteredRules.length }}</span> of
           <span class="font-bold text-slate-700">{{ rulesList.length }}</span> configured firewall rules
@@ -445,10 +445,10 @@
           class="w-full max-w-xl bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col my-8"
           @click.stop
         >
-          <!-- Modal Top Header Ribbon (Sophos SFOS Style) -->
+          <!-- Modal Top Header Ribbon (Sophos UTM 9 Style) -->
           <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
             <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-black text-sm shadow-md">
+              <div class="w-9 h-9 rounded-lg bg-[#0072ce] flex items-center justify-center text-white font-black text-sm shadow-md">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -459,7 +459,7 @@
                     Add Firewall Rule
                   </h3>
                   <span class="text-[10px] bg-blue-950 text-blue-300 font-mono font-bold px-2 py-0.5 rounded border border-blue-800/80">
-                    SFOS POLICY
+                    UTM 9 POLICY
                   </span>
                 </div>
                 <p class="text-xs text-slate-400 mt-0.5">Define security filtering criteria, zones, service ports &amp; action verdict</p>
@@ -506,7 +506,7 @@
                 type="text"
                 required
                 placeholder="e.g., Allow Internal LAN to Internet Web"
-                class="w-full bg-slate-50 text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] font-medium"
+                class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium"
               />
               <p class="text-[10px] text-slate-400 mt-1">Specify a unique descriptive name for identifying this rule in log traces.</p>
             </div>
@@ -523,7 +523,7 @@
                     id="rule-src-zone"
                     v-model="formData.src_zone"
                     required
-                    class="w-full bg-slate-50 text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] font-medium appearance-none"
+                    class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium appearance-none"
                   >
                     <option value="LAN">LAN (Internal Network)</option>
                     <option value="WAN">WAN (External / Internet)</option>
@@ -550,7 +550,7 @@
                     id="rule-dest-zone"
                     v-model="formData.dest_zone"
                     required
-                    class="w-full bg-slate-50 text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] font-medium appearance-none"
+                    class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium appearance-none"
                   >
                     <option value="WAN">WAN (External / Internet)</option>
                     <option value="LAN">LAN (Internal Network)</option>
@@ -578,7 +578,7 @@
                   id="rule-services"
                   v-model="formData.services"
                   required
-                  class="w-full bg-slate-50 text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] font-medium appearance-none"
+                  class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium appearance-none"
                 >
                   <option value="Any">Any (All Protocols &amp; Ports)</option>
                   <option value="HTTP, HTTPS">Web (HTTP: 80, HTTPS: 443)</option>
@@ -614,7 +614,7 @@
                     'p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 cursor-pointer',
                     formData.action === 'accept'
                       ? 'border-emerald-600 bg-emerald-50/70 shadow-sm ring-1 ring-emerald-500/30'
-                      : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 text-slate-600'
+                      : 'border-slate-200 bg-[#f4f6f9]/50 hover:bg-[#f4f6f9] text-slate-600'
                   ]"
                 >
                   <div
@@ -641,7 +641,7 @@
                     'p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 cursor-pointer',
                     formData.action === 'drop'
                       ? 'border-rose-600 bg-rose-50/70 shadow-sm ring-1 ring-rose-500/30'
-                      : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 text-slate-600'
+                      : 'border-slate-200 bg-[#f4f6f9]/50 hover:bg-[#f4f6f9] text-slate-600'
                   ]"
                 >
                   <div
@@ -674,8 +674,8 @@
                   role="switch"
                   :aria-checked="formData.enabled"
                   @click="formData.enabled = !formData.enabled"
-                  class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:ring-offset-2"
-                  :class="formData.enabled ? 'bg-[#2563eb]' : 'bg-slate-300'"
+                  class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#0072ce] focus:ring-offset-2"
+                  :class="formData.enabled ? 'bg-[#0072ce]' : 'bg-slate-300'"
                 >
                   <span
                     aria-hidden="true"
@@ -691,7 +691,7 @@
           </form>
 
           <!-- Modal Action Footer with Validation Save Button Hook -->
-          <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+          <div class="px-6 py-4 bg-[#f4f6f9] border-t border-slate-200 flex items-center justify-between gap-3">
             <button
               type="button"
               @click="closeModal"
@@ -706,7 +706,7 @@
               type="button"
               @click="handleSubmit"
               :disabled="isSubmitting"
-              class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#2563eb] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
+              class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
             >
               <svg
                 v-if="isSubmitting"
@@ -816,7 +816,7 @@ const formData = reactive({
   enabled: true
 })
 
-// Baseline Rules Matrix Data (Matching standard Sophos XGS deployment)
+// Baseline Rules Matrix Data (Matching standard Sophos UTM 9 deployment)
 const rulesList = ref([
   {
     id: 1,

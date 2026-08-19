@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-full bg-slate-50 text-slate-800 font-sans antialiased selection:bg-[#2563eb] selection:text-white relative pb-16">
+  <div class="min-h-full bg-[#f4f6f9] text-slate-800 font-sans antialiased selection:bg-[#0072ce] selection:text-white relative pb-16">
     <!-- Notification Toasts Floating Stack -->
     <div class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-md w-full pointer-events-none" aria-live="polite">
       <transition-group
@@ -58,7 +58,7 @@
     <div class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
       <!-- Title & Subtitle with Sophos Blue Accent -->
       <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-[#2563eb] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
+        <div class="w-12 h-12 rounded-xl bg-[#0072ce] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
@@ -70,8 +70,8 @@
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               {{ activePeersCount }}/{{ peersList.length }} Peers Connected
             </span>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#2563eb] border border-blue-100 uppercase">
-              SFOS XGS VPN Subsystem
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#0072ce] border border-blue-100 uppercase">
+              UTM 9 VPN Engine
             </span>
           </div>
           <p class="text-xs text-slate-500 mt-1">
@@ -88,7 +88,7 @@
             v-model="searchQuery"
             type="text"
             placeholder="Search clients or IPs..."
-            class="w-full bg-slate-50 text-slate-800 text-xs px-3 py-2 pl-8 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-400 transition-colors"
+            class="w-full bg-[#f4f6f9] text-slate-800 text-xs px-3 py-2 pl-8 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-400 transition-colors"
           />
           <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -105,7 +105,7 @@
         <!-- Status Filter Dropdown -->
         <select
           v-model="statusFilter"
-          class="bg-slate-50 text-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] font-medium"
+          class="bg-[#f4f6f9] text-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] font-medium"
         >
           <option value="ALL">All Statuses</option>
           <option value="ACTIVE">Connected Only</option>
@@ -117,11 +117,11 @@
           type="button"
           @click="fetchPeers(true)"
           :disabled="isLoading"
-          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-[#f4f6f9] hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
           title="Reload peer metrics from VPN daemon"
         >
           <svg
-            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#2563eb]' : '']"
+            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#0072ce]' : '']"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -135,7 +135,7 @@
         <button
           type="button"
           @click="openAddUserModal"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2563eb] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer"
           title="Provision a new remote client tunnel profile"
         >
           <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,10 +146,10 @@
       </div>
     </div>
 
-    <!-- Telemetry Statistics Strip (Sophos XGS Style) -->
+    <!-- Telemetry Statistics Strip (Sophos UTM 9 Style) -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
       <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-blue-50 text-[#2563eb] flex items-center justify-center font-bold">
+        <div class="w-9 h-9 rounded-lg bg-blue-50 text-[#0072ce] flex items-center justify-center font-bold">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
@@ -199,7 +199,7 @@
 
     <!-- CORE HORIZONTAL CONFIGURATION TAB SELECTOR -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6">
-      <div class="border-b border-slate-200 bg-slate-50/50 px-4 pt-3 flex items-center gap-2 overflow-x-auto">
+      <div class="border-b border-slate-200 bg-[#f4f6f9]/50 px-4 pt-3 flex items-center gap-2 overflow-x-auto">
         <button
           type="button"
           v-for="tab in configTabs"
@@ -208,12 +208,12 @@
           :class="[
             'relative px-5 py-3 text-xs font-bold transition-all flex items-center gap-2.5 whitespace-nowrap cursor-pointer rounded-t-lg -mb-px',
             activeTab === tab.id
-              ? 'bg-white text-[#2563eb] border-t-2 border-x border-slate-200 border-t-[#2563eb] shadow-xs'
+              ? 'bg-white text-[#0072ce] border-t-2 border-x border-slate-200 border-t-[#0072ce] shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
           ]"
         >
           <!-- Tab Protocol Icon -->
-          <component :is="tab.icon" class="w-4 h-4" :class="activeTab === tab.id ? 'text-[#2563eb]' : 'text-slate-400'" />
+          <component :is="tab.icon" class="w-4 h-4" :class="activeTab === tab.id ? 'text-[#0072ce]' : 'text-slate-400'" />
           <span>{{ tab.label }}</span>
 
           <!-- Tab Status / Count Badge -->
@@ -221,7 +221,7 @@
             v-if="tab.badge"
             :class="[
               'text-[10px] px-1.5 py-0.5 rounded-full font-mono font-semibold',
-              activeTab === tab.id ? 'bg-blue-50 text-[#2563eb] border border-blue-200' : 'bg-slate-200 text-slate-600'
+              activeTab === tab.id ? 'bg-blue-50 text-[#0072ce] border border-blue-200' : 'bg-slate-200 text-slate-600'
             ]"
           >
             {{ tab.badge }}
@@ -230,17 +230,17 @@
           <!-- High-contrast corporate blue accent highlight bar on active -->
           <span
             v-if="activeTab === tab.id"
-            class="absolute inset-x-0 -top-[2px] h-[3px] bg-[#2563eb] rounded-t-md"
+            class="absolute inset-x-0 -top-[2px] h-[3px] bg-[#0072ce] rounded-t-md"
           ></span>
         </button>
       </div>
 
       <!-- Tab Contextual Banner / Info Notice -->
-      <div class="p-4 bg-slate-50/70 border-b border-slate-200 text-xs text-slate-600 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="p-4 bg-[#f4f6f9]/70 border-b border-slate-200 text-xs text-slate-600 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div class="flex items-center gap-2.5">
           <span class="w-2 h-2 rounded-full" :class="activeTab === 'wireguard' ? 'bg-emerald-500' : 'bg-amber-500'"></span>
           <span v-if="activeTab === 'wireguard'">
-            <strong>WireGuard Server Gateway:</strong> Listening on UDP <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-[#2563eb] font-mono">51820</code> | Subnet: <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono">10.8.0.0/24</code>
+            <strong>WireGuard Server Gateway:</strong> Listening on UDP <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-[#0072ce] font-mono">51820</code> | Subnet: <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono">10.8.0.0/24</code>
           </span>
           <span v-else-if="activeTab === 'ssl'">
             <strong>SSL VPN (OpenVPN Engine):</strong> Listening on TCP/UDP <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono">8443</code> | TLS 1.3 Strict
@@ -272,7 +272,7 @@
       <button
         type="button"
         @click="activeTab = 'wireguard'"
-        class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer"
+        class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0072ce] text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer"
       >
         <span>Switch to WireGuard VPN</span>
       </button>
@@ -281,9 +281,9 @@
     <!-- HIGH-UTILITY REMOTE USER OVERVIEW TABLE CONTAINER -->
     <div v-if="activeTab === 'wireguard'" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
       <!-- Table Top Toolbar Strip -->
-      <div class="px-5 py-3.5 border-b border-slate-200 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div class="px-5 py-3.5 border-b border-slate-200 bg-[#f4f6f9]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div class="flex items-center gap-2">
-          <span class="w-1.5 h-4 bg-[#2563eb] rounded-full"></span>
+          <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
           <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Remote User Client Matrix</h2>
           <span class="text-[11px] text-slate-400 font-mono">({{ filteredPeers.length }} matched)</span>
         </div>
@@ -301,7 +301,7 @@
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse" role="table">
           <thead>
-            <tr class="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider select-none">
+            <tr class="border-b border-slate-200 bg-[#f4f6f9] text-[11px] font-bold text-slate-500 uppercase tracking-wider select-none">
               <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[200px]">Client Name</th>
               <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[150px]">Assigned Virtual IP</th>
               <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[220px]">Public Crypto Key</th>
@@ -317,7 +317,7 @@
               :class="[
                 'transition-colors duration-150',
                 peer.status === 'active' || peer.is_active
-                  ? (index % 2 === 0 ? 'bg-white hover:bg-blue-50/30' : 'bg-slate-50/60 hover:bg-blue-50/40')
+                  ? (index % 2 === 0 ? 'bg-white hover:bg-blue-50/30' : 'bg-[#f4f6f9]/60 hover:bg-blue-50/40')
                   : 'bg-slate-100/40 hover:bg-slate-100/70 text-slate-600'
               ]"
             >
@@ -326,7 +326,7 @@
                 <div class="flex items-center gap-3">
                   <div
                     class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-white font-bold text-xs shadow-2xs"
-                    :class="peer.status === 'active' || peer.is_active ? 'bg-[#2563eb]' : 'bg-slate-400'"
+                    :class="peer.status === 'active' || peer.is_active ? 'bg-[#0072ce]' : 'bg-slate-400'"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -348,7 +348,7 @@
 
               <!-- 2. Assigned Virtual IP -->
               <td class="py-3.5 px-4 border-r border-slate-200/80 font-mono">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-[#2563eb] border border-blue-200 shadow-2xs">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-[#0072ce] border border-blue-200 shadow-2xs">
                   <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                   </svg>
@@ -430,7 +430,7 @@
                   <button
                     type="button"
                     @click="viewPeerConfig(peer)"
-                    class="p-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#2563eb] border border-slate-200 transition-colors cursor-pointer"
+                    class="p-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#0072ce] border border-slate-200 transition-colors cursor-pointer"
                     title="View Profile Configuration"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -464,7 +464,7 @@
                 <button
                   type="button"
                   @click="resetFilters"
-                  class="mt-3 inline-flex items-center px-3 py-1.5 text-xs font-semibold text-[#2563eb] hover:underline cursor-pointer"
+                  class="mt-3 inline-flex items-center px-3 py-1.5 text-xs font-semibold text-[#0072ce] hover:underline cursor-pointer"
                 >
                   Clear all filters
                 </button>
@@ -475,7 +475,7 @@
       </div>
 
       <!-- Table Bottom Footer Summary -->
-      <div class="px-5 py-3 border-t border-slate-200 bg-slate-50 text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div class="px-5 py-3 border-t border-slate-200 bg-[#f4f6f9] text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           Showing <span class="font-bold text-slate-700">{{ filteredPeers.length }}</span> of
           <span class="font-bold text-slate-700">{{ peersList.length }}</span> registered remote VPN clients
@@ -514,10 +514,10 @@
           class="w-full max-w-2xl bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col my-8"
           @click.stop
         >
-          <!-- Modal Top Header Ribbon (Sophos SFOS Style) -->
+          <!-- Modal Top Header Ribbon (Sophos UTM 9 Style) -->
           <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
             <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-black text-sm shadow-md">
+              <div class="w-9 h-9 rounded-lg bg-[#0072ce] flex items-center justify-center text-white font-black text-sm shadow-md">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                 </svg>
@@ -577,7 +577,7 @@
                   type="text"
                   required
                   placeholder="e.g., alice-laptop, field-engineer-01"
-                  class="w-full bg-slate-50 text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] font-medium"
+                  class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium"
                 />
                 <p class="text-[10px] text-slate-400 mt-1">Unique remote user name or hostname.</p>
               </div>
@@ -595,7 +595,7 @@
                       type="text"
                       required
                       placeholder="e.g., 10.8.0.5/32"
-                      class="w-full bg-slate-50 text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] font-mono font-medium"
+                      class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-mono font-medium"
                     />
                     <button
                       type="button"
@@ -618,7 +618,7 @@
                     v-model="formData.dns"
                     type="text"
                     placeholder="10.8.0.1, 1.1.1.1"
-                    class="w-full bg-slate-50 text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] font-mono font-medium"
+                    class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-mono font-medium"
                   />
                   <p class="text-[10px] text-slate-400 mt-1">DNS servers pushed to the remote client.</p>
                 </div>
@@ -634,7 +634,7 @@
                   v-model="formData.allowed_ips"
                   type="text"
                   placeholder="0.0.0.0/0, ::/0 (Full Tunnel) or 192.168.1.0/24 (Split Tunnel)"
-                  class="w-full bg-slate-50 text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] font-mono font-medium"
+                  class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-mono font-medium"
                 />
                 <p class="text-[10px] text-slate-400 mt-1">Use <code class="font-mono text-slate-600 font-bold">0.0.0.0/0, ::/0</code> for Full Tunnel or specify internal LAN subnets for Split Tunneling.</p>
               </div>
@@ -645,7 +645,7 @@
                   type="button"
                   @click="generateClientProfile"
                   :disabled="isSubmitting"
-                  class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#2563eb] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
+                  class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#0072ce] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
                 >
                   <svg
                     v-if="isSubmitting"
@@ -678,9 +678,9 @@
                   <button
                     type="button"
                     @click="copyConfigToClipboard"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-slate-300 hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-2xs transition-colors cursor-pointer"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-slate-300 hover:bg-[#f4f6f9] text-xs font-semibold text-slate-700 shadow-2xs transition-colors cursor-pointer"
                   >
-                    <svg v-if="!isConfigCopied" class="w-3.5 h-3.5 text-[#2563eb]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg v-if="!isConfigCopied" class="w-3.5 h-3.5 text-[#0072ce]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                     </svg>
                     <svg v-else class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -693,7 +693,7 @@
                   <button
                     type="button"
                     @click="downloadConfigFile"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#0072ce] hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -715,7 +715,7 @@
           </div>
 
           <!-- Modal Action Footer -->
-          <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+          <div class="px-6 py-4 bg-[#f4f6f9] border-t border-slate-200 flex items-center justify-between gap-3">
             <button
               type="button"
               @click="closeModal"
@@ -735,7 +735,7 @@
               <button
                 type="button"
                 @click="closeModal"
-                class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 cursor-pointer"
+                class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 cursor-pointer"
               >
                 Done
               </button>
@@ -1112,7 +1112,7 @@ Address = ${clientIp}
 DNS = ${dnsServers}
 
 [Peer]
-# Sophos XGS Corporate Gateway
+# Astaro-Next Corporate Gateway
 PublicKey = ${serverPublicKey}
 PresharedKey = ${presharedKey}
 Endpoint = ${serverEndpoint}
@@ -1231,7 +1231,7 @@ Address = ${formData.virtual_ip}
 DNS = ${formData.dns}
 
 [Peer]
-# Sophos XGS Corporate Remote Access Gateway
+# Astaro-Next Corporate Remote Access Gateway
 PublicKey = ${formData.server_public_key}
 Endpoint = ${formData.server_endpoint}
 AllowedIPs = ${formData.allowed_ips}

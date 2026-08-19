@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-full bg-slate-50 text-slate-800 font-sans antialiased selection:bg-[#2563eb] selection:text-white relative pb-16">
+  <div class="min-h-full bg-[#f4f6f9] text-slate-800 font-sans antialiased selection:bg-[#0072ce] selection:text-white relative pb-16">
     <!-- Notification Toasts Floating Stack Overlay -->
     <div class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-md w-full pointer-events-none" aria-live="polite">
       <transition-group
@@ -58,7 +58,7 @@
     <div class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
       <!-- Title & Subtitle with Sophos Blue Accent -->
       <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-[#2563eb] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
+        <div class="w-12 h-12 rounded-xl bg-[#0072ce] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
@@ -70,8 +70,8 @@
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               {{ activeRulesCount }}/{{ rulesList.length }} Rules Active
             </span>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#2563eb] border border-blue-100 uppercase">
-              SFOS XGS WAF Engine
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#0072ce] border border-blue-100 uppercase">
+              UTM 9 WAF Engine
             </span>
           </div>
           <p class="text-xs text-slate-500 mt-1">
@@ -86,7 +86,7 @@
         <button
           type="button"
           @click="openNginxPreview"
-          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-mono font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 transition-all shadow-2xs cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-mono font-semibold text-slate-700 hover:bg-[#f4f6f9] hover:text-slate-900 active:bg-slate-100 transition-all shadow-2xs cursor-pointer"
           title="Inspect generated Nginx & NAXSI configuration"
         >
           <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,11 +100,11 @@
           type="button"
           @click="fetchRules(true)"
           :disabled="isLoading"
-          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-[#f4f6f9] hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
           title="Refresh published web rules from backend"
         >
           <svg
-            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#2563eb]' : '']"
+            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#0072ce]' : '']"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -118,7 +118,7 @@
         <button
           type="button"
           @click="openAddRuleModal"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2563eb] hover:bg-blue-600 active:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all duration-150 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-600 active:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all duration-150 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
         >
           <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -140,7 +140,7 @@
             </span>
           </div>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-blue-50 text-[#2563eb] flex items-center justify-center border border-blue-200">
+        <div class="w-10 h-10 rounded-lg bg-blue-50 text-[#0072ce] flex items-center justify-center border border-blue-200">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
           </svg>
@@ -185,7 +185,7 @@
             <span class="text-xs text-slate-500 font-sans">Reachability 100%</span>
           </div>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-slate-50 text-slate-600 flex items-center justify-center border border-slate-200">
+        <div class="w-10 h-10 rounded-lg bg-[#f4f6f9] text-slate-600 flex items-center justify-center border border-slate-200">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
           </svg>
@@ -197,9 +197,9 @@
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
       
       <!-- Table Filter Bar & Search -->
-      <div class="px-5 py-4 border-b border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="px-5 py-4 border-b border-slate-100 bg-[#f4f6f9]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div class="flex items-center gap-2.5">
-          <span class="w-1.5 h-4 bg-[#2563eb] rounded-full"></span>
+          <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
           <div>
             <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Published Application Rules</h2>
             <p class="text-[11px] text-slate-500">Active Web Application Firewall and reverse proxy routing policies</p>
@@ -213,7 +213,7 @@
               v-model="searchQuery"
               type="text"
               placeholder="Search rule, domain, or IP..."
-              class="w-full bg-white text-slate-800 text-xs px-3 py-1.5 pl-8 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-400 transition-colors"
+              class="w-full bg-white text-slate-800 text-xs px-3 py-1.5 pl-8 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-400 transition-colors"
             />
             <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -230,7 +230,7 @@
           <!-- WAF Filter Selector -->
           <select
             v-model="wafFilter"
-            class="bg-white text-slate-700 text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] font-medium"
+            class="bg-white text-slate-700 text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] font-medium"
           >
             <option value="ALL">All Protection Modes</option>
             <option value="WAF_ACTIVE">NAXSI WAF Active</option>
@@ -243,7 +243,7 @@
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
-            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono uppercase tracking-wider text-[11px]">
+            <tr class="bg-[#f4f6f9] border-b border-slate-200 text-slate-500 font-mono uppercase tracking-wider text-[11px]">
               <th class="p-3.5 font-bold w-12 text-center">Status</th>
               <th class="p-3.5 font-bold min-w-[200px]">Rule Name</th>
               <th class="p-3.5 font-bold min-w-[220px]">Public Hosted Domain</th>
@@ -256,7 +256,7 @@
             <tr
               v-for="rule in filteredRules"
               :key="rule.id || rule.rule_name"
-              class="hover:bg-slate-50/80 transition-colors group"
+              class="hover:bg-[#f4f6f9]/80 transition-colors group"
             >
               <!-- Status Active Indicator -->
               <td class="p-3.5 text-center">
@@ -271,7 +271,7 @@
               <!-- Rule Name -->
               <td class="p-3.5">
                 <div class="flex items-center gap-2">
-                  <span class="font-bold text-slate-900 group-hover:text-[#2563eb] transition-colors text-xs">
+                  <span class="font-bold text-slate-900 group-hover:text-[#0072ce] transition-colors text-xs">
                     {{ rule.rule_name }}
                   </span>
                   <span v-if="rule.id" class="text-[10px] bg-slate-100 text-slate-500 font-mono px-1.5 py-0.2 rounded border border-slate-200">
@@ -306,7 +306,7 @@
               <!-- Internal Real Server IP/Port Target -->
               <td class="p-3.5 font-mono">
                 <div class="flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5 text-[#2563eb]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-3.5 h-3.5 text-[#0072ce]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
                   </svg>
                   <span class="font-bold text-slate-800 text-xs">
@@ -342,7 +342,7 @@
                   <!-- NAXSI Deep Packet WAF Layer Pill -->
                   <span
                     v-if="rule.enable_naxsi_waf"
-                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-50 text-[#2563eb] border border-blue-200 shadow-2xs"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-50 text-[#0072ce] border border-blue-200 shadow-2xs"
                   >
                     <svg class="w-3 h-3 text-blue-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -377,7 +377,7 @@
                   <button
                     type="button"
                     @click="openEditRuleModal(rule)"
-                    class="p-1.5 bg-white hover:bg-slate-100 text-slate-600 hover:text-[#2563eb] rounded-lg border border-slate-200 transition-colors shadow-2xs cursor-pointer"
+                    class="p-1.5 bg-white hover:bg-slate-100 text-slate-600 hover:text-[#0072ce] rounded-lg border border-slate-200 transition-colors shadow-2xs cursor-pointer"
                     title="Edit Web Server Rule"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -416,7 +416,7 @@
                   <button
                     type="button"
                     @click="openAddRuleModal"
-                    class="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#2563eb] text-white text-xs font-bold shadow-sm hover:bg-blue-600 transition-colors"
+                    class="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0072ce] text-white text-xs font-bold shadow-sm hover:bg-blue-600 transition-colors"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -431,7 +431,7 @@
       </div>
 
       <!-- Table Footer Summary -->
-      <div class="px-5 py-3 bg-slate-50/80 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
+      <div class="px-5 py-3 bg-[#f4f6f9]/80 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
         <div>
           Showing <span class="font-bold text-slate-800">{{ filteredRules.length }}</span> of {{ rulesList.length }} Published Application Rules
         </div>
@@ -466,7 +466,7 @@
           <!-- Modal Header -->
           <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
             <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-black text-sm shadow-md">
+              <div class="w-9 h-9 rounded-lg bg-[#0072ce] flex items-center justify-center text-white font-black text-sm shadow-md">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
@@ -505,7 +505,7 @@
                 type="text"
                 required
                 placeholder="e.g. Corporate Portal & API Gateway"
-                class="w-full bg-slate-50 text-slate-900 text-xs px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-400 transition-colors"
+                class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-400 transition-colors"
               />
               <p class="text-[11px] text-slate-500 mt-1">
                 A descriptive identifier for this published application rule in SFOS.
@@ -523,7 +523,7 @@
                   type="text"
                   required
                   placeholder="e.g. portal.myoffice.local or app.company.com"
-                  class="w-full bg-slate-50 text-slate-900 text-xs px-3.5 py-2.5 pl-8 rounded-lg border border-slate-300 font-mono focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-400 transition-colors"
+                  class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3.5 py-2.5 pl-8 rounded-lg border border-slate-300 font-mono focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-400 transition-colors"
                 />
                 <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
@@ -546,7 +546,7 @@
                   type="text"
                   required
                   placeholder="e.g. 10.0.0.45 or 192.168.10.20"
-                  class="w-full bg-slate-50 text-slate-900 text-xs px-3.5 py-2.5 rounded-lg border border-slate-300 font-mono focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-400 transition-colors"
+                  class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3.5 py-2.5 rounded-lg border border-slate-300 font-mono focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-400 transition-colors"
                 />
               </div>
 
@@ -562,14 +562,14 @@
                   max="65535"
                   required
                   placeholder="80"
-                  class="w-full bg-slate-50 text-slate-900 text-xs px-3.5 py-2.5 rounded-lg border border-slate-300 font-mono focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-400 transition-colors"
+                  class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3.5 py-2.5 rounded-lg border border-slate-300 font-mono focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-400 transition-colors"
                 />
               </div>
             </div>
 
             <!-- Toggle Switch 1: Enable HTTPS / SSL Certificate Mapping -->
             <div class="pt-2 border-t border-slate-100">
-              <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-start justify-between gap-4">
+              <div class="p-3.5 rounded-xl border border-slate-200 bg-[#f4f6f9] flex items-start justify-between gap-4">
                 <div class="space-y-1 pr-2">
                   <div class="flex items-center gap-2">
                     <span class="font-bold text-xs text-slate-900">
@@ -596,7 +596,7 @@
                     aria-label="Toggle Enable HTTPS / SSL Certificate Mapping"
                   />
                   <div
-                    class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2563eb] shadow-inner transition-colors duration-200"
+                    class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0072ce] shadow-inner transition-colors duration-200"
                   ></div>
                 </label>
               </div>
@@ -604,7 +604,7 @@
 
             <!-- Toggle Switch 2: Enable Deep Packet Web Application Firewall Inspection (SQLi/XSS Proactive Protection Mode) -->
             <div>
-              <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-start justify-between gap-4">
+              <div class="p-3.5 rounded-xl border border-slate-200 bg-[#f4f6f9] flex items-start justify-between gap-4">
                 <div class="space-y-1 pr-2">
                   <div class="flex items-center gap-2">
                     <span class="font-bold text-xs text-slate-900">
@@ -612,7 +612,7 @@
                     </span>
                     <span
                       v-if="ruleForm.enable_naxsi_waf"
-                      class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 text-[#2563eb] border border-blue-200"
+                      class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 text-[#0072ce] border border-blue-200"
                     >
                       NAXSI L7 ACTIVE
                     </span>
@@ -631,7 +631,7 @@
                     aria-label="Toggle Enable Deep Packet Web Application Firewall Inspection"
                   />
                   <div
-                    class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2563eb] shadow-inner transition-colors duration-200"
+                    class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0072ce] shadow-inner transition-colors duration-200"
                   ></div>
                 </label>
               </div>
@@ -642,7 +642,7 @@
               <button
                 type="button"
                 @click="closeModal"
-                class="px-4 py-2 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                class="px-4 py-2 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-[#f4f6f9] transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -650,7 +650,7 @@
               <button
                 type="submit"
                 :disabled="isSubmitting"
-                class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#2563eb] hover:bg-blue-600 active:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+                class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-600 active:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-wait"
               >
                 <svg
                   v-if="isSubmitting"
@@ -706,7 +706,7 @@
             <pre class="whitespace-pre leading-relaxed">{{ generatedNginxConfig }}</pre>
           </div>
 
-          <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-between items-center text-xs">
+          <div class="bg-[#f4f6f9] px-6 py-3 border-t border-slate-200 flex justify-between items-center text-xs">
             <span class="text-slate-500 font-mono">Validated with: nginx -t &amp;&amp; systemctl reload nginx</span>
             <button
               type="button"

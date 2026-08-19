@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-full bg-slate-50 text-slate-800 font-sans antialiased selection:bg-[#2563eb] selection:text-white relative pb-24">
+  <div class="min-h-full bg-[#f4f6f9] text-slate-800 font-sans antialiased selection:bg-[#0072ce] selection:text-white relative pb-24">
     <!-- Notification Toasts Floating Stack Overlay -->
     <div class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-md w-full pointer-events-none" aria-live="polite">
       <transition-group
@@ -58,7 +58,7 @@
     <div class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
       <!-- Title & Subtitle with Sophos Blue Accent -->
       <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-[#2563eb] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
+        <div class="w-12 h-12 rounded-xl bg-[#0072ce] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
           </svg>
@@ -70,8 +70,8 @@
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               L7 Filter Active
             </span>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#2563eb] border border-blue-100 uppercase">
-              SFOS 20.0 Engine
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#0072ce] border border-blue-100 uppercase">
+              UTM 9.7 Engine
             </span>
             <span v-if="hasUnsavedChanges" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
               <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
@@ -92,7 +92,7 @@
           <select
             v-model="activeProfile"
             @change="handleProfileChange"
-            class="bg-white text-slate-800 font-semibold text-xs px-2.5 py-1 rounded-md border border-slate-200 shadow-2xs focus:outline-none focus:border-[#2563eb]"
+            class="bg-white text-slate-800 font-semibold text-xs px-2.5 py-1 rounded-md border border-slate-200 shadow-2xs focus:outline-none focus:border-[#0072ce]"
           >
             <option value="corporate_default">Corporate Default Policy</option>
             <option value="strict_security">Strict Security Baseline</option>
@@ -105,7 +105,7 @@
         <button
           type="button"
           @click="isUrlTesterOpen = true"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 transition-all shadow-2xs cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-[#f4f6f9] hover:text-slate-900 active:bg-slate-100 transition-all shadow-2xs cursor-pointer"
           title="Simulate URL classification and policy evaluation"
         >
           <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,7 +118,7 @@
         <button
           type="button"
           @click="isJsonModalOpen = true"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-mono font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 transition-all shadow-2xs cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-mono font-semibold text-slate-700 hover:bg-[#f4f6f9] hover:text-slate-900 active:bg-slate-100 transition-all shadow-2xs cursor-pointer"
           title="Inspect API gateway payload string"
         >
           <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,11 +132,11 @@
           type="button"
           @click="fetchPolicy(true)"
           :disabled="isLoading"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-[#f4f6f9] hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
           title="Reload active policy records from gateway"
         >
           <svg
-            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#2563eb]' : '']"
+            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#0072ce]' : '']"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -188,7 +188,7 @@
             <span class="text-[11px] font-sans font-normal text-slate-500">requests</span>
           </div>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-blue-50 text-[#2563eb] flex items-center justify-center border border-blue-200">
+        <div class="w-10 h-10 rounded-lg bg-blue-50 text-[#0072ce] flex items-center justify-center border border-blue-200">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
@@ -205,7 +205,7 @@
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Live Cloud Sync (1.8ms)
           </span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-slate-50 text-slate-600 flex items-center justify-center border border-slate-200">
+        <div class="w-10 h-10 rounded-lg bg-[#f4f6f9] text-slate-600 flex items-center justify-center border border-slate-200">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
           </svg>
@@ -221,15 +221,15 @@
       <!-- ========================================================================= -->
       <section class="lg:col-span-5 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col transition-shadow hover:shadow-md">
         <!-- Card Header with Sophos Blue Accent -->
-        <div class="px-5 py-4 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
+        <div class="px-5 py-4 border-b border-slate-100 bg-[#f4f6f9]/60 flex items-center justify-between">
           <div class="flex items-center gap-2.5">
-            <span class="w-1.5 h-4 bg-[#2563eb] rounded-full"></span>
+            <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
             <div>
               <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Security Filters</h2>
               <p class="text-[11px] text-slate-500">Critical threat &amp; zero-day definitions</p>
             </div>
           </div>
-          <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-blue-50 text-[#2563eb] border border-blue-100">
+          <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-blue-50 text-[#0072ce] border border-blue-100">
             HIGH-PRIORITY
           </span>
         </div>
@@ -241,7 +241,7 @@
           <div class="pt-3 first:pt-0 flex items-start justify-between gap-4 group">
             <div class="space-y-1 pr-2">
               <div class="flex items-center gap-2">
-                <span class="font-bold text-xs text-slate-900 group-hover:text-[#2563eb] transition-colors">
+                <span class="font-bold text-xs text-slate-900 group-hover:text-[#0072ce] transition-colors">
                   Block Known Malware Sites
                 </span>
                 <!-- Active Lighting State Indicator -->
@@ -275,7 +275,7 @@
                 aria-label="Toggle Block Known Malware Sites"
               />
               <div
-                class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2563eb] shadow-inner transition-colors duration-200"
+                class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0072ce] shadow-inner transition-colors duration-200"
               ></div>
             </label>
           </div>
@@ -284,7 +284,7 @@
           <div class="pt-4 flex items-start justify-between gap-4 group">
             <div class="space-y-1 pr-2">
               <div class="flex items-center gap-2">
-                <span class="font-bold text-xs text-slate-900 group-hover:text-[#2563eb] transition-colors">
+                <span class="font-bold text-xs text-slate-900 group-hover:text-[#0072ce] transition-colors">
                   Block Phishing &amp; Deceptive Domains
                 </span>
                 <!-- Active Lighting State Indicator -->
@@ -318,7 +318,7 @@
                 aria-label="Toggle Block Phishing and Deceptive Domains"
               />
               <div
-                class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2563eb] shadow-inner transition-colors duration-200"
+                class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0072ce] shadow-inner transition-colors duration-200"
               ></div>
             </label>
           </div>
@@ -327,7 +327,7 @@
           <div class="pt-4 flex items-start justify-between gap-4 group">
             <div class="space-y-1 pr-2">
               <div class="flex items-center gap-2">
-                <span class="font-bold text-xs text-slate-900 group-hover:text-[#2563eb] transition-colors">
+                <span class="font-bold text-xs text-slate-900 group-hover:text-[#0072ce] transition-colors">
                   Block Cryptomining &amp; C2 Botnets
                 </span>
                 <span
@@ -352,7 +352,7 @@
                 aria-label="Toggle Block Cryptomining"
               />
               <div
-                class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2563eb] shadow-inner transition-colors duration-200"
+                class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0072ce] shadow-inner transition-colors duration-200"
               ></div>
             </label>
           </div>
@@ -361,7 +361,7 @@
           <div class="pt-4 flex items-start justify-between gap-4 group">
             <div class="space-y-1 pr-2">
               <div class="flex items-center gap-2">
-                <span class="font-bold text-xs text-slate-900 group-hover:text-[#2563eb] transition-colors">
+                <span class="font-bold text-xs text-slate-900 group-hover:text-[#0072ce] transition-colors">
                   Enforce SafeSearch VIP Redirection
                 </span>
                 <span
@@ -386,7 +386,7 @@
                 aria-label="Toggle Enforce SafeSearch"
               />
               <div
-                class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2563eb] shadow-inner transition-colors duration-200"
+                class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0072ce] shadow-inner transition-colors duration-200"
               ></div>
             </label>
           </div>
@@ -395,7 +395,7 @@
           <div class="pt-4 flex items-start justify-between gap-4 group">
             <div class="space-y-1 pr-2">
               <div class="flex items-center gap-2">
-                <span class="font-bold text-xs text-slate-900 group-hover:text-[#2563eb] transition-colors">
+                <span class="font-bold text-xs text-slate-900 group-hover:text-[#0072ce] transition-colors">
                   Block Newly Registered Domains (&lt;72h)
                 </span>
                 <span
@@ -420,7 +420,7 @@
                 aria-label="Toggle Block Unrated Sites"
               />
               <div
-                class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2563eb] shadow-inner transition-colors duration-200"
+                class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0072ce] shadow-inner transition-colors duration-200"
               ></div>
             </label>
           </div>
@@ -429,7 +429,7 @@
           <div class="pt-4 flex items-start justify-between gap-4 group">
             <div class="space-y-1 pr-2">
               <div class="flex items-center gap-2">
-                <span class="font-bold text-xs text-slate-900 group-hover:text-[#2563eb] transition-colors">
+                <span class="font-bold text-xs text-slate-900 group-hover:text-[#0072ce] transition-colors">
                   SSL/TLS Deep Packet Inspection
                 </span>
                 <span
@@ -454,7 +454,7 @@
                 aria-label="Toggle SSL Deep Inspection"
               />
               <div
-                class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2563eb] shadow-inner transition-colors duration-200"
+                class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0072ce] shadow-inner transition-colors duration-200"
               ></div>
             </label>
           </div>
@@ -462,17 +462,17 @@
         </div>
 
         <!-- Security Panel Footer Alert -->
-        <div class="p-4 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-600 flex items-center justify-between">
+        <div class="p-4 bg-[#f4f6f9] border-t border-slate-100 text-[11px] text-slate-600 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-[#2563eb] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-[#0072ce] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>Definitions sync with SophosLabs Threat Intelligence.</span>
+            <span>Definitions sync with Zenarmor L7 Threat Intelligence.</span>
           </div>
           <button
             type="button"
             @click="toggleAllSecurityFilters(true)"
-            class="text-[#2563eb] hover:underline font-bold text-xs cursor-pointer"
+            class="text-[#0072ce] hover:underline font-bold text-xs cursor-pointer"
           >
             Enable All
           </button>
@@ -484,9 +484,9 @@
       <!-- ========================================================================= -->
       <section class="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col transition-shadow hover:shadow-md">
         <!-- Card Header with Search & Quick Filters -->
-        <div class="px-5 py-4 border-b border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="px-5 py-4 border-b border-slate-100 bg-[#f4f6f9]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="flex items-center gap-2.5">
-            <span class="w-1.5 h-4 bg-[#2563eb] rounded-full"></span>
+            <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
             <div>
               <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Web Category Control</h2>
               <p class="text-[11px] text-slate-500">Grouped content filtering &amp; access policy enforcement</p>
@@ -500,7 +500,7 @@
                 v-model="categorySearch"
                 type="text"
                 placeholder="Search categories..."
-                class="bg-white text-slate-800 text-xs px-2.5 py-1.5 pl-7 rounded-lg border border-slate-300 focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-400 w-36 sm:w-44"
+                class="bg-white text-slate-800 text-xs px-2.5 py-1.5 pl-7 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-400 w-36 sm:w-44"
               />
               <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -550,7 +550,7 @@
                 <button
                   type="button"
                   @click="toggleGroupCategories(group)"
-                  class="text-[11px] font-semibold text-[#2563eb] hover:underline cursor-pointer"
+                  class="text-[11px] font-semibold text-[#0072ce] hover:underline cursor-pointer"
                 >
                   {{ isGroupAllBlocked(group) ? 'Unblock Group' : 'Block Group' }}
                 </button>
@@ -566,7 +566,7 @@
                     'p-3 rounded-xl border transition-all duration-150 flex items-start gap-3 cursor-pointer select-none group',
                     isCategoryBlocked(cat.id)
                       ? 'bg-rose-50/40 border-rose-200/90 shadow-2xs hover:bg-rose-50/70 ring-1 ring-rose-300/30'
-                      : 'bg-white border-slate-200 hover:bg-slate-50/80 hover:border-slate-300'
+                      : 'bg-white border-slate-200 hover:bg-[#f4f6f9]/80 hover:border-slate-300'
                   ]"
                 >
                   <!-- Custom Styled Checkbox Control -->
@@ -625,7 +625,7 @@
               <button
                 type="button"
                 @click="categorySearch = ''"
-                class="mt-2 text-xs font-semibold text-[#2563eb] hover:underline"
+                class="mt-2 text-xs font-semibold text-[#0072ce] hover:underline"
               >
                 Clear category search
               </button>
@@ -635,7 +635,7 @@
         </div>
 
         <!-- Category Panel Bottom Banner -->
-        <div class="p-4 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
+        <div class="p-4 bg-[#f4f6f9] border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
           <div class="flex items-center gap-2 font-mono text-[11px]">
             <span class="w-2 h-2 rounded-full" :class="blockedCategoriesCount > 0 ? 'bg-rose-500' : 'bg-slate-300'"></span>
             <span>Total Enforced Category Blocks: <strong class="text-slate-800">{{ blockedCategoriesCount }}</strong></span>
@@ -704,7 +704,7 @@
           type="button"
           @click="applyWebPolicy"
           :disabled="isSubmitting"
-          class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#2563eb] hover:bg-blue-600 active:bg-blue-700 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-600/30 border border-blue-400/30 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-wait hover:scale-[1.02] active:scale-[0.98]"
+          class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#0072ce] hover:bg-blue-600 active:bg-blue-700 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-600/30 border border-blue-400/30 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-wait hover:scale-[1.02] active:scale-[0.98]"
         >
           <svg
             v-if="isSubmitting"
@@ -744,7 +744,7 @@
         <div class="w-full max-w-lg bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col" @click.stop>
           <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-black text-sm">
+              <div class="w-8 h-8 rounded-lg bg-[#0072ce] flex items-center justify-center text-white font-black text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -768,12 +768,12 @@
                   @keyup.enter="evaluateTestUrl"
                   type="text"
                   placeholder="e.g. www.poker-online.example or stream.video.test"
-                  class="flex-1 bg-slate-50 text-slate-900 text-xs px-3 py-2 rounded-lg border border-slate-300 font-mono focus:outline-none focus:border-[#2563eb]"
+                  class="flex-1 bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2 rounded-lg border border-slate-300 font-mono focus:outline-none focus:border-[#0072ce]"
                 />
                 <button
                   type="button"
                   @click="evaluateTestUrl"
-                  class="px-4 py-2 bg-[#2563eb] hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
+                  class="px-4 py-2 bg-[#0072ce] hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
                 >
                   Test
                 </button>
@@ -809,12 +809,12 @@
               <div class="text-xs space-y-1">
                 <div><strong>Matched Category:</strong> <span class="font-mono">{{ testResult.category }}</span></div>
                 <div><strong>Trigger Reason:</strong> <span>{{ testResult.reason }}</span></div>
-                <div><strong>Confidence:</strong> <span class="font-mono">99.4% (SophosLabs Cloud Feed)</span></div>
+                <div><strong>Confidence:</strong> <span class="font-mono">99.4% (Zenarmor L7 Cloud Feed)</span></div>
               </div>
             </div>
           </div>
 
-          <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end">
+          <div class="px-6 py-3.5 bg-[#f4f6f9] border-t border-slate-200 flex justify-end">
             <button
               type="button"
               @click="isUrlTesterOpen = false"
@@ -863,7 +863,7 @@
             <button
               type="button"
               @click="copyPayloadToClipboard"
-              class="px-4 py-1.5 rounded-lg bg-[#2563eb] hover:bg-blue-600 text-white font-bold text-xs transition-colors cursor-pointer"
+              class="px-4 py-1.5 rounded-lg bg-[#0072ce] hover:bg-blue-600 text-white font-bold text-xs transition-colors cursor-pointer"
             >
               {{ isCopied ? 'Copied!' : 'Copy JSON' }}
             </button>
@@ -1275,7 +1275,7 @@ const generateCleanPayload = () => {
     blocked_categories: [...blockedCategoryIds.value].sort(),
     total_blocked_categories: blockedCategoryIds.value.length,
     action_mode: 'block_and_log',
-    custom_block_page_message: 'Access to this web resource is blocked by Sophos XGS Corporate Security Policy.'
+    custom_block_page_message: 'Access to this web resource is blocked by Astaro-Next Corporate Security Policy.'
   }
 }
 
@@ -1318,7 +1318,7 @@ const fetchPolicy = async (isManual = false) => {
       }
     }
   } catch (err) {
-    console.warn('[WebProtection] Live backend unreachable, operating with standard Sophos SFOS defaults:', err.message)
+    console.warn('[WebProtection] Live backend unreachable, operating with standard Sophos UTM Defaults:', err.message)
     if (isManual) {
       addToast('Gateway Telemetry Note', 'Operating on active cached policy configuration.', 'info')
     }
