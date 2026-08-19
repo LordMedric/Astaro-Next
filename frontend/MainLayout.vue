@@ -69,30 +69,30 @@
           <div class="hidden xl:flex items-center gap-4 bg-slate-950/60 px-3 py-1.5 rounded-md border border-slate-800">
             <!-- Hostname -->
             <div class="flex items-center gap-1.5 text-slate-300">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span class="text-slate-400">HOST:</span>
-              <span class="font-semibold text-slate-200">{{ applianceHost }}</span>
+              <span class="font-semibold text-slate-200">{{ liveMetrics.hostname }}</span>
             </div>
             <div class="w-px h-3.5 bg-slate-800"></div>
 
             <!-- CPU Metric -->
             <div class="flex items-center gap-1.5">
               <span class="text-slate-400">CPU:</span>
-              <span :class="cpuUsage > 80 ? 'text-rose-400 font-bold' : 'text-emerald-400 font-semibold'">{{ cpuUsage }}%</span>
+              <span :class="liveMetrics.cpu > 80 ? 'text-rose-400 font-bold' : 'text-emerald-400 font-semibold'">{{ liveMetrics.cpu }}%</span>
             </div>
             <div class="w-px h-3.5 bg-slate-800"></div>
 
             <!-- RAM Metric -->
             <div class="flex items-center gap-1.5">
               <span class="text-slate-400">RAM:</span>
-              <span :class="memUsage > 85 ? 'text-rose-400 font-bold' : 'text-emerald-400 font-semibold'">{{ memUsage }}%</span>
+              <span :class="liveMetrics.memory > 85 ? 'text-rose-400 font-bold' : 'text-emerald-400 font-semibold'">{{ liveMetrics.memory }}%</span>
             </div>
             <div class="w-px h-3.5 bg-slate-800"></div>
 
             <!-- Uptime -->
             <div class="flex items-center gap-1.5 text-slate-400">
               <span>UP:</span>
-              <span class="text-slate-200">{{ uptime }}</span>
+              <span class="text-slate-200 font-mono text-[11px]">{{ liveMetrics.uptime }}</span>
             </div>
           </div>
 
@@ -340,7 +340,7 @@
 </template>
 
 <script setup>
-import { ref, computed, h } from 'vue'
+import { ref, computed, onMounted, onUnmounted, h } from 'vue'
 
 // Props definitions
 const props = defineProps({
@@ -359,27 +359,56 @@ const props = defineProps({
   currentUser: {
     type: String,
     default: 'admin'
-  },
-  applianceHost: {
-    type: String,
-    default: 'astaro-next.internal'
-  },
-  cpuUsage: {
-    type: Number,
-    default: 18
-  },
-  memUsage: {
-    type: Number,
-    default: 44
-  },
-  uptime: {
-    type: String,
-    default: '24d 11h 05m'
   }
 })
 
 // Emits for routing/navigation events, authentication, and manual refreshes
 const emit = defineEmits(['navigate', 'logout', 'refresh'])
+
+// Live Real-Time Hardware Telemetry State
+const liveMetrics = ref({
+  hostname: (typeof window !== 'undefined' && window.location && window.location.hostname) ? window.location.hostname : 'astaro-gateway',
+  cpu: 12,
+  memory: 34,
+  uptime: '1h 22m'
+})
+
+let headerPollTimer = null
+
+const fetchHeaderTelemetry = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (!axiosLib) return
+
+  try {
+    const res = await axiosLib.get('/api/system/control-center')
+    if (res.data) {
+      if (res.data.system) {
+        liveMetrics.value.hostname = res.data.system.hostname || window.location.hostname
+        if (res.data.system.uptime) {
+          liveMetrics.value.uptime = res.data.system.uptime
+        }
+      }
+      if (res.data.performance) {
+        const p = res.data.performance
+        liveMetrics.value.cpu = Math.round(Number(p.cpuPercent ?? p.cpu ?? liveMetrics.value.cpu))
+        liveMetrics.value.memory = Math.round(Number(p.memoryPercent ?? p.memory ?? liveMetrics.value.memory))
+      }
+    }
+  } catch (err) {
+    // Non-intrusive fallback
+  }
+}
+
+onMounted(() => {
+  fetchHeaderTelemetry()
+  headerPollTimer = setInterval(fetchHeaderTelemetry, 4000)
+})
+
+onUnmounted(() => {
+  if (headerPollTimer) {
+    clearInterval(headerPollTimer)
+  }
+})
 
 // Mobile drawer visibility toggle
 const isMobileMenuOpen = ref(false)
