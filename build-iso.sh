@@ -23,8 +23,22 @@ echo "          Astaro-Next Firewall OS ISO Builder                      "
 echo "===================================================================="
 
 # 1. Install ISO building prerequisites
-echo "[+] Step 1/6: Installing live-build & ISO mastering tools..."
+echo "[+] Step 1/6: Cleaning apt sources and installing ISO mastering tools..."
 export DEBIAN_FRONTEND=noninteractive
+
+# Automatically purge any cdrom sources leftover from offline installer ISO
+sed -i 's/^[[:space:]]*deb[[:space:]]*cdrom/# deb cdrom/g' /etc/apt/sources.list 2>/dev/null || true
+sed -i '/cdrom:/d' /etc/apt/sources.list 2>/dev/null || true
+if [ -d /etc/apt/sources.list.d ]; then
+  for f in /etc/apt/sources.list.d/*.sources /etc/apt/sources.list.d/*.list; do
+    if [ -f "$f" ]; then
+      sed -i '/cdrom:/d' "$f" 2>/dev/null || true
+      sed -i '/URIs:.*cdrom/d' "$f" 2>/dev/null || true
+      sed -i 's/^[[:space:]]*deb[[:space:]]*cdrom/# deb cdrom/g' "$f" 2>/dev/null || true
+    fi
+  done
+fi
+
 apt-get update -y
 apt-get install -y --no-install-recommends \
   live-build \
@@ -69,7 +83,11 @@ lb config \
 echo "[+] Step 4/6: Defining firewall & networking package list..."
 mkdir -p config/package-lists
 cat << 'EOF' > config/package-lists/astaro.list.chroot
-# Core Networking & System
+# Essential Live Boot Hooks & System
+live-boot
+live-config
+live-config-systemd
+live-tools
 linux-image-amd64
 systemd
 systemd-sysv
