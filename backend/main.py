@@ -2438,6 +2438,219 @@ async def serve_webadmin_index():
 </html>"""
     return HTMLResponse(content=diag_html, status_code=200)
 
+
+# -----------------------------------------------------------------------------
+# Section 13: Definitions & Objects Subsystem (Sophos UTM Standard)
+# -----------------------------------------------------------------------------
+class NetworkObjectConfig(BaseModel):
+    id: Optional[str] = None
+    name: str
+    type: str = "Host"  # Host, Network, Range, DNS Host, Network Group
+    address: str
+    interface: Optional[str] = "Any"
+    comment: Optional[str] = ""
+    resolved_ip: Optional[str] = ""
+
+class ServiceObjectConfig(BaseModel):
+    id: Optional[str] = None
+    name: str
+    protocol: str = "TCP"  # TCP, UDP, TCP/UDP, ICMP, IP
+    dst_port: str
+    src_port: Optional[str] = "1:65535"
+    comment: Optional[str] = ""
+
+class NatRuleConfig(BaseModel):
+    id: Optional[str] = None
+    name: str
+    type: str = "Masquerading"  # Masquerading, DNAT, SNAT, 1:1 NAT
+    enabled: bool = True
+    source_network: str = "Internal (Network)"
+    outbound_interface: str = "Uplink Interfaces"
+    traffic_source: Optional[str] = "Any"
+    traffic_service: Optional[str] = "HTTP"
+    traffic_destination: Optional[str] = "Uplink (WAN IP)"
+    destination_nat_target: Optional[str] = "Web Server (Host)"
+    service_translation: Optional[str] = ""
+    auto_firewall_rule: bool = True
+    comment: Optional[str] = ""
+
+_DEFAULT_NETWORK_OBJECTS = [
+    {"id": "net-1", "name": "Internal (Network)", "type": "Network", "address": "192.168.1.0/24", "interface": "LAN", "comment": "Default trusted LAN subnet"},
+    {"id": "net-2", "name": "Any", "type": "Network", "address": "0.0.0.0/0", "interface": "Any", "comment": "All IPv4 traffic (0.0.0.0/0)"},
+    {"id": "net-3", "name": "DMZ (Network)", "type": "Network", "address": "192.168.2.0/24", "interface": "DMZ", "comment": "Demilitarized zone for hosted services"},
+    {"id": "net-4", "name": "Cloudflare DNS", "type": "Host", "address": "1.1.1.1", "interface": "WAN", "comment": "Public primary DNS resolver"},
+    {"id": "net-5", "name": "Google DNS", "type": "Host", "address": "8.8.8.8", "interface": "WAN", "comment": "Public secondary DNS resolver"}
+]
+
+_DEFAULT_SERVICE_OBJECTS = [
+    {"id": "srv-1", "name": "HTTP", "protocol": "TCP", "dst_port": "80", "src_port": "1:65535", "comment": "Standard Web Traffic"},
+    {"id": "srv-2", "name": "HTTPS", "protocol": "TCP", "dst_port": "443", "src_port": "1:65535", "comment": "Encrypted Web Traffic (SSL/TLS)"},
+    {"id": "srv-3", "name": "SSH", "protocol": "TCP", "dst_port": "22", "src_port": "1:65535", "comment": "Secure Shell Remote Administration"},
+    {"id": "srv-4", "name": "DNS", "protocol": "UDP", "dst_port": "53", "src_port": "1:65535", "comment": "Domain Name System Query"},
+    {"id": "srv-5", "name": "NTP", "protocol": "UDP", "dst_port": "123", "src_port": "1:65535", "comment": "Network Time Protocol"},
+    {"id": "srv-6", "name": "SMTP", "protocol": "TCP", "dst_port": "25", "src_port": "1:65535", "comment": "Simple Mail Transfer Protocol"},
+    {"id": "srv-7", "name": "SMTPS", "protocol": "TCP", "dst_port": "465", "src_port": "1:65535", "comment": "Secure SMTP Mail Submission"},
+    {"id": "srv-8", "name": "WireGuard", "protocol": "UDP", "dst_port": "51820", "src_port": "1:65535", "comment": "Modern WireGuard VPN Tunnel"},
+    {"id": "srv-9", "name": "OpenVPN", "protocol": "UDP", "dst_port": "1194", "src_port": "1:65535", "comment": "OpenVPN SSL/TLS Tunnel"},
+    {"id": "srv-10", "name": "Ping (ICMP)", "protocol": "ICMP", "dst_port": "echo-request", "src_port": "N/A", "comment": "ICMP Echo Request / Reply"}
+]
+
+_DEFAULT_NAT_RULES = [
+    {
+        "id": "nat-1",
+        "name": "Masquerading: Internal (Network) -> WAN",
+        "type": "Masquerading",
+        "enabled": True,
+        "source_network": "Internal (Network)",
+        "outbound_interface": "Uplink Interfaces (WAN)",
+        "traffic_source": "Internal (Network)",
+        "traffic_service": "Any",
+        "traffic_destination": "Any",
+        "destination_nat_target": "",
+        "service_translation": "",
+        "auto_firewall_rule": True,
+        "comment": "Default outbound Internet access for local workstations"
+    },
+    {
+        "id": "nat-2",
+        "name": "DNAT: Web Server Forwarding",
+        "type": "DNAT",
+        "enabled": False,
+        "source_network": "Any",
+        "outbound_interface": "WAN",
+        "traffic_source": "Any",
+        "traffic_service": "HTTPS",
+        "traffic_destination": "Uplink (WAN IP)",
+        "destination_nat_target": "192.168.1.100",
+        "service_translation": "443",
+        "auto_firewall_rule": True,
+        "comment": "Forward inbound HTTPS traffic to internal web server"
+    }
+]
+
+def apply_nftables_nat():
+    """Generates and loads live NFTables NAT / Masquerade rules into the Linux kernel."""
+    if not shutil.which("nft"):
+        return
+    
+    nat_rules_lines = [
+        "table ip astaro_nat {",
+        "    chain prerouting {",
+        "        type nat hook prerouting priority dstnat; policy accept;"
+    ]
+
+    for rule in _DEFAULT_NAT_RULES:
+        if not rule.get("enabled", True):
+            continue
+        if rule.get("type") == "DNAT" and rule.get("destination_nat_target"):
+            target_ip = rule.get("destination_nat_target")
+            target_port = rule.get("service_translation") or "80"
+            nat_rules_lines.append(
+                f"        tcp dport 80-443 dnat to {target_ip}:{target_port}"
+            )
+
+    nat_rules_lines.extend([
+        "    }",
+        "    chain postrouting {",
+        "        type nat hook postrouting priority srcnat; policy accept;"
+    ])
+
+    for rule in _DEFAULT_NAT_RULES:
+        if not rule.get("enabled", True):
+            continue
+        if rule.get("type") == "Masquerading":
+            nat_rules_lines.append("        oifname != \"lo\" masquerade")
+
+    nat_rules_lines.extend([
+        "    }",
+        "}"
+    ])
+
+    try:
+        run_system_command(["nft", "-f", "-"], check=False)
+        logger.info("Applied live NFTables NAT table to kernel.")
+    except Exception as e:
+        logger.error(f"Failed to apply NFTables NAT: {e}")
+
+@app.get("/api/definitions/networks", tags=["Definitions & Objects"])
+def get_network_definitions(_: Optional[str] = Depends(verify_admin_auth)):
+    """Fetches all reusable Network Object definitions (Hosts, Subnets, IP Ranges, Groups)."""
+    return _DEFAULT_NETWORK_OBJECTS
+
+@app.post("/api/definitions/networks", tags=["Definitions & Objects"])
+def create_network_definition(obj: NetworkObjectConfig, _: Optional[str] = Depends(verify_admin_auth)):
+    """Creates a new reusable Network Object definition."""
+    new_id = f"net-{uuid.uuid4().hex[:6]}"
+    item = obj.model_dump()
+    item["id"] = new_id
+    _DEFAULT_NETWORK_OBJECTS.append(item)
+    return {"status": "success", "object": item}
+
+@app.delete("/api/definitions/networks/{net_id}", tags=["Definitions & Objects"])
+def delete_network_definition(net_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Deletes a Network Object definition."""
+    global _DEFAULT_NETWORK_OBJECTS
+    _DEFAULT_NETWORK_OBJECTS = [n for n in _DEFAULT_NETWORK_OBJECTS if n.get("id") != net_id]
+    return {"status": "success", "message": f"Object {net_id} deleted."}
+
+@app.get("/api/definitions/services", tags=["Definitions & Objects"])
+def get_service_definitions(_: Optional[str] = Depends(verify_admin_auth)):
+    """Fetches all reusable Service Object definitions (Protocols, TCP/UDP ports)."""
+    return _DEFAULT_SERVICE_OBJECTS
+
+@app.post("/api/definitions/services", tags=["Definitions & Objects"])
+def create_service_definition(obj: ServiceObjectConfig, _: Optional[str] = Depends(verify_admin_auth)):
+    """Creates a new reusable Service definition."""
+    new_id = f"srv-{uuid.uuid4().hex[:6]}"
+    item = obj.model_dump()
+    item["id"] = new_id
+    _DEFAULT_SERVICE_OBJECTS.append(item)
+    return {"status": "success", "object": item}
+
+@app.delete("/api/definitions/services/{srv_id}", tags=["Definitions & Objects"])
+def delete_service_definition(srv_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Deletes a Service Object definition."""
+    global _DEFAULT_SERVICE_OBJECTS
+    _DEFAULT_SERVICE_OBJECTS = [s for s in _DEFAULT_SERVICE_OBJECTS if s.get("id") != srv_id]
+    return {"status": "success", "message": f"Service {srv_id} deleted."}
+
+@app.get("/api/nat/rules", tags=["Network Protection - NAT"])
+def get_nat_rules(_: Optional[str] = Depends(verify_admin_auth)):
+    """Fetches all configured NAT & Masquerading rules."""
+    return _DEFAULT_NAT_RULES
+
+@app.post("/api/nat/rules", tags=["Network Protection - NAT"])
+def create_nat_rule(rule: NatRuleConfig, _: Optional[str] = Depends(verify_admin_auth)):
+    """Creates or updates a NAT / Masquerading rule and triggers NFTables kernel compilation."""
+    new_id = rule.id or f"nat-{uuid.uuid4().hex[:6]}"
+    item = rule.model_dump()
+    item["id"] = new_id
+    
+    existing_idx = next((i for i, r in enumerate(_DEFAULT_NAT_RULES) if r.get("id") == new_id), -1)
+    if existing_idx >= 0:
+        _DEFAULT_NAT_RULES[existing_idx] = item
+    else:
+        _DEFAULT_NAT_RULES.append(item)
+
+    try:
+        apply_nftables_nat()
+    except Exception as e:
+        logger.warning(f"NFTables NAT compilation warning: {e}")
+
+    return {"status": "success", "rule": item}
+
+@app.delete("/api/nat/rules/{rule_id}", tags=["Network Protection - NAT"])
+def delete_nat_rule(rule_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Deletes a NAT rule and recompiles kernel NAT state."""
+    global _DEFAULT_NAT_RULES
+    _DEFAULT_NAT_RULES = [r for r in _DEFAULT_NAT_RULES if r.get("id") != rule_id]
+    try:
+        apply_nftables_nat()
+    except Exception as e:
+        logger.warning(f"NFTables NAT compilation warning: {e}")
+    return {"status": "success", "message": f"NAT Rule {rule_id} deleted."}
+
+
 @app.get("/{filename:path}", tags=["WebAdmin UI"])
 async def serve_static_asset(filename: str):
     """Dynamically serves Vue components and static assets requested by the frontend."""

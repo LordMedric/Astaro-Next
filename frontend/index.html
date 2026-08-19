@@ -93,6 +93,8 @@
         'setup-wizard': Vue.defineAsyncComponent(() => loadModule('./SetupWizard.vue', options)),
         'certificates-view': Vue.defineAsyncComponent(() => loadModule('./Certificates.vue', options)),
         'vpn-settings': Vue.defineAsyncComponent(() => loadModule('./VpnSettings.vue', options)),
+        'definitions-view': Vue.defineAsyncComponent(() => loadModule('./Definitions.vue', options)),
+        'nat-rules': Vue.defineAsyncComponent(() => loadModule('./NatRules.vue', options)),
         'main-layout': Vue.defineAsyncComponent(() => loadModule('./MainLayout.vue', options))
       },
       data() {
@@ -128,6 +130,14 @@
           />
           <firewall-rules
             v-else-if="currentItem === 'rules_policies' || currentItem === 'firewall_rules' || currentItem === 'firewall'"
+            :authToken="authToken"
+          />
+          <nat-rules
+            v-else-if="currentItem === 'nat' || currentItem === 'nat_rules' || currentItem === 'masquerading' || currentItem === 'dnat'"
+            :authToken="authToken"
+          />
+          <definitions-view
+            v-else-if="currentItem === 'definitions' || currentItem === 'objects' || currentItem === 'network_definitions' || currentItem === 'service_definitions'"
             :authToken="authToken"
           />
           <interfaces-view
