@@ -19,8 +19,15 @@ echo "          Astaro-Next Next-Gen Firewall OS Installer               "
 echo "===================================================================="
 
 # 1. Update and install system dependencies
-echo "[+] Step 1/5: Installing core Linux networking & runtime packages..."
+echo "[+] Step 1/5: Cleaning apt sources and installing Linux packages..."
 export DEBIAN_FRONTEND=noninteractive
+
+# Automatically disable cdrom sources leftover from offline installer ISO
+sed -i 's/^[[:space:]]*deb[[:space:]]*cdrom/# deb cdrom/g' /etc/apt/sources.list 2>/dev/null || true
+if [ -d /etc/apt/sources.list.d ]; then
+  sed -i 's/^[[:space:]]*deb[[:space:]]*cdrom/# deb cdrom/g' /etc/apt/sources.list.d/*.list 2>/dev/null || true
+fi
+
 apt-get update -y
 apt-get install -y --no-install-recommends \
   curl \
