@@ -2547,6 +2547,7 @@ class NetworkObjectConfig(BaseModel):
     name: str
     type: str = "Host"  # Host, Network, Range, DNS Host, Network Group
     address: str
+    members: Optional[List[str]] = []
     interface: Optional[str] = "Any"
     comment: Optional[str] = ""
     resolved_ip: Optional[str] = ""
@@ -2554,9 +2555,10 @@ class NetworkObjectConfig(BaseModel):
 class ServiceObjectConfig(BaseModel):
     id: Optional[str] = None
     name: str
-    protocol: str = "TCP"  # TCP, UDP, TCP/UDP, ICMP, IP
+    protocol: str = "TCP"  # TCP, UDP, TCP/UDP, ICMP, IP, Group
     dst_port: str
     src_port: Optional[str] = "1:65535"
+    members: Optional[List[str]] = []
     comment: Optional[str] = ""
 
 class NatRuleConfig(BaseModel):
@@ -2575,24 +2577,29 @@ class NatRuleConfig(BaseModel):
     comment: Optional[str] = ""
 
 _DEFAULT_NETWORK_OBJECTS = [
-    {"id": "net-1", "name": "Internal (Network)", "type": "Network", "address": "192.168.1.0/24", "interface": "LAN", "comment": "Default trusted LAN subnet"},
-    {"id": "net-2", "name": "Any", "type": "Network", "address": "0.0.0.0/0", "interface": "Any", "comment": "All IPv4 traffic (0.0.0.0/0)"},
-    {"id": "net-3", "name": "DMZ (Network)", "type": "Network", "address": "192.168.2.0/24", "interface": "DMZ", "comment": "Demilitarized zone for hosted services"},
-    {"id": "net-4", "name": "Cloudflare DNS", "type": "Host", "address": "1.1.1.1", "interface": "WAN", "comment": "Public primary DNS resolver"},
-    {"id": "net-5", "name": "Google DNS", "type": "Host", "address": "8.8.8.8", "interface": "WAN", "comment": "Public secondary DNS resolver"}
+    {"id": "net-1", "name": "Internal (Network)", "type": "Network", "address": "192.168.1.0/24", "members": [], "interface": "LAN", "comment": "Default trusted LAN subnet"},
+    {"id": "net-2", "name": "Any", "type": "Network", "address": "0.0.0.0/0", "members": [], "interface": "Any", "comment": "All IPv4 traffic (0.0.0.0/0)"},
+    {"id": "net-3", "name": "DMZ (Network)", "type": "Network", "address": "192.168.2.0/24", "members": [], "interface": "DMZ", "comment": "Demilitarized zone for hosted services"},
+    {"id": "net-4", "name": "Cloudflare DNS", "type": "Host", "address": "1.1.1.1", "members": [], "interface": "WAN", "comment": "Public primary DNS resolver"},
+    {"id": "net-5", "name": "Google DNS", "type": "Host", "address": "8.8.8.8", "members": [], "interface": "WAN", "comment": "Public secondary DNS resolver"},
+    {"id": "net-6", "name": "Public DNS Resolvers Group", "type": "Network Group", "address": "1.1.1.1, 8.8.8.8, 9.9.9.9", "members": ["Cloudflare DNS", "Google DNS", "Quad9 DNS (9.9.9.9)"], "interface": "WAN", "comment": "Group of trusted public DNS resolvers"},
+    {"id": "net-7", "name": "Internal Corporate Subnets Group", "type": "Network Group", "address": "192.168.1.0/24, 10.10.0.0/16", "members": ["Internal (Network)", "Branch Subnet (10.10.0.0/16)"], "interface": "LAN", "comment": "All corporate internal network subnets"}
 ]
 
 _DEFAULT_SERVICE_OBJECTS = [
-    {"id": "srv-1", "name": "HTTP", "protocol": "TCP", "dst_port": "80", "src_port": "1:65535", "comment": "Standard Web Traffic"},
-    {"id": "srv-2", "name": "HTTPS", "protocol": "TCP", "dst_port": "443", "src_port": "1:65535", "comment": "Encrypted Web Traffic (SSL/TLS)"},
-    {"id": "srv-3", "name": "SSH", "protocol": "TCP", "dst_port": "22", "src_port": "1:65535", "comment": "Secure Shell Remote Administration"},
-    {"id": "srv-4", "name": "DNS", "protocol": "UDP", "dst_port": "53", "src_port": "1:65535", "comment": "Domain Name System Query"},
-    {"id": "srv-5", "name": "NTP", "protocol": "UDP", "dst_port": "123", "src_port": "1:65535", "comment": "Network Time Protocol"},
-    {"id": "srv-6", "name": "SMTP", "protocol": "TCP", "dst_port": "25", "src_port": "1:65535", "comment": "Simple Mail Transfer Protocol"},
-    {"id": "srv-7", "name": "SMTPS", "protocol": "TCP", "dst_port": "465", "src_port": "1:65535", "comment": "Secure SMTP Mail Submission"},
-    {"id": "srv-8", "name": "WireGuard", "protocol": "UDP", "dst_port": "51820", "src_port": "1:65535", "comment": "Modern WireGuard VPN Tunnel"},
-    {"id": "srv-9", "name": "OpenVPN", "protocol": "UDP", "dst_port": "1194", "src_port": "1:65535", "comment": "OpenVPN SSL/TLS Tunnel"},
-    {"id": "srv-10", "name": "Ping (ICMP)", "protocol": "ICMP", "dst_port": "echo-request", "src_port": "N/A", "comment": "ICMP Echo Request / Reply"}
+    {"id": "srv-1", "name": "HTTP", "protocol": "TCP", "dst_port": "80", "src_port": "1:65535", "members": [], "comment": "Standard Web Traffic"},
+    {"id": "srv-2", "name": "HTTPS", "protocol": "TCP", "dst_port": "443", "src_port": "1:65535", "members": [], "comment": "Encrypted Web Traffic (SSL/TLS)"},
+    {"id": "srv-3", "name": "SSH", "protocol": "TCP", "dst_port": "22", "src_port": "1:65535", "members": [], "comment": "Secure Shell Remote Administration"},
+    {"id": "srv-4", "name": "DNS", "protocol": "UDP", "dst_port": "53", "src_port": "1:65535", "members": [], "comment": "Domain Name System Query"},
+    {"id": "srv-5", "name": "NTP", "protocol": "UDP", "dst_port": "123", "src_port": "1:65535", "members": [], "comment": "Network Time Protocol"},
+    {"id": "srv-6", "name": "SMTP", "protocol": "TCP", "dst_port": "25", "src_port": "1:65535", "members": [], "comment": "Simple Mail Transfer Protocol"},
+    {"id": "srv-7", "name": "SMTPS", "protocol": "TCP", "dst_port": "465", "src_port": "1:65535", "members": [], "comment": "Secure SMTP Mail Submission"},
+    {"id": "srv-8", "name": "WireGuard", "protocol": "UDP", "dst_port": "51820", "src_port": "1:65535", "members": [], "comment": "Modern WireGuard VPN Tunnel"},
+    {"id": "srv-9", "name": "OpenVPN", "protocol": "UDP", "dst_port": "1194", "src_port": "1:65535", "members": [], "comment": "OpenVPN SSL/TLS Tunnel"},
+    {"id": "srv-10", "name": "Ping (ICMP)", "protocol": "ICMP", "dst_port": "echo-request", "src_port": "N/A", "members": [], "comment": "ICMP Echo Request / Reply"},
+    {"id": "srv-11", "name": "Web Surfing Group", "protocol": "Group", "dst_port": "80, 443, 53", "src_port": "1:65535", "members": ["HTTP (80)", "HTTPS (443)", "DNS (53)"], "comment": "Web protocols and domain resolution group"},
+    {"id": "srv-12", "name": "Mail Server Protocols Group", "protocol": "Group", "dst_port": "25, 465, 587, 993", "src_port": "1:65535", "members": ["SMTP (25)", "SMTPS (465)", "Submission (587)", "IMAPS (993)"], "comment": "Inbound and outbound email routing services"},
+    {"id": "srv-13", "name": "Remote Administration Group", "protocol": "Group", "dst_port": "22, 4444, 3389", "src_port": "1:65535", "members": ["SSH (22)", "WebAdmin (4444)", "RDP (3389)"], "comment": "Encrypted administrative remote access"}
 ]
 
 _DEFAULT_NAT_RULES = [
