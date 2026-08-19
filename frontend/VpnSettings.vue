@@ -258,24 +258,94 @@
       </div>
     </div>
 
-    <!-- NON-WIREGUARD TAB PLACEHOLDER -->
-    <div v-if="activeTab !== 'wireguard'" class="bg-white rounded-xl border border-slate-200 shadow-sm p-8 text-center mb-6">
+    <!-- TAB 2: SITE-TO-SITE & CLIENT OUTBOUND TUNNELS -->
+    <div v-if="activeTab === 'tunnels'" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col mb-6">
+      <div class="px-5 py-3.5 border-b border-slate-200 bg-[#f4f6f9]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
+          <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Site-to-Site & Client Tunnels Matrix</h2>
+          <span class="text-[11px] text-slate-400 font-mono">({{ tunnelsList.length }} tunnels configured)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            @click="isTunnelModalOpen = true"
+            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#0072ce] hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Add Client / Site-to-Site Tunnel</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 bg-[#f4f6f9] text-[11px] font-bold text-slate-500 uppercase tracking-wider select-none">
+              <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Tunnel Name</th>
+              <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Protocol / Type</th>
+              <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Remote Gateway</th>
+              <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Virtual IP</th>
+              <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Routed Remote Subnets</th>
+              <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Status / Latency</th>
+              <th scope="col" class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-slate-700">
+            <tr v-for="tun in tunnelsList" :key="tun.tunnel_name" class="hover:bg-blue-50/20 transition-colors">
+              <td class="py-3.5 px-4 font-bold text-slate-900 border-r border-slate-200/80 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full" :class="tun.enabled ? 'bg-emerald-500' : 'bg-slate-300'"></span>
+                <span>{{ tun.tunnel_name }}</span>
+              </td>
+              <td class="py-3.5 px-4 border-r border-slate-200/80 font-mono text-[11px]">
+                <span class="px-2 py-0.5 rounded bg-blue-50 text-[#0072ce] border border-blue-200 font-bold uppercase">{{ tun.tunnel_type }}</span>
+              </td>
+              <td class="py-3.5 px-4 border-r border-slate-200/80 font-mono text-[11px] text-slate-800">
+                {{ tun.remote_endpoint }}
+              </td>
+              <td class="py-3.5 px-4 border-r border-slate-200/80 font-mono text-[11px]">
+                {{ tun.local_virtual_ip }}
+              </td>
+              <td class="py-3.5 px-4 border-r border-slate-200/80 font-mono text-[11px]">
+                <div v-for="sub in tun.remote_subnets" :key="sub" class="inline-block mr-1.5 px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200 text-slate-700">
+                  {{ sub }}
+                </div>
+              </td>
+              <td class="py-3.5 px-4 border-r border-slate-200/80">
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Active ({{ tun.latency_ms }}ms)
+                </span>
+              </td>
+              <td class="py-3.5 px-4 text-right">
+                <button
+                  type="button"
+                  @click="tun.enabled = !tun.enabled"
+                  class="px-2.5 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer"
+                  :class="tun.enabled ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
+                >
+                  {{ tun.enabled ? 'Disable' : 'Enable' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: IPSEC IKEV2 GATEWAY PLACEHOLDER -->
+    <div v-if="activeTab === 'ipsec'" class="bg-white rounded-xl border border-slate-200 shadow-sm p-8 text-center mb-6">
       <div class="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto mb-4 text-slate-500">
         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       </div>
-      <h3 class="text-base font-bold text-slate-900">{{ activeTab === 'ssl' ? 'SSL VPN (OpenVPN) Subsystem' : 'IPsec VPN (IKEv2) Gateway' }}</h3>
+      <h3 class="text-base font-bold text-slate-900">IPsec / IKEv2 Gateway Subsystem</h3>
       <p class="text-xs text-slate-500 max-w-md mx-auto mt-1">
-        This gateway subsystem is provisioned and running in standby compatibility mode. Switch to WireGuard for high-speed next-generation remote peer management.
+        StrongSwan cryptographic stack is active. Configure Site-to-Site IPsec tunnels in the Client & Site-to-Site tab.
       </p>
-      <button
-        type="button"
-        @click="activeTab = 'wireguard'"
-        class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0072ce] text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer"
-      >
-        <span>Switch to WireGuard VPN</span>
-      </button>
     </div>
 
     <!-- HIGH-UTILITY REMOTE USER OVERVIEW TABLE CONTAINER -->
@@ -831,9 +901,9 @@ const IpsecIcon = {
 const activeTab = ref('wireguard')
 
 const configTabs = computed(() => [
-  { id: 'wireguard', label: 'WireGuard VPN', icon: WireGuardIcon, badge: `${peersList.value.length} peers` },
-  { id: 'ssl', label: 'SSL VPN', icon: SslVpnIcon, badge: 'Standby' },
-  { id: 'ipsec', label: 'IPsec VPN', icon: IpsecIcon, badge: 'Standby' }
+  { id: 'wireguard', label: 'Remote Access VPN (Server)', icon: WireGuardIcon, badge: `${peersList.value.length} peers` },
+  { id: 'tunnels', label: 'Site-to-Site & Client Tunnels', icon: SslVpnIcon, badge: `${tunnelsList.value.length} tunnels` },
+  { id: 'ipsec', label: 'IPsec / IKEv2 Gateway', icon: IpsecIcon, badge: 'Standby' }
 ])
 
 // -----------------------------------------------------------------------------
@@ -842,6 +912,7 @@ const configTabs = computed(() => [
 const isLoading = ref(false)
 const isSubmitting = ref(false)
 const isModalOpen = ref(false)
+const isTunnelModalOpen = ref(false)
 const isConfigCopied = ref(false)
 const validationError = ref('')
 const searchQuery = ref('')
@@ -850,6 +921,37 @@ const lastSyncedTime = ref(new Date().toLocaleTimeString())
 const generatedProfileBlock = ref('')
 
 const toasts = ref([])
+
+const tunnelsList = ref([
+  {
+    tunnel_name: 'HQ-Datacenter-Tunnel',
+    tunnel_type: 'wireguard',
+    remote_endpoint: 'vpn.corp.company.com:51820',
+    local_virtual_ip: '10.250.0.2/30',
+    remote_subnets: ['10.100.0.0/16', '172.16.0.0/16'],
+    remote_public_key: 'xK8b3s90j12LmOP947vbcKqLmNwz458vBnmQ123aA=',
+    route_mode: 'split_tunnel',
+    status: 'connected',
+    latency_ms: 14,
+    transfer_rx: '142.8 MB',
+    transfer_tx: '89.4 MB',
+    enabled: true
+  },
+  {
+    tunnel_name: 'Cloud-AWS-VPC-Link',
+    tunnel_type: 'ipsec',
+    remote_endpoint: '52.95.120.45:4500',
+    local_virtual_ip: '169.254.10.1/30',
+    remote_subnets: ['172.31.0.0/16'],
+    remote_public_key: 'N/A (IKEv2 Pre-shared)',
+    route_mode: 'policy_based',
+    status: 'connected',
+    latency_ms: 28,
+    transfer_rx: '412.3 MB',
+    transfer_tx: '218.1 MB',
+    enabled: true
+  }
+])
 
 // Peer List Initial Fallback Mock & Store
 const peersList = ref([

@@ -91,6 +91,7 @@
         'web-protection': Vue.defineAsyncComponent(() => loadModule('./WebProtection.vue', options)),
         'mail-manager': Vue.defineAsyncComponent(() => loadModule('./MailManager.vue', options)),
         'setup-wizard': Vue.defineAsyncComponent(() => loadModule('./SetupWizard.vue', options)),
+        'certificates-view': Vue.defineAsyncComponent(() => loadModule('./Certificates.vue', options)),
         'vpn-settings': Vue.defineAsyncComponent(() => loadModule('./VpnSettings.vue', options)),
         'main-layout': Vue.defineAsyncComponent(() => loadModule('./MainLayout.vue', options))
       },
@@ -135,6 +136,10 @@
           />
           <vpn-settings
             v-else-if="currentItem === 'vpn' || currentItem === 'vpn_settings' || currentItem === 'wireguard' || currentItem === 'wireguard_vpn' || currentItem === 'ipsec' || currentItem === 'openvpn'"
+            :authToken="authToken"
+          />
+          <certificates-view
+            v-else-if="currentItem === 'certificates' || currentItem === 'certs' || currentItem === 'pki'"
             :authToken="authToken"
           />
           <waf-settings
