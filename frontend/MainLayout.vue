@@ -1,9 +1,9 @@
 <template>
   <div class="min-h-screen bg-[#161e29] text-slate-100 font-sans flex flex-col antialiased selection:bg-[#0072ce] selection:text-white">
-    <!-- Top Global System Header Bar (Sophos UTM 9 Style) -->
+    <!-- Top Global System Header Bar (Astaro / Sophos UTM Style) -->
     <header class="bg-[#1b232e] border-b border-slate-700/80 sticky top-0 z-50 flex-none shadow-sm">
-      <!-- High-contrast corporate UTM blue top accent bar -->
-      <div class="h-1 w-full bg-[#0072ce]"></div>
+      <!-- High-contrast corporate Astaro Orange top accent bar -->
+      <div class="h-1 w-full bg-[#ee7f00]"></div>
 
       <div class="px-4 py-2.5 flex items-center justify-between gap-4">
         <!-- Left: Brand Logo & Mobile Toggle -->
@@ -12,7 +12,7 @@
           <button
             type="button"
             @click="isMobileMenuOpen = !isMobileMenuOpen"
-            class="lg:hidden inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0072ce] transition-colors"
+            class="lg:hidden inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#ee7f00] transition-colors"
             aria-label="Toggle navigation menu"
             :aria-expanded="isMobileMenuOpen"
           >
@@ -24,14 +24,14 @@
 
           <!-- Astaro-Next Appliance Brand Identity -->
           <div class="flex items-center gap-3 select-none">
-            <div class="w-8 h-8 rounded bg-[#0072ce] flex items-center justify-center shadow-md font-extrabold text-white text-base tracking-wider ring-1 ring-blue-400/30">
+            <div class="w-8 h-8 rounded bg-[#005299] flex items-center justify-center shadow-md font-extrabold text-white text-base tracking-wider ring-1 ring-blue-400/30">
               <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
             <div class="flex flex-col">
               <div class="flex items-center gap-2">
-                <span class="text-sm font-black tracking-tight text-white uppercase">Astaro<span class="text-[#0072ce]">-Next</span></span>
+                <span class="text-sm font-black tracking-tight text-white uppercase">Astaro<span class="text-[#ee7f00]">-Next</span></span>
                 <span class="text-[10px] bg-blue-950 text-blue-300 font-mono font-bold px-1.5 py-0.5 rounded border border-blue-800/60">v2.4.0</span>
               </div>
               <span class="text-[10px] text-slate-400 font-medium tracking-wide">Next-Gen Firewall OS</span>
