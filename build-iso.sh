@@ -13,8 +13,8 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-BUILD_DIR="/tmp/astaro-iso-build"
-OUTPUT_DIR="$(pwd)/dist"
+BUILD_DIR="${SCRIPT_DIR}/.build-workspace"
+OUTPUT_DIR="${SCRIPT_DIR}/dist"
 ISO_NAME="astaro-next-v2.4-amd64.iso"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -39,10 +39,17 @@ if [ -d /etc/apt/sources.list.d ]; then
   done
 fi
 
+chmod 666 /dev/null 2>/dev/null || true
+chmod 1777 /tmp 2>/dev/null || true
+
 apt-get update -y
 apt-get install -y --no-install-recommends \
   live-build \
   debootstrap \
+  debian-archive-keyring \
+  debian-keyring \
+  gpgv \
+  gnupg \
   xorriso \
   isolinux \
   syslinux-utils \
