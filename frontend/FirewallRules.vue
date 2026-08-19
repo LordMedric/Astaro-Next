@@ -252,11 +252,29 @@
                 rule.enabled ? (index % 2 === 0 ? 'bg-white hover:bg-blue-50/30' : 'bg-[#f4f6f9]/60 hover:bg-blue-50/40') : 'bg-slate-100/60 opacity-75 hover:bg-slate-100'
               ]"
             >
-              <!-- 0. Rule Index / Priority Order -->
-              <td class="py-3.5 px-4 border-r border-slate-200/80 text-center font-mono font-bold text-slate-500">
-                <span class="inline-flex items-center justify-center w-6 h-6 rounded bg-slate-100 text-slate-700 text-[11px] border border-slate-200">
-                  {{ rule.id || index + 1 }}
-                </span>
+              <!-- 0. Rule Index / Priority Order with Up/Down Controls -->
+              <td class="py-3.5 px-2 border-r border-slate-200/80 text-center font-mono font-bold text-slate-500">
+                <div class="flex items-center justify-center gap-1">
+                  <div class="flex flex-col gap-0.5">
+                    <button
+                      type="button"
+                      :disabled="index === 0"
+                      @click="moveRule(index, -1)"
+                      class="text-slate-400 hover:text-[#005299] disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed leading-none p-0.5"
+                      title="Move Priority Up"
+                    >▲</button>
+                    <button
+                      type="button"
+                      :disabled="index === filteredRules.length - 1"
+                      @click="moveRule(index, 1)"
+                      class="text-slate-400 hover:text-[#005299] disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed leading-none p-0.5"
+                      title="Move Priority Down"
+                    >▼</button>
+                  </div>
+                  <span class="inline-flex items-center justify-center w-6 h-6 rounded bg-slate-100 text-slate-700 text-[11px] border border-slate-200">
+                    {{ index + 1 }}
+                  </span>
+                </div>
               </td>
 
               <!-- 1. Rule Name & Identity -->
@@ -996,6 +1014,24 @@ const getZoneIcon = (zone) => {
     case 'VPN': return LockIcon
     case 'DMZ': return DmzIcon
     default: return StarIcon
+  }
+}
+
+const moveRule = async (index, direction) => {
+  const targetIndex = index + direction
+  if (targetIndex < 0 || targetIndex >= firewallRules.value.length) return
+  const temp = firewallRules.value[index]
+  firewallRules.value[index] = firewallRules.value[targetIndex]
+  firewallRules.value[targetIndex] = temp
+  
+  if (!axiosInstance) await initAxios()
+  if (axiosInstance) {
+    try {
+      const ruleIds = firewallRules.value.map(r => r.id)
+      await axiosInstance.post('/api/firewall/rules/reorder', { rule_ids: ruleIds })
+    } catch (err) {
+      console.error('Failed to reorder rules:', err)
+    }
   }
 }
 

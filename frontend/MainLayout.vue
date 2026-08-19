@@ -483,6 +483,18 @@ const DefinitionsIcon = {
   ])
 }
 
+const LogsIcon = {
+  render: () => h('svg', { class: 'w-4 h-4', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+    h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' })
+  ])
+}
+
+const UsersIcon = {
+  render: () => h('svg', { class: 'w-4 h-4', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+    h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' })
+  ])
+}
+
 const BackupFirmwareIcon = {
   render: () => h('svg', { class: 'w-4 h-4', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
     h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' })
@@ -501,6 +513,13 @@ const navGroups = [
         label: 'Control Center',
         badge: 'Dashboard',
         icon: ControlCenterIcon
+      },
+      {
+        id: 'live_logs',
+        aliases: ['logs', 'logging', 'conntrack', 'connections'],
+        label: 'Live Logs & Conntrack',
+        badge: 'Live Log',
+        icon: LogsIcon
       }
     ]
   },
@@ -555,6 +574,13 @@ const navGroups = [
         label: 'Definitions & Objects',
         badge: 'Objects',
         icon: DefinitionsIcon
+      },
+      {
+        id: 'users',
+        aliases: ['accounts', 'authentication', 'user_portal'],
+        label: 'Users & Authentication',
+        badge: 'Portal/2FA',
+        icon: UsersIcon
       },
       {
         id: 'network',

@@ -95,6 +95,8 @@
         'vpn-settings': Vue.defineAsyncComponent(() => loadModule('./VpnSettings.vue', options)),
         'definitions-view': Vue.defineAsyncComponent(() => loadModule('./Definitions.vue', options)),
         'nat-rules': Vue.defineAsyncComponent(() => loadModule('./NatRules.vue', options)),
+        'live-logs': Vue.defineAsyncComponent(() => loadModule('./LiveLogs.vue', options)),
+        'users-view': Vue.defineAsyncComponent(() => loadModule('./Users.vue', options)),
         'main-layout': Vue.defineAsyncComponent(() => loadModule('./MainLayout.vue', options))
       },
       data() {
@@ -120,6 +122,10 @@
             v-if="currentItem === 'control_center' || currentItem === 'dashboard'"
             :authToken="authToken"
           />
+          <live-logs
+            v-else-if="currentItem === 'live_logs' || currentItem === 'logs' || currentItem === 'logging' || currentItem === 'conntrack' || currentItem === 'connections'"
+            :authToken="authToken"
+          />
           <web-protection
             v-else-if="currentItem === 'web' || currentItem === 'web_protection' || currentItem === 'zenarmor' || currentItem === 'zenarmor_profiles'"
             :authToken="authToken"
@@ -138,6 +144,10 @@
           />
           <definitions-view
             v-else-if="currentItem === 'definitions' || currentItem === 'objects' || currentItem === 'network_definitions' || currentItem === 'service_definitions'"
+            :authToken="authToken"
+          />
+          <users-view
+            v-else-if="currentItem === 'users' || currentItem === 'accounts' || currentItem === 'authentication'"
             :authToken="authToken"
           />
           <interfaces-view
