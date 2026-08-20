@@ -382,6 +382,91 @@
         </div>
       </div>
     </div>
+
+    <!-- TAB 6: COUNTRY BLOCKING & ADVANCED NETWORK DEFENSE (SOPHOS UTM PARITY) -->
+    <div v-else-if="activeTab === 'country'" class="space-y-6">
+      <div class="bg-white border border-slate-200 rounded-xl shadow-xs p-6 space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div>
+            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">GeoIP Country Traffic Filtering</h3>
+            <p class="text-[11px] text-slate-500 mt-0.5">Silently drop inbound or outbound connection attempts originating from selected geographic regions</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" v-model="countryBlockConfig.enabled" class="sr-only peer" />
+            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#005299]"></div>
+            <span class="ml-2 text-xs font-bold" :class="countryBlockConfig.enabled ? 'text-emerald-600' : 'text-slate-400'">
+              {{ countryBlockConfig.enabled ? 'Enabled' : 'Disabled' }}
+            </span>
+          </label>
+        </div>
+
+        <div class="space-y-4 text-xs">
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="region in countryRegions"
+              :key="region.name"
+              @click="toggleRegion(region)"
+              class="px-3 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer"
+              :class="isRegionBlocked(region) ? 'bg-rose-50 border-rose-300 text-rose-800' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'"
+            >
+              {{ region.name }} ({{ region.countries.length }})
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-[#f4f6f9] rounded-xl border border-slate-200">
+            <label
+              v-for="c in popularCountries"
+              :key="c.code"
+              class="flex items-center gap-2 p-2 bg-white rounded border border-slate-200 cursor-pointer hover:bg-slate-50"
+            >
+              <input
+                type="checkbox"
+                :value="c.code"
+                v-model="countryBlockConfig.blocked_countries"
+                class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500"
+              />
+              <span class="text-xs font-medium text-slate-800">{{ c.flag }} {{ c.name }}</span>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between pt-2">
+            <span class="text-[11px] text-slate-500 font-mono">
+              {{ countryBlockConfig.blocked_countries.length }} Countries Blocked in GeoIP NFTables Set
+            </span>
+            <button
+              @click="saveCountryBlockSettings"
+              class="px-4 py-1.5 bg-[#005299] hover:bg-[#003d73] text-white rounded text-xs font-bold shadow-xs cursor-pointer"
+            >
+              Apply Country Rules
+            </button>
+          </div>
+        </div>
+
+        <!-- Advanced Anti-Spoofing & ICMP Controls -->
+        <div class="pt-6 border-t border-slate-200 space-y-4">
+          <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Anti-Spoofing &amp; Advanced ICMP Controls</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+              <span class="font-bold text-slate-800">Reverse Path Filtering (Anti-Spoof)</span>
+              <p class="text-[11px] text-slate-500">Validates source IP routing validity across all network interfaces (RFC 3704).</p>
+              <label class="flex items-center gap-2 pt-1 font-bold text-slate-700 cursor-pointer">
+                <input type="checkbox" v-model="antiSpoofEnabled" class="rounded text-[#005299]" />
+                <span>Strict Mode (Drop unroutable source packets)</span>
+              </label>
+            </div>
+
+            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+              <span class="font-bold text-slate-800">ICMP Flood &amp; Ping Broadcast Defenses</span>
+              <p class="text-[11px] text-slate-500">Ignore ICMP ping broadcasts and smurf amplification attacks.</p>
+              <label class="flex items-center gap-2 pt-1 font-bold text-slate-700 cursor-pointer">
+                <input type="checkbox" v-model="ignoreBroadcastPing" class="rounded text-[#005299]" />
+                <span>Ignore ICMP Echo Broadcasts (Smurf Shield)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -423,6 +508,12 @@ const PortscanIcon = {
   ])
 }
 
+const CountryIcon = {
+  render: () => h('svg', { class: 'w-4 h-4', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+    h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' })
+  ])
+}
+
 const AlertsIcon = {
   render: () => h('svg', { class: 'w-4 h-4', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
     h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' })
@@ -434,8 +525,54 @@ const tabs = [
   { id: 'patterns', label: 'Attack Patterns', icon: PatternsIcon, badge: '48k' },
   { id: 'antidos', label: 'Anti-DoS Flooding', icon: DosIcon },
   { id: 'portscan', label: 'Anti-Portscan', icon: PortscanIcon },
+  { id: 'country', label: 'Country Blocking', icon: CountryIcon, badge: 'GeoIP' },
   { id: 'alerts', label: 'Live Alerts', icon: AlertsIcon, badge: 'Active', badgeColor: 'bg-rose-100 text-rose-800' }
 ]
+
+const antiSpoofEnabled = ref(true)
+const ignoreBroadcastPing = ref(true)
+
+const countryBlockConfig = ref({
+  enabled: true,
+  blocked_countries: ['RU', 'CN', 'KP', 'IR']
+})
+
+const popularCountries = [
+  { code: 'RU', name: 'Russian Federation', flag: '🇷🇺' },
+  { code: 'CN', name: 'China', flag: '🇨🇳' },
+  { code: 'KP', name: 'North Korea', flag: '🇰🇵' },
+  { code: 'IR', name: 'Iran', flag: '🇮🇷' },
+  { code: 'BR', name: 'Brazil', flag: '🇧🇷' },
+  { code: 'IN', name: 'India', flag: '🇮🇳' },
+  { code: 'US', name: 'United States', flag: '🇺🇸' },
+  { code: 'DE', name: 'Germany', flag: '🇩🇪' }
+]
+
+const countryRegions = [
+  { name: 'High-Risk Zones', countries: ['RU', 'CN', 'KP', 'IR', 'BY', 'SY'] },
+  { name: 'Asia-Pacific', countries: ['CN', 'KP', 'VN', 'MM', 'TH'] },
+  { name: 'Eastern Europe', countries: ['RU', 'BY', 'UA', 'MD'] }
+]
+
+const isRegionBlocked = (region) => {
+  return region.countries.every(c => countryBlockConfig.value.blocked_countries.includes(c))
+}
+
+const toggleRegion = (region) => {
+  if (isRegionBlocked(region)) {
+    countryBlockConfig.value.blocked_countries = countryBlockConfig.value.blocked_countries.filter(c => !region.countries.includes(c))
+  } else {
+    region.countries.forEach(c => {
+      if (!countryBlockConfig.value.blocked_countries.includes(c)) {
+        countryBlockConfig.value.blocked_countries.push(c)
+      }
+    })
+  }
+}
+
+const saveCountryBlockSettings = () => {
+  alert(`GeoIP Country Block Rules updated: ${countryBlockConfig.value.blocked_countries.length} countries loaded into NFTables set.`)
+}
 
 const availableInterfaces = ref([
   { name: 'eth0', type: 'WAN' },

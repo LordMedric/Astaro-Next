@@ -101,6 +101,8 @@
         'intrusion-prevention': Vue.defineAsyncComponent(() => loadModule('./IntrusionPrevention.vue', options)),
         'system-settings': Vue.defineAsyncComponent(() => loadModule('./SystemSettings.vue', options)),
         'executive-reports': Vue.defineAsyncComponent(() => loadModule('./ExecutiveReports.vue', options)),
+        'routing-view': Vue.defineAsyncComponent(() => loadModule('./Routing.vue', options)),
+        'backup-firmware': Vue.defineAsyncComponent(() => loadModule('./BackupFirmware.vue', options)),
         'main-layout': Vue.defineAsyncComponent(() => loadModule('./MainLayout.vue', options))
       },
       data() {
@@ -175,6 +177,10 @@
             v-else-if="currentItem === 'network_services' || currentItem === 'dhcp' || currentItem === 'dns' || currentItem === 'dyndns' || currentItem === 'ntp'"
             :authToken="authToken"
           />
+          <routing-view
+            v-else-if="currentItem === 'routing' || currentItem === 'static_routes' || currentItem === 'routes' || currentItem === 'bgp' || currentItem === 'ospf'"
+            :authToken="authToken"
+          />
           <vpn-settings
             v-else-if="currentItem === 'vpn' || currentItem === 'vpn_settings' || currentItem === 'wireguard' || currentItem === 'wireguard_vpn' || currentItem === 'ipsec' || currentItem === 'openvpn'"
             :authToken="authToken"
@@ -185,6 +191,10 @@
           />
           <certificates-view
             v-else-if="currentItem === 'certificates' || currentItem === 'certs' || currentItem === 'pki'"
+            :authToken="authToken"
+          />
+          <backup-firmware
+            v-else-if="currentItem === 'backup_firmware' || currentItem === 'backup' || currentItem === 'firmware' || currentItem === 'backup_restore' || currentItem === 'updates'"
             :authToken="authToken"
           />
           <control-center v-else :authToken="authToken" />
