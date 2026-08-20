@@ -553,7 +553,16 @@
                 <span class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                   <span class="w-2 h-2 rounded-full bg-[#005299]"></span> Source Configuration
                 </span>
-                <span class="text-[10px] text-slate-400 font-mono">UTM Base Object</span>
+                <button
+                  type="button"
+                  @click="openInlineObjectModal('source')"
+                  class="text-[11px] font-bold text-[#005299] hover:text-blue-800 flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-300 shadow-2xs cursor-pointer"
+                >
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>New Object / Group</span>
+                </button>
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <div>
@@ -603,7 +612,16 @@
                 <span class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                   <span class="w-2 h-2 rounded-full bg-[#ee7f00]"></span> Destination Configuration
                 </span>
-                <span class="text-[10px] text-slate-400 font-mono">UTM Base Object</span>
+                <button
+                  type="button"
+                  @click="openInlineObjectModal('dest')"
+                  class="text-[11px] font-bold text-[#005299] hover:text-blue-800 flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-300 shadow-2xs cursor-pointer"
+                >
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>New Object / Group</span>
+                </button>
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <div>
@@ -649,9 +667,21 @@
 
             <!-- 3. Dropdown Element: Services / Ports Selection -->
             <div>
-              <label for="rule-services" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Services / Service Group Selection <span class="text-rose-500">*</span>
-              </label>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="rule-services" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Services / Service Group Selection <span class="text-rose-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  @click="openInlineServiceModal"
+                  class="text-[11px] font-bold text-[#005299] hover:text-blue-800 flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-300 shadow-2xs cursor-pointer"
+                >
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>New Service / Group</span>
+                </button>
+              </div>
               <div class="relative">
                 <select
                   id="rule-services"
@@ -769,38 +799,167 @@
             </div>
           </form>
 
-          <!-- Modal Action Footer with Validation Save Button Hook -->
-          <div class="px-6 py-4 bg-[#f4f6f9] border-t border-slate-200 flex items-center justify-between gap-3">
-            <button
-              type="button"
-              @click="closeModal"
-              :disabled="isSubmitting"
-              class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
-            >
-              Cancel
-            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
-            <!-- Save Rule Button: Dispatches axios.post to /api/firewall/rules/save -->
-            <button
-              type="button"
-              @click="handleSubmit"
-              :disabled="isSubmitting"
-              class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
-            >
-              <svg
-                v-if="isSubmitting"
-                class="w-3.5 h-3.5 animate-spin text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+    <!-- ========================================================================= -->
+    <!-- INLINE SUB-MODAL: CREATE NEW NETWORK OBJECT / GROUP ON THE FLY            -->
+    <!-- ========================================================================= -->
+    <transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div
+        v-if="isInlineObjectModalOpen"
+        class="fixed inset-0 z-60 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4"
+        @keydown.esc="isInlineObjectModalOpen = false"
+      >
+        <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col">
+          <div class="bg-[#005299] text-white px-5 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <h3 class="text-xs font-bold uppercase tracking-wider">New {{ inlineObjectTarget === 'source' ? 'Source' : 'Destination' }} Object / Group</h3>
+            </div>
+            <button @click="isInlineObjectModalOpen = false" class="text-white/80 hover:text-white cursor-pointer font-bold">&times;</button>
+          </div>
+
+          <div class="p-5 space-y-4 text-xs text-slate-800">
+            <div>
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Object Name *</label>
+              <input
+                type="text"
+                v-model="newInlineObj.name"
+                placeholder="e.g., DMZ Web Cluster or Backup Server"
+                class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#005299] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Definition Type</label>
+              <select
+                v-model="newInlineObj.type"
+                class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#005299] focus:outline-none bg-white font-medium"
               >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <svg v-else class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-              <span>{{ isSubmitting ? 'Saving & Applying Rule...' : 'Save & Apply Rule' }}</span>
-            </button>
+                <option value="Host">Host (Single IP)</option>
+                <option value="Network">Network (Subnet / CIDR)</option>
+                <option value="Range">IP Range</option>
+                <option value="DNS Host">DNS Host (FQDN)</option>
+                <option value="Network Group">Network Group (Multiple IPs / Subnets)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">
+                {{ newInlineObj.type === 'Network Group' ? 'Member IPs / Subnets (Comma Separated)' : 'IPv4 Address / Target' }} *
+              </label>
+              <input
+                type="text"
+                v-model="newInlineObj.address"
+                :placeholder="newInlineObj.type === 'Network Group' ? '192.168.1.10, 192.168.1.20, 10.0.0.0/24' : (newInlineObj.type === 'Network' ? '192.168.1.0/24' : '192.168.1.100')"
+                class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#005299] focus:outline-none font-mono"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Comment</label>
+              <input
+                type="text"
+                v-model="newInlineObj.comment"
+                placeholder="Optional description"
+                class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#005299] focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-between">
+            <button @click="isInlineObjectModalOpen = false" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer">Cancel</button>
+            <button @click="saveInlineObject" class="px-4 py-1.5 bg-[#005299] hover:bg-[#003d73] text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer">Save &amp; Use Object</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- ========================================================================= -->
+    <!-- INLINE SUB-MODAL: CREATE NEW SERVICE OBJECT / GROUP ON THE FLY            -->
+    <!-- ========================================================================= -->
+    <transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div
+        v-if="isInlineServiceModalOpen"
+        class="fixed inset-0 z-60 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4"
+        @keydown.esc="isInlineServiceModalOpen = false"
+      >
+        <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col">
+          <div class="bg-[#005299] text-white px-5 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <h3 class="text-xs font-bold uppercase tracking-wider">New Service Definition / Group</h3>
+            </div>
+            <button @click="isInlineServiceModalOpen = false" class="text-white/80 hover:text-white cursor-pointer font-bold">&times;</button>
+          </div>
+
+          <div class="p-5 space-y-4 text-xs text-slate-800">
+            <div>
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Service Name *</label>
+              <input
+                type="text"
+                v-model="newInlineSrv.name"
+                placeholder="e.g., PostgreSQL or Custom API Cluster"
+                class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#005299] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Type / Protocol</label>
+              <select
+                v-model="newInlineSrv.type"
+                class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#005299] focus:outline-none bg-white font-medium"
+              >
+                <option value="TCP">TCP Service</option>
+                <option value="UDP">UDP Service</option>
+                <option value="TCP/UDP">TCP &amp; UDP Service</option>
+                <option value="Service Group">Service Group (Multiple Ports)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">
+                {{ newInlineSrv.type === 'Service Group' ? 'Included Ports / Services (Comma Separated)' : 'Destination Port (e.g. 5432 or 8000:8080)' }} *
+              </label>
+              <input
+                type="text"
+                v-model="newInlineSrv.dst_port"
+                placeholder="e.g., 5432 or 80, 443, 8080"
+                class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#005299] focus:outline-none font-mono"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Comment</label>
+              <input
+                type="text"
+                v-model="newInlineSrv.comment"
+                placeholder="Optional description"
+                class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#005299] focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-between">
+            <button @click="isInlineServiceModalOpen = false" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer">Cancel</button>
+            <button @click="saveInlineService" class="px-4 py-1.5 bg-[#005299] hover:bg-[#003d73] text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer">Save &amp; Use Service</button>
           </div>
         </div>
       </div>
@@ -884,6 +1043,114 @@ const selectedZoneFilter = ref('ALL')
 const selectedActionFilter = ref('ALL')
 const lastSyncedTime = ref(new Date().toLocaleTimeString())
 const toasts = ref([])
+
+// Inline Definition / Group Creation on the fly state
+const isInlineObjectModalOpen = ref(false)
+const isInlineServiceModalOpen = ref(false)
+const inlineObjectTarget = ref('source') // 'source' | 'dest'
+const newInlineObj = ref({
+  name: '',
+  type: 'Host',
+  address: '',
+  comment: ''
+})
+const newInlineSrv = ref({
+  name: '',
+  type: 'TCP',
+  dst_port: '',
+  comment: ''
+})
+
+const openInlineObjectModal = (target) => {
+  inlineObjectTarget.value = target
+  newInlineObj.value = {
+    name: '',
+    type: 'Host',
+    address: '',
+    comment: ''
+  }
+  isInlineObjectModalOpen.value = true
+}
+
+const openInlineServiceModal = () => {
+  newInlineSrv.value = {
+    name: '',
+    type: 'TCP',
+    dst_port: '',
+    comment: ''
+  }
+  isInlineServiceModalOpen.value = true
+}
+
+const saveInlineObject = async () => {
+  if (!newInlineObj.value.name || !newInlineObj.value.address) {
+    alert('Please enter an object name and address/members.')
+    return
+  }
+
+  try {
+    if (!axiosInstance) await initAxios()
+    if (axiosInstance) {
+      await axiosInstance.post('/api/definitions/networks', {
+        name: newInlineObj.value.name,
+        type: newInlineObj.value.type,
+        address: newInlineObj.value.address,
+        comment: newInlineObj.value.comment || 'Created from rule modal'
+      })
+    }
+
+    // Automatically apply to current rule form
+    if (inlineObjectTarget.value === 'source') {
+      formData.source_type = newInlineObj.value.type
+      formData.source_value = newInlineObj.value.address
+    } else {
+      formData.dest_type = newInlineObj.value.type
+      formData.dest_value = newInlineObj.value.address
+    }
+
+    isInlineObjectModalOpen.value = false
+    showToast('Object Created', `Created and selected "${newInlineObj.value.name}" on the fly.`, 'success', 3000)
+  } catch (e) {
+    console.error('Failed to create object:', e)
+    // Local fallback
+    if (inlineObjectTarget.value === 'source') {
+      formData.source_type = newInlineObj.value.type
+      formData.source_value = newInlineObj.value.address
+    } else {
+      formData.dest_type = newInlineObj.value.type
+      formData.dest_value = newInlineObj.value.address
+    }
+    isInlineObjectModalOpen.value = false
+  }
+}
+
+const saveInlineService = async () => {
+  if (!newInlineSrv.value.name || !newInlineSrv.value.dst_port) {
+    alert('Please enter a service name and port.')
+    return
+  }
+
+  try {
+    if (!axiosInstance) await initAxios()
+    if (axiosInstance) {
+      await axiosInstance.post('/api/definitions/services', {
+        name: newInlineSrv.value.name,
+        type: newInlineSrv.value.type,
+        protocol: newInlineSrv.value.type.includes('UDP') ? 'UDP' : 'TCP',
+        dst_port: newInlineSrv.value.dst_port,
+        comment: newInlineSrv.value.comment || 'Created from rule modal'
+      })
+    }
+
+    formData.services = `${newInlineSrv.value.name} (${newInlineSrv.value.dst_port})`
+    isInlineServiceModalOpen.value = false
+    showToast('Service Created', `Created and selected "${newInlineSrv.value.name}" on the fly.`, 'success', 3000)
+  } catch (e) {
+    console.error('Failed to create service:', e)
+    formData.services = `${newInlineSrv.value.name} (${newInlineSrv.value.dst_port})`
+    isInlineServiceModalOpen.value = false
+  }
+}
 
 // Form Data Reactive State for Modal Submission
 const formData = reactive({

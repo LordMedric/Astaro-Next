@@ -220,7 +220,16 @@
           <!-- Masquerading specific -->
           <div v-if="newRule.type === 'Masquerading'" class="space-y-3 p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Source Network</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-bold text-slate-700">Source Network / Group</label>
+                <button
+                  type="button"
+                  @click="openInlineNetModal"
+                  class="text-[11px] font-bold text-[#005299] hover:text-blue-800 flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-300 shadow-2xs cursor-pointer"
+                >
+                  + New Object / Group
+                </button>
+              </div>
               <select
                 v-model="newRule.source_network"
                 class="w-full p-2 border border-slate-300 rounded bg-white font-mono"
@@ -248,7 +257,16 @@
           <div v-else class="space-y-3 p-3 bg-amber-50/50 rounded-lg border border-amber-200">
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block font-bold text-slate-700 mb-1">Incoming Service</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block font-bold text-slate-700">Incoming Service</label>
+                  <button
+                    type="button"
+                    @click="openInlineSrvModal"
+                    class="text-[10px] font-bold text-[#005299] hover:text-blue-800 bg-white px-1.5 py-0.2 rounded border border-slate-300 cursor-pointer"
+                  >
+                    + New Service
+                  </button>
+                </div>
                 <select
                   v-model="newRule.traffic_service"
                   class="w-full p-2 border border-slate-300 rounded bg-white"
@@ -336,6 +354,77 @@
         </div>
       </div>
     </div>
+
+    <!-- INLINE NETWORK OBJECT / GROUP MODAL -->
+    <div
+      v-if="isInlineNetModalOpen"
+      class="fixed inset-0 z-60 bg-slate-950/70 flex items-center justify-center p-4"
+    >
+      <div class="w-full max-w-md bg-white rounded-xl border border-slate-200 shadow-2xl overflow-hidden">
+        <div class="bg-[#005299] text-white px-4 py-3 flex items-center justify-between">
+          <h3 class="text-xs font-bold uppercase tracking-wider">New Network Definition / Group</h3>
+          <button @click="isInlineNetModalOpen = false" class="text-white/80 hover:text-white cursor-pointer font-bold">&times;</button>
+        </div>
+        <div class="p-4 space-y-3 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Name *</label>
+            <input type="text" v-model="newInlineNet.name" placeholder="e.g. DMZ Servers" class="w-full p-2 border border-slate-300 rounded" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Type</label>
+            <select v-model="newInlineNet.type" class="w-full p-2 border border-slate-300 rounded bg-white">
+              <option value="Host">Host (Single IP)</option>
+              <option value="Network">Network (Subnet / CIDR)</option>
+              <option value="Network Group">Network Group (Multiple IPs)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Address / Members *</label>
+            <input type="text" v-model="newInlineNet.address" placeholder="192.168.1.50 or 10.0.0.0/24" class="w-full p-2 border border-slate-300 rounded font-mono" />
+          </div>
+        </div>
+        <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex justify-between">
+          <button @click="isInlineNetModalOpen = false" class="px-3 py-1 text-xs border rounded text-slate-700">Cancel</button>
+          <button @click="saveInlineNet" class="px-4 py-1 text-xs font-bold bg-[#005299] text-white rounded shadow-xs">Save &amp; Use</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INLINE SERVICE DEFINITION MODAL -->
+    <div
+      v-if="isInlineSrvModalOpen"
+      class="fixed inset-0 z-60 bg-slate-950/70 flex items-center justify-center p-4"
+    >
+      <div class="w-full max-w-md bg-white rounded-xl border border-slate-200 shadow-2xl overflow-hidden">
+        <div class="bg-[#005299] text-white px-4 py-3 flex items-center justify-between">
+          <h3 class="text-xs font-bold uppercase tracking-wider">New Service Definition / Group</h3>
+          <button @click="isInlineSrvModalOpen = false" class="text-white/80 hover:text-white cursor-pointer font-bold">&times;</button>
+        </div>
+        <div class="p-4 space-y-3 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Service Name *</label>
+            <input type="text" v-model="newInlineSrv.name" placeholder="e.g. Minecraft Server" class="w-full p-2 border border-slate-300 rounded" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Protocol / Type</label>
+            <select v-model="newInlineSrv.type" class="w-full p-2 border border-slate-300 rounded bg-white">
+              <option value="TCP">TCP</option>
+              <option value="UDP">UDP</option>
+              <option value="TCP/UDP">TCP/UDP</option>
+              <option value="Service Group">Service Group</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Destination Port *</label>
+            <input type="text" v-model="newInlineSrv.dst_port" placeholder="e.g. 25565 or 8080:8090" class="w-full p-2 border border-slate-300 rounded font-mono" />
+          </div>
+        </div>
+        <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex justify-between">
+          <button @click="isInlineSrvModalOpen = false" class="px-3 py-1 text-xs border rounded text-slate-700">Cancel</button>
+          <button @click="saveInlineSrv" class="px-4 py-1 text-xs font-bold bg-[#005299] text-white rounded shadow-xs">Save &amp; Use</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -351,6 +440,12 @@ const props = defineProps({
 
 const activeTab = ref('all') // 'all' | 'masquerading' | 'dnat'
 const isModalOpen = ref(false)
+const isInlineNetModalOpen = ref(false)
+const isInlineSrvModalOpen = ref(false)
+
+const newInlineNet = ref({ name: '', type: 'Host', address: '' })
+const newInlineSrv = ref({ name: '', type: 'TCP', dst_port: '' })
+
 const natRules = ref([])
 const networkDefs = ref([])
 const serviceDefs = ref([])
@@ -369,6 +464,51 @@ const newRule = ref({
   auto_firewall_rule: true,
   comment: ''
 })
+
+const openInlineNetModal = () => {
+  newInlineNet.value = { name: '', type: 'Host', address: '' }
+  isInlineNetModalOpen.value = true
+}
+
+const openInlineSrvModal = () => {
+  newInlineSrv.value = { name: '', type: 'TCP', dst_port: '' }
+  isInlineSrvModalOpen.value = true
+}
+
+const saveInlineNet = async () => {
+  if (!newInlineNet.value.name || !newInlineNet.value.address) return
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.post('/api/definitions/networks', newInlineNet.value)
+      await fetchNatRules()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+  newRule.value.source_network = newInlineNet.value.name
+  isInlineNetModalOpen.value = false
+}
+
+const saveInlineSrv = async () => {
+  if (!newInlineSrv.value.name || !newInlineSrv.value.dst_port) return
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.post('/api/definitions/services', {
+        name: newInlineSrv.value.name,
+        type: newInlineSrv.value.type,
+        protocol: newInlineSrv.value.type.includes('UDP') ? 'UDP' : 'TCP',
+        dst_port: newInlineSrv.value.dst_port
+      })
+      await fetchNatRules()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+  newRule.value.traffic_service = newInlineSrv.value.name
+  isInlineSrvModalOpen.value = false
+}
 
 const filteredRules = computed(() => {
   if (activeTab.value === 'masquerading') {
