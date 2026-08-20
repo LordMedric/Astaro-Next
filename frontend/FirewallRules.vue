@@ -576,6 +576,7 @@
                     class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
                   >
                     <option value="Any">&lt;&lt; Any Source &gt;&gt;</option>
+                    <option value="Network Group">Network Group (Multiple IPs / Subnets)</option>
                     <option value="Host">Host (Single IP)</option>
                     <option value="Network">Network (Subnet/CIDR)</option>
                     <option value="Range">IP Range</option>
@@ -584,12 +585,12 @@
                   </select>
                 </div>
                 <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Address / Object</label>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Address / Object / Group</label>
                   <input
                     v-model="formData.source_value"
                     type="text"
                     :disabled="formData.source_type === 'Any'"
-                    :placeholder="formData.source_type === 'Network' ? '192.168.1.0/24' : (formData.source_type === 'Range' ? '192.168.1.10-50' : (formData.source_type === 'DNS Host' ? 'host.example.com' : '192.168.1.100'))"
+                    :placeholder="formData.source_type === 'Network Group' ? '192.168.1.10, 10.0.0.0/24, (DMZ Servers)' : (formData.source_type === 'Network' ? '192.168.1.0/24' : (formData.source_type === 'Range' ? '192.168.1.10-50' : (formData.source_type === 'DNS Host' ? 'host.example.com' : '192.168.1.100')))"
                     class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-mono disabled:bg-slate-100 disabled:text-slate-400"
                   />
                 </div>
@@ -625,6 +626,7 @@
                     class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
                   >
                     <option value="Any">&lt;&lt; Any Destination &gt;&gt;</option>
+                    <option value="Network Group">Network Group (Multiple IPs / Subnets)</option>
                     <option value="Host">Host (Single IP)</option>
                     <option value="Network">Network (Subnet/CIDR)</option>
                     <option value="Range">IP Range</option>
@@ -633,12 +635,12 @@
                   </select>
                 </div>
                 <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Address / Target</label>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Address / Target / Group</label>
                   <input
                     v-model="formData.dest_value"
                     type="text"
                     :disabled="formData.dest_type === 'Any'"
-                    :placeholder="formData.dest_type === 'Network' ? '10.0.0.0/8' : (formData.dest_type === 'Range' ? '10.0.0.1-100' : (formData.dest_type === 'DNS Host' ? 'api.github.com' : '8.8.8.8'))"
+                    :placeholder="formData.dest_type === 'Network Group' ? '8.8.8.8, 1.1.1.1, (Web Servers)' : (formData.dest_type === 'Network' ? '10.0.0.0/8' : (formData.dest_type === 'Range' ? '10.0.0.1-100' : (formData.dest_type === 'DNS Host' ? 'api.github.com' : '8.8.8.8')))"
                     class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-mono disabled:bg-slate-100 disabled:text-slate-400"
                   />
                 </div>
@@ -648,7 +650,7 @@
             <!-- 3. Dropdown Element: Services / Ports Selection -->
             <div>
               <label for="rule-services" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Services / Ports Selection <span class="text-rose-500">*</span>
+                Services / Service Group Selection <span class="text-rose-500">*</span>
               </label>
               <div class="relative">
                 <select
@@ -658,12 +660,12 @@
                   class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium appearance-none"
                 >
                   <option value="Any">Any (All Protocols &amp; Ports)</option>
-                  <option value="HTTP, HTTPS">Web (HTTP: 80, HTTPS: 443)</option>
-                  <option value="HTTP">HTTP (TCP 80)</option>
-                  <option value="HTTPS">HTTPS (TCP 443)</option>
+                  <option value="Web Services (HTTP/HTTPS)">Service Group: Web Services (TCP 80, 443)</option>
+                  <option value="Email Services (SMTP/IMAP/POP3)">Service Group: Email Services (TCP 25, 465, 587, 993, 995)</option>
+                  <option value="Admin Remote Access (SSH/RDP/HTTPS)">Service Group: Remote Admin (TCP 22, 3389, 4444)</option>
+                  <option value="DNS (UDP/TCP 53)">DNS (UDP/TCP 53)</option>
+                  <option value="HTTP, HTTPS">HTTP (80), HTTPS (443)</option>
                   <option value="SSH">SSH (TCP 22)</option>
-                  <option value="DNS">DNS (UDP/TCP 53)</option>
-                  <option value="SMTP, SMTPS">Email (SMTP: 25, 587, 465)</option>
                   <option value="WireGuard">WireGuard VPN (UDP 51820)</option>
                   <option value="RDP">Remote Desktop (TCP 3389)</option>
                   <option value="ICMP">ICMP (Ping / Traceroute)</option>
