@@ -458,56 +458,57 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- IN-PAGE EXPANDABLE ADD / EDIT FIREWALL RULE CARD (SOPHOS UTM 9 PARITY)    -->
+    <!-- COMPACT POP-UP MODAL: ADD FIREWALL RULE                                   -->
     <!-- ========================================================================= -->
     <transition
       enter-active-class="transition duration-200 ease-out"
-      enter-from-class="opacity-0 -translate-y-4"
-      enter-to-class="opacity-100 translate-y-0"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
       leave-active-class="transition duration-150 ease-in"
-      leave-from-class="opacity-100 translate-y-0"
-      leave-to-class="opacity-0 -translate-y-4"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
     >
       <div
         v-if="isModalOpen"
-        class="mb-6 bg-white rounded-2xl border-2 border-[#0072ce]/40 shadow-xl overflow-hidden flex flex-col"
+        class="fixed inset-0 z-40 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        @keydown.esc="closeModal"
       >
-        <!-- Card Top Header Ribbon (Sophos UTM 9 Style) -->
-        <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-lg bg-[#0072ce] flex items-center justify-center text-white font-black text-sm shadow-md">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="text-sm font-bold text-white tracking-tight">
+        <!-- Modal Card Container (Compact max-w-lg) -->
+        <div
+          class="w-full max-w-lg bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col my-6 max-h-[90vh]"
+          @click.stop
+        >
+          <!-- Modal Top Header Ribbon (Sophos UTM 9 Style) -->
+          <div class="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-[#0072ce] flex items-center justify-center text-white font-black text-xs shadow-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xs font-bold text-white tracking-tight uppercase">
                   Add Firewall Rule
                 </h3>
-                <span class="text-[10px] bg-blue-950 text-blue-300 font-mono font-bold px-2 py-0.5 rounded border border-blue-800/80">
-                  INLINE EDITOR
-                </span>
+                <p class="text-[10px] text-slate-400">Define security filtering criteria, zones &amp; action verdict</p>
               </div>
-              <p class="text-xs text-slate-400 mt-0.5">Define security filtering criteria, zones, service ports &amp; action verdict</p>
             </div>
+
+            <!-- Close Modal Button (✕) -->
+            <button
+              type="button"
+              @click="closeModal"
+              class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer text-base leading-none"
+              aria-label="Close add rule modal"
+            >
+              &times;
+            </button>
           </div>
 
-          <!-- Close / Collapse Button (✕) -->
-          <button
-            type="button"
-            @click="closeModal"
-            class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-            aria-label="Close rule editor"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Modular Rule Submission Form Window -->
-        <form @submit.prevent="handleSubmit" class="p-6 space-y-5 bg-white text-slate-800">
+          <!-- Modular Rule Submission Form Window (Scrollable) -->
+          <form @submit.prevent="handleSubmit" class="p-5 space-y-4 bg-white text-slate-800 flex-1 overflow-y-auto">
           <!-- Inline Validation Alert -->
           <div
             v-if="validationError"
@@ -816,7 +817,8 @@
           </button>
         </div>
       </div>
-    </transition>
+    </div>
+  </transition>
 
     <!-- ========================================================================= -->
     <!-- INLINE SUB-MODAL: CREATE NEW NETWORK OBJECT / GROUP ON THE FLY            -->
