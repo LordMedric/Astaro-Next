@@ -166,203 +166,202 @@
           </tr>
         </tbody>
       </table>
-    </div>
-
-    <!-- CREATE NAT RULE MODAL -->
+    </div>    <!-- CREATE NAT RULE IN-PAGE CARD (SOPHOS UTM 9 PARITY) -->
     <div
       v-if="isModalOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4"
+      class="bg-white rounded-xl shadow-lg border-2 border-[#005299]/30 overflow-hidden flex flex-col mb-6"
     >
-      <div class="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-lg w-full overflow-hidden">
-        <!-- Modal Header -->
-        <div class="px-5 py-3.5 bg-[#1b232e] text-white flex items-center justify-between border-b-2 border-[#ee7f00]">
-          <h3 class="text-sm font-bold uppercase tracking-wider">Create New NAT Rule</h3>
-          <button @click="isModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">✕</button>
+      <!-- Card Header -->
+      <div class="px-5 py-3.5 bg-[#1b232e] text-white flex items-center justify-between border-b-2 border-[#ee7f00]">
+        <h3 class="text-xs font-bold uppercase tracking-wider">Create New NAT Rule</h3>
+        <button @click="isModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer text-base">✕</button>
+      </div>
+
+      <!-- Form Fields -->
+      <div class="p-5 space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Rule Name</label>
+          <input
+            v-model="newRule.name"
+            type="text"
+            placeholder="e.g. Masquerade LAN to WAN, Forward Web Port 443"
+            class="w-full p-2 border border-slate-300 rounded focus:border-[#005299] focus:outline-none"
+          />
         </div>
 
-        <!-- Form Fields -->
-        <div class="p-5 space-y-4 text-xs">
+        <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Rule Name</label>
-            <input
-              v-model="newRule.name"
-              type="text"
-              placeholder="e.g. Masquerade LAN to WAN, Forward Web Port 443"
-              class="w-full p-2 border border-slate-300 rounded focus:border-[#005299] focus:outline-none"
-            />
+            <label class="block font-bold text-slate-700 mb-1">Rule Type</label>
+            <select
+              v-model="newRule.type"
+              class="w-full p-2 border border-slate-300 rounded focus:border-[#005299] focus:outline-none bg-white"
+            >
+              <option value="Masquerading">Masquerading (Outbound SNAT)</option>
+              <option value="DNAT">DNAT (Port Forwarding)</option>
+              <option value="SNAT">Source NAT (SNAT)</option>
+              <option value="1:1 NAT">1:1 Full Cone NAT</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Initial State</label>
+            <select
+              v-model="newRule.enabled"
+              class="w-full p-2 border border-slate-300 rounded focus:border-[#005299] focus:outline-none bg-white"
+            >
+              <option :value="true">Enabled (Active)</option>
+              <option :value="false">Disabled</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Masquerading specific -->
+        <div v-if="newRule.type === 'Masquerading'" class="space-y-3 p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block font-bold text-slate-700">Source Network / Group</label>
+              <button
+                type="button"
+                @click="openInlineNetModal"
+                class="text-[11px] font-bold text-[#005299] hover:text-blue-800 flex items-center gap-1.5 bg-white px-2.5 py-1 rounded border border-slate-300 shadow-2xs cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                </svg>
+                <span>Add Network Definition / Group</span>
+              </button>
+            </div>
+            <select
+              v-model="newRule.source_network"
+              class="w-full p-2 border border-slate-300 rounded bg-white font-mono"
+            >
+              <option v-for="net in networkDefs" :key="net.id" :value="net.name">
+                {{ net.name }} ({{ net.address }})
+              </option>
+              <option value="Internal (Network)">Internal (Network) [192.168.1.0/24]</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Outbound Interface</label>
+            <select
+              v-model="newRule.outbound_interface"
+              class="w-full p-2 border border-slate-300 rounded bg-white"
+            >
+              <option value="Uplink Interfaces (WAN)">Uplink Interfaces (WAN / External)</option>
+              <option value="ens33">ens33 (WAN)</option>
+              <option value="eth0">eth0 (WAN)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- DNAT specific -->
+        <div v-else class="space-y-3 p-3 bg-amber-50/50 rounded-lg border border-amber-200">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-bold text-slate-700">Incoming Service</label>
+                <button
+                  type="button"
+                  @click="openInlineSrvModal"
+                  class="text-[10px] font-bold text-[#005299] hover:text-blue-800 bg-white px-2 py-0.5 rounded border border-slate-300 cursor-pointer"
+                >
+                  + New Service
+                </button>
+              </div>
+              <select
+                v-model="newRule.traffic_service"
+                class="w-full p-2 border border-slate-300 rounded bg-white"
+              >
+                <option v-for="srv in serviceDefs" :key="srv.id" :value="srv.name">
+                  {{ srv.name }} ({{ srv.protocol }}:{{ srv.dst_port }})
+                </option>
+                <option value="HTTPS">HTTPS (TCP:443)</option>
+                <option value="HTTP">HTTP (TCP:80)</option>
+                <option value="SSH">SSH (TCP:22)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Original Destination</label>
+              <input
+                v-model="newRule.traffic_destination"
+                type="text"
+                placeholder="e.g. Uplink (WAN IP)"
+                class="w-full p-2 border border-slate-300 rounded bg-white"
+              />
+            </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Rule Type</label>
-              <select
-                v-model="newRule.type"
-                class="w-full p-2 border border-slate-300 rounded focus:border-[#005299] focus:outline-none bg-white"
-              >
-                <option value="Masquerading">Masquerading (Outbound SNAT)</option>
-                <option value="DNAT">DNAT (Port Forwarding)</option>
-                <option value="SNAT">Source NAT (SNAT)</option>
-                <option value="1:1 NAT">1:1 Full Cone NAT</option>
-              </select>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Initial State</label>
-              <select
-                v-model="newRule.enabled"
-                class="w-full p-2 border border-slate-300 rounded focus:border-[#005299] focus:outline-none bg-white"
-              >
-                <option :value="true">Enabled (Active)</option>
-                <option :value="false">Disabled</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Masquerading specific -->
-          <div v-if="newRule.type === 'Masquerading'" class="space-y-3 p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <label class="block font-bold text-slate-700">Source Network / Group</label>
-                <button
-                  type="button"
-                  @click="openInlineNetModal"
-                  class="text-[11px] font-bold text-[#005299] hover:text-blue-800 flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-300 shadow-2xs cursor-pointer"
-                >
-                  + New Object / Group
-                </button>
-              </div>
-              <select
-                v-model="newRule.source_network"
-                class="w-full p-2 border border-slate-300 rounded bg-white font-mono"
-              >
-                <option v-for="net in networkDefs" :key="net.id" :value="net.name">
-                  {{ net.name }} ({{ net.address }})
-                </option>
-                <option value="Internal (Network)">Internal (Network) [192.168.1.0/24]</option>
-              </select>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Outbound Interface</label>
-              <select
-                v-model="newRule.outbound_interface"
-                class="w-full p-2 border border-slate-300 rounded bg-white"
-              >
-                <option value="Uplink Interfaces (WAN)">Uplink Interfaces (WAN / External)</option>
-                <option value="ens33">ens33 (WAN)</option>
-                <option value="eth0">eth0 (WAN)</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- DNAT specific -->
-          <div v-else class="space-y-3 p-3 bg-amber-50/50 rounded-lg border border-amber-200">
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block font-bold text-slate-700">Incoming Service</label>
-                  <button
-                    type="button"
-                    @click="openInlineSrvModal"
-                    class="text-[10px] font-bold text-[#005299] hover:text-blue-800 bg-white px-1.5 py-0.2 rounded border border-slate-300 cursor-pointer"
-                  >
-                    + New Service
-                  </button>
-                </div>
-                <select
-                  v-model="newRule.traffic_service"
-                  class="w-full p-2 border border-slate-300 rounded bg-white"
-                >
-                  <option v-for="srv in serviceDefs" :key="srv.id" :value="srv.name">
-                    {{ srv.name }} ({{ srv.protocol }}:{{ srv.dst_port }})
-                  </option>
-                  <option value="HTTPS">HTTPS (TCP:443)</option>
-                  <option value="HTTP">HTTP (TCP:80)</option>
-                  <option value="SSH">SSH (TCP:22)</option>
-                </select>
-              </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Original Destination</label>
-                <input
-                  v-model="newRule.traffic_destination"
-                  type="text"
-                  placeholder="e.g. Uplink (WAN IP)"
-                  class="w-full p-2 border border-slate-300 rounded bg-white"
-                />
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Target Host / IP</label>
-                <input
-                  v-model="newRule.destination_nat_target"
-                  type="text"
-                  placeholder="e.g. 192.168.1.100"
-                  class="w-full p-2 border border-slate-300 rounded font-mono bg-white"
-                />
-              </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Translated Port</label>
-                <input
-                  v-model="newRule.service_translation"
-                  type="text"
-                  placeholder="e.g. 443 (Leave blank for same)"
-                  class="w-full p-2 border border-slate-300 rounded font-mono bg-white"
-                />
-              </div>
-            </div>
-
-            <div class="flex items-center gap-2 pt-1">
+              <label class="block font-bold text-slate-700 mb-1">Target Host / IP</label>
               <input
-                id="auto-fw"
-                v-model="newRule.auto_firewall_rule"
-                type="checkbox"
-                class="rounded border-slate-300 text-[#005299] focus:ring-[#005299]"
+                v-model="newRule.destination_nat_target"
+                type="text"
+                placeholder="e.g. 192.168.1.100"
+                class="w-full p-2 border border-slate-300 rounded font-mono bg-white"
               />
-              <label for="auto-fw" class="text-slate-700 font-semibold cursor-pointer">
-                Automatic Firewall Rule (Automatically permit traffic across packet filter)
-              </label>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Translated Port</label>
+              <input
+                v-model="newRule.service_translation"
+                type="text"
+                placeholder="e.g. 443 (Leave blank for same)"
+                class="w-full p-2 border border-slate-300 rounded font-mono bg-white"
+              />
             </div>
           </div>
 
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Comment</label>
+          <div class="flex items-center gap-2 pt-1">
             <input
-              v-model="newRule.comment"
-              type="text"
-              placeholder="Optional notes or documentation"
-              class="w-full p-2 border border-slate-300 rounded focus:border-[#005299] focus:outline-none"
+              id="auto-fw"
+              v-model="newRule.auto_firewall_rule"
+              type="checkbox"
+              class="w-4 h-4 rounded border-slate-300 text-[#005299] focus:ring-[#005299]"
             />
+            <label for="auto-fw" class="text-slate-700 font-bold">
+              Automatic Firewall rule (Permit translated traffic)
+            </label>
           </div>
         </div>
 
-        <!-- Modal Footer -->
-        <div class="p-4 bg-[#f4f6f9] border-t border-slate-200 flex items-center justify-end gap-2">
-          <button
-            type="button"
-            @click="isModalOpen = false"
-            class="px-3.5 py-1.5 rounded border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            @click="saveRule"
-            class="px-4 py-1.5 rounded bg-[#005299] hover:bg-[#003d73] text-white text-xs font-bold shadow-xs cursor-pointer"
-          >
-            Save Rule
-          </button>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Comment</label>
+          <input
+            v-model="newRule.comment"
+            type="text"
+            placeholder="Optional notes or documentation"
+            class="w-full p-2 border border-slate-300 rounded focus:border-[#005299] focus:outline-none"
+          />
         </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-[#f4f6f9] border-t border-slate-200 flex items-center justify-end gap-2">
+        <button
+          type="button"
+          @click="isModalOpen = false"
+          class="px-3.5 py-1.5 rounded border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          @click="saveRule"
+          class="px-4 py-1.5 rounded bg-[#005299] hover:bg-[#003d73] text-white text-xs font-bold shadow-xs cursor-pointer"
+        >
+          Save Rule
+        </button>
       </div>
     </div>
 
     <!-- INLINE NETWORK OBJECT / GROUP MODAL -->
     <div
       v-if="isInlineNetModalOpen"
-      class="fixed inset-0 z-60 bg-slate-950/70 flex items-center justify-center p-4"
+      class="fixed inset-0 z-[100] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4"
     >
       <div class="w-full max-w-md bg-white rounded-xl border border-slate-200 shadow-2xl overflow-hidden">
         <div class="bg-[#005299] text-white px-4 py-3 flex items-center justify-between">
-          <h3 class="text-xs font-bold uppercase tracking-wider">New Network Definition / Group</h3>
+          <h3 class="text-xs font-bold uppercase tracking-wider">Add Network Definition</h3>
           <button @click="isInlineNetModalOpen = false" class="text-white/80 hover:text-white cursor-pointer font-bold">&times;</button>
         </div>
         <div class="p-4 space-y-3 text-xs">
@@ -373,9 +372,14 @@
           <div>
             <label class="block font-bold text-slate-700 mb-1">Type</label>
             <select v-model="newInlineNet.type" class="w-full p-2 border border-slate-300 rounded bg-white">
-              <option value="Host">Host (Single IP)</option>
-              <option value="Network">Network (Subnet / CIDR)</option>
-              <option value="Network Group">Network Group (Multiple IPs)</option>
+              <option value="Host">Host</option>
+              <option value="DNS host">DNS host</option>
+              <option value="DNS group">DNS group</option>
+              <option value="Network">Network</option>
+              <option value="Range">Range</option>
+              <option value="Multicast group">Multicast group</option>
+              <option value="Network group">Network group</option>
+              <option value="Availability Group">Availability Group</option>
             </select>
           </div>
           <div>
@@ -384,8 +388,8 @@
           </div>
         </div>
         <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex justify-between">
-          <button @click="isInlineNetModalOpen = false" class="px-3 py-1 text-xs border rounded text-slate-700">Cancel</button>
-          <button @click="saveInlineNet" class="px-4 py-1 text-xs font-bold bg-[#005299] text-white rounded shadow-xs">Save &amp; Use</button>
+          <button @click="isInlineNetModalOpen = false" class="px-3 py-1 text-xs border rounded text-slate-700 cursor-pointer">Cancel</button>
+          <button @click="saveInlineNet" class="px-4 py-1 text-xs font-bold bg-[#005299] text-white rounded shadow-xs cursor-pointer">Save &amp; Use</button>
         </div>
       </div>
     </div>
@@ -393,7 +397,7 @@
     <!-- INLINE SERVICE DEFINITION MODAL -->
     <div
       v-if="isInlineSrvModalOpen"
-      class="fixed inset-0 z-60 bg-slate-950/70 flex items-center justify-center p-4"
+      class="fixed inset-0 z-[100] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4"
     >
       <div class="w-full max-w-md bg-white rounded-xl border border-slate-200 shadow-2xl overflow-hidden">
         <div class="bg-[#005299] text-white px-4 py-3 flex items-center justify-between">

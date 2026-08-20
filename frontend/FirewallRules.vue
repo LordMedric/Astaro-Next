@@ -458,348 +458,362 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- MODAL POP-UP INTERFACE FORM PANEL CONTAINER OVERLAY                       -->
+    <!-- IN-PAGE EXPANDABLE ADD / EDIT FIREWALL RULE CARD (SOPHOS UTM 9 PARITY)    -->
     <!-- ========================================================================= -->
     <transition
       enter-active-class="transition duration-200 ease-out"
-      enter-from-class="opacity-0 scale-95"
-      enter-to-class="opacity-100 scale-100"
+      enter-from-class="opacity-0 -translate-y-4"
+      enter-to-class="opacity-100 translate-y-0"
       leave-active-class="transition duration-150 ease-in"
-      leave-from-class="opacity-100 scale-100"
-      leave-to-class="opacity-0 scale-95"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 -translate-y-4"
     >
       <div
         v-if="isModalOpen"
-        class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title-add-rule"
-        @keydown.esc="closeModal"
+        class="mb-6 bg-white rounded-2xl border-2 border-[#0072ce]/40 shadow-xl overflow-hidden flex flex-col"
       >
-        <!-- Modal Card Container -->
-        <div
-          class="w-full max-w-xl bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col my-8"
-          @click.stop
-        >
-          <!-- Modal Top Header Ribbon (Sophos UTM 9 Style) -->
-          <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-lg bg-[#0072ce] flex items-center justify-center text-white font-black text-sm shadow-md">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        <!-- Card Top Header Ribbon (Sophos UTM 9 Style) -->
+        <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-[#0072ce] flex items-center justify-center text-white font-black text-sm shadow-md">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-bold text-white tracking-tight">
+                  Add Firewall Rule
+                </h3>
+                <span class="text-[10px] bg-blue-950 text-blue-300 font-mono font-bold px-2 py-0.5 rounded border border-blue-800/80">
+                  INLINE EDITOR
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">Define security filtering criteria, zones, service ports &amp; action verdict</p>
+            </div>
+          </div>
+
+          <!-- Close / Collapse Button (✕) -->
+          <button
+            type="button"
+            @click="closeModal"
+            class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+            aria-label="Close rule editor"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modular Rule Submission Form Window -->
+        <form @submit.prevent="handleSubmit" class="p-6 space-y-5 bg-white text-slate-800">
+          <!-- Inline Validation Alert -->
+          <div
+            v-if="validationError"
+            class="p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5 shadow-2xs"
+          >
+            <svg class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <strong class="font-bold">Validation Error:</strong>
+              <span class="ml-1">{{ validationError }}</span>
+            </div>
+          </div>
+
+          <!-- 1. Rule Name Input -->
+          <div>
+            <label for="rule-name" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Rule Name <span class="text-rose-500">*</span>
+            </label>
+            <input
+              id="rule-name"
+              v-model="formData.name"
+              type="text"
+              required
+              placeholder="e.g., Allow Internal LAN to Internet Web"
+              class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium"
+            />
+            <p class="text-[10px] text-slate-400 mt-1">Specify a unique descriptive name for identifying this rule in log traces.</p>
+          </div>
+
+          <!-- 2. Source Configuration (Zone & Base Object Type) -->
+          <div class="p-3.5 bg-[#f4f6f9] rounded-xl border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#005299]"></span> Source Configuration
+              </span>
+              <button
+                type="button"
+                @click="openInlineObjectModal('source')"
+                class="text-[11px] font-bold text-[#005299] hover:text-blue-800 flex items-center gap-1.5 bg-white px-2.5 py-1 rounded border border-slate-300 shadow-2xs cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                </svg>
+                <span>Add Network Definition / Group</span>
+              </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Source Zone</label>
+                <select
+                  v-model="formData.src_zone"
+                  class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
+                >
+                  <option value="LAN">LAN (Internal)</option>
+                  <option value="WAN">WAN (External)</option>
+                  <option value="VPN">VPN</option>
+                  <option value="DMZ">DMZ</option>
+                  <option value="Any">Any Zone</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Object Type</label>
+                <select
+                  v-model="formData.source_type"
+                  class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
+                >
+                  <option value="Any">&lt;&lt; Any Source &gt;&gt;</option>
+                  <option value="Network Group">Network Group (Multiple IPs / Subnets)</option>
+                  <option value="Host">Host (Single IP)</option>
+                  <option value="Network">Network (Subnet/CIDR)</option>
+                  <option value="Range">IP Range</option>
+                  <option value="DNS Host">DNS Host (FQDN)</option>
+                  <option value="IP">Direct IP</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Address / Object / Group</label>
+                <input
+                  v-model="formData.source_value"
+                  type="text"
+                  :disabled="formData.source_type === 'Any'"
+                  :placeholder="formData.source_type === 'Network Group' ? '192.168.1.10, 10.0.0.0/24, (DMZ Servers)' : (formData.source_type === 'Network' ? '192.168.1.0/24' : (formData.source_type === 'Range' ? '192.168.1.10-50' : (formData.source_type === 'DNS Host' ? 'host.example.com' : '192.168.1.100')))"
+                  class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-mono disabled:bg-slate-100 disabled:text-slate-400"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Destination Configuration (Zone & Base Object Type) -->
+          <div class="p-3.5 bg-amber-50/40 rounded-xl border border-amber-200/80 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#ee7f00]"></span> Destination Configuration
+              </span>
+              <button
+                type="button"
+                @click="openInlineObjectModal('dest')"
+                class="text-[11px] font-bold text-[#005299] hover:text-blue-800 flex items-center gap-1.5 bg-white px-2.5 py-1 rounded border border-slate-300 shadow-2xs cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                </svg>
+                <span>Add Network Definition / Group</span>
+              </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Destination Zone</label>
+                <select
+                  v-model="formData.dest_zone"
+                  class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
+                >
+                  <option value="WAN">WAN (External)</option>
+                  <option value="LAN">LAN (Internal)</option>
+                  <option value="DMZ">DMZ</option>
+                  <option value="VPN">VPN</option>
+                  <option value="Any">Any Zone</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Object Type</label>
+                <select
+                  v-model="formData.dest_type"
+                  class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
+                >
+                  <option value="Any">&lt;&lt; Any Destination &gt;&gt;</option>
+                  <option value="Network Group">Network Group (Multiple IPs / Subnets)</option>
+                  <option value="Host">Host (Single IP)</option>
+                  <option value="Network">Network (Subnet/CIDR)</option>
+                  <option value="Range">IP Range</option>
+                  <option value="DNS Host">DNS Host (FQDN)</option>
+                  <option value="IP">Direct IP</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Address / Target / Group</label>
+                <input
+                  v-model="formData.dest_value"
+                  type="text"
+                  :disabled="formData.dest_type === 'Any'"
+                  :placeholder="formData.dest_type === 'Network Group' ? '8.8.8.8, 1.1.1.1, (Web Servers)' : (formData.dest_type === 'Network' ? '10.0.0.0/8' : (formData.dest_type === 'Range' ? '10.0.0.1-100' : (formData.dest_type === 'DNS Host' ? 'api.github.com' : '8.8.8.8')))"
+                  class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-mono disabled:bg-slate-100 disabled:text-slate-400"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Dropdown Element: Services / Ports Selection -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="rule-services" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Services / Service Group Selection <span class="text-rose-500">*</span>
+              </label>
+              <button
+                type="button"
+                @click="openInlineServiceModal"
+                class="text-[11px] font-bold text-[#005299] hover:text-blue-800 flex items-center gap-1.5 bg-white px-2.5 py-1 rounded border border-slate-300 shadow-2xs cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                </svg>
+                <span>Add Service Definition / Group</span>
+              </button>
+            </div>
+            <div class="relative">
+              <select
+                id="rule-services"
+                v-model="formData.services"
+                required
+                class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium appearance-none"
+              >
+                <option value="Any">Any (All Protocols &amp; Ports)</option>
+                <option value="Web Services (HTTP/HTTPS)">Service Group: Web Services (TCP 80, 443)</option>
+                <option value="Email Services (SMTP/IMAP/POP3)">Service Group: Email Services (TCP 25, 465, 587, 993, 995)</option>
+                <option value="Admin Remote Access (SSH/RDP/HTTPS)">Service Group: Remote Admin (TCP 22, 3389, 4444)</option>
+                <option value="DNS (UDP/TCP 53)">DNS (UDP/TCP 53)</option>
+                <option value="HTTP, HTTPS">HTTP (80), HTTPS (443)</option>
+                <option value="SSH">SSH (TCP 22)</option>
+                <option value="WireGuard">WireGuard VPN (UDP 51820)</option>
+                <option value="RDP">Remote Desktop (TCP 3389)</option>
+                <option value="ICMP">ICMP (Ping / Traceroute)</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-              <div>
-                <div class="flex items-center gap-2">
-                  <h3 id="modal-title-add-rule" class="text-sm font-bold text-white tracking-tight">
-                    Add Firewall Rule
-                  </h3>
-                  <span class="text-[10px] bg-blue-950 text-blue-300 font-mono font-bold px-2 py-0.5 rounded border border-blue-800/80">
-                    UTM 9 POLICY
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1">Select application protocol definitions or port groupings to inspect.</p>
+          </div>
+
+          <!-- 4. Action Selection (Visual Selector / Dropdown) -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+              Action Selection <span class="text-rose-500">*</span>
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+              <!-- Accept Action Option Card -->
+              <button
+                type="button"
+                @click="formData.action = 'accept'"
+                :class="[
+                  'p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 cursor-pointer',
+                  formData.action === 'accept'
+                    ? 'border-emerald-600 bg-emerald-50/70 shadow-sm ring-1 ring-emerald-500/30'
+                    : 'border-slate-200 bg-[#f4f6f9]/50 hover:bg-[#f4f6f9] text-slate-600'
+                ]"
+              >
+                <div
+                  class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white flex-shrink-0"
+                  :class="formData.action === 'accept' ? 'bg-emerald-600' : 'bg-slate-300'"
+                >
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM13.707 8.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div>
+                  <span class="font-bold text-xs block" :class="formData.action === 'accept' ? 'text-emerald-800' : 'text-slate-800'">
+                    Accept (Pass)
                   </span>
+                  <span class="text-[10px] text-slate-500">Permit packet forwarding</span>
                 </div>
-                <p class="text-xs text-slate-400 mt-0.5">Define security filtering criteria, zones, service ports &amp; action verdict</p>
-              </div>
-            </div>
+              </button>
 
-            <!-- Close Modal Button (✕) -->
-            <button
-              type="button"
-              @click="closeModal"
-              class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-              aria-label="Close add rule modal"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <!-- Modular Rule Submission Form Window -->
-          <form @submit.prevent="handleSubmit" class="p-6 space-y-5 bg-white text-slate-800 flex-1 overflow-y-auto">
-            <!-- Modal Inline Validation Alert -->
-            <div
-              v-if="validationError"
-              class="p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5 shadow-2xs"
-            >
-              <svg class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <div>
-                <strong class="font-bold">Validation Error:</strong>
-                <span class="ml-1">{{ validationError }}</span>
-              </div>
-            </div>
-
-            <!-- 1. Rule Name Input -->
-            <div>
-              <label for="rule-name" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Rule Name <span class="text-rose-500">*</span>
-              </label>
-              <input
-                id="rule-name"
-                v-model="formData.name"
-                type="text"
-                required
-                placeholder="e.g., Allow Internal LAN to Internet Web"
-                class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium"
-              />
-              <p class="text-[10px] text-slate-400 mt-1">Specify a unique descriptive name for identifying this rule in log traces.</p>
-            </div>
-
-            <!-- 2. Source Configuration (Zone & Base Object Type) -->
-            <div class="p-3.5 bg-[#f4f6f9] rounded-xl border border-slate-200 space-y-3">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-[#005299]"></span> Source Configuration
-                </span>
-                <button
-                  type="button"
-                  @click="openInlineObjectModal('source')"
-                  class="text-[11px] font-bold text-[#005299] hover:text-blue-800 flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-300 shadow-2xs cursor-pointer"
+              <!-- Drop Action Option Card -->
+              <button
+                type="button"
+                @click="formData.action = 'drop'"
+                :class="[
+                  'p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 cursor-pointer',
+                  formData.action === 'drop'
+                    ? 'border-rose-600 bg-rose-50/70 shadow-sm ring-1 ring-rose-500/30'
+                    : 'border-slate-200 bg-[#f4f6f9]/50 hover:bg-[#f4f6f9] text-slate-600'
+                ]"
+              >
+                <div
+                  class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white flex-shrink-0"
+                  :class="formData.action === 'drop' ? 'bg-rose-600' : 'bg-slate-300'"
                 >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>New Object / Group</span>
-                </button>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Source Zone</label>
-                  <select
-                    v-model="formData.src_zone"
-                    class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
-                  >
-                    <option value="LAN">LAN (Internal)</option>
-                    <option value="WAN">WAN (External)</option>
-                    <option value="VPN">VPN</option>
-                    <option value="DMZ">DMZ</option>
-                    <option value="Any">Any Zone</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Object Type</label>
-                  <select
-                    v-model="formData.source_type"
-                    class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
-                  >
-                    <option value="Any">&lt;&lt; Any Source &gt;&gt;</option>
-                    <option value="Network Group">Network Group (Multiple IPs / Subnets)</option>
-                    <option value="Host">Host (Single IP)</option>
-                    <option value="Network">Network (Subnet/CIDR)</option>
-                    <option value="Range">IP Range</option>
-                    <option value="DNS Host">DNS Host (FQDN)</option>
-                    <option value="IP">Direct IP</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Address / Object / Group</label>
-                  <input
-                    v-model="formData.source_value"
-                    type="text"
-                    :disabled="formData.source_type === 'Any'"
-                    :placeholder="formData.source_type === 'Network Group' ? '192.168.1.10, 10.0.0.0/24, (DMZ Servers)' : (formData.source_type === 'Network' ? '192.168.1.0/24' : (formData.source_type === 'Range' ? '192.168.1.10-50' : (formData.source_type === 'DNS Host' ? 'host.example.com' : '192.168.1.100')))"
-                    class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-mono disabled:bg-slate-100 disabled:text-slate-400"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- 3. Destination Configuration (Zone & Base Object Type) -->
-            <div class="p-3.5 bg-amber-50/40 rounded-xl border border-amber-200/80 space-y-3">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-[#ee7f00]"></span> Destination Configuration
-                </span>
-                <button
-                  type="button"
-                  @click="openInlineObjectModal('dest')"
-                  class="text-[11px] font-bold text-[#005299] hover:text-blue-800 flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-300 shadow-2xs cursor-pointer"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>New Object / Group</span>
-                </button>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Destination Zone</label>
-                  <select
-                    v-model="formData.dest_zone"
-                    class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
-                  >
-                    <option value="WAN">WAN (External)</option>
-                    <option value="LAN">LAN (Internal)</option>
-                    <option value="DMZ">DMZ</option>
-                    <option value="VPN">VPN</option>
-                    <option value="Any">Any Zone</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Object Type</label>
-                  <select
-                    v-model="formData.dest_type"
-                    class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-medium"
-                  >
-                    <option value="Any">&lt;&lt; Any Destination &gt;&gt;</option>
-                    <option value="Network Group">Network Group (Multiple IPs / Subnets)</option>
-                    <option value="Host">Host (Single IP)</option>
-                    <option value="Network">Network (Subnet/CIDR)</option>
-                    <option value="Range">IP Range</option>
-                    <option value="DNS Host">DNS Host (FQDN)</option>
-                    <option value="IP">Direct IP</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Address / Target / Group</label>
-                  <input
-                    v-model="formData.dest_value"
-                    type="text"
-                    :disabled="formData.dest_type === 'Any'"
-                    :placeholder="formData.dest_type === 'Network Group' ? '8.8.8.8, 1.1.1.1, (Web Servers)' : (formData.dest_type === 'Network' ? '10.0.0.0/8' : (formData.dest_type === 'Range' ? '10.0.0.1-100' : (formData.dest_type === 'DNS Host' ? 'api.github.com' : '8.8.8.8')))"
-                    class="w-full bg-white text-slate-900 text-xs p-2 rounded border border-slate-300 focus:border-[#005299] focus:outline-none font-mono disabled:bg-slate-100 disabled:text-slate-400"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- 3. Dropdown Element: Services / Ports Selection -->
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <label for="rule-services" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Services / Service Group Selection <span class="text-rose-500">*</span>
-                </label>
-                <button
-                  type="button"
-                  @click="openInlineServiceModal"
-                  class="text-[11px] font-bold text-[#005299] hover:text-blue-800 flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-300 shadow-2xs cursor-pointer"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>New Service / Group</span>
-                </button>
-              </div>
-              <div class="relative">
-                <select
-                  id="rule-services"
-                  v-model="formData.services"
-                  required
-                  class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium appearance-none"
-                >
-                  <option value="Any">Any (All Protocols &amp; Ports)</option>
-                  <option value="Web Services (HTTP/HTTPS)">Service Group: Web Services (TCP 80, 443)</option>
-                  <option value="Email Services (SMTP/IMAP/POP3)">Service Group: Email Services (TCP 25, 465, 587, 993, 995)</option>
-                  <option value="Admin Remote Access (SSH/RDP/HTTPS)">Service Group: Remote Admin (TCP 22, 3389, 4444)</option>
-                  <option value="DNS (UDP/TCP 53)">DNS (UDP/TCP 53)</option>
-                  <option value="HTTP, HTTPS">HTTP (80), HTTPS (443)</option>
-                  <option value="SSH">SSH (TCP 22)</option>
-                  <option value="WireGuard">WireGuard VPN (UDP 51820)</option>
-                  <option value="RDP">Remote Desktop (TCP 3389)</option>
-                  <option value="ICMP">ICMP (Ping / Traceroute)</option>
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                   </svg>
                 </div>
-              </div>
-              <p class="text-[10px] text-slate-400 mt-1">Select application protocol definitions or port groupings to inspect.</p>
+                <div>
+                  <span class="font-bold text-xs block" :class="formData.action === 'drop' ? 'text-rose-800' : 'text-slate-800'">
+                    Drop (Block)
+                  </span>
+                  <span class="text-[10px] text-slate-500">Silently discard packets</span>
+                </div>
+              </button>
             </div>
-
-            <!-- 4. Action Selection (Visual Selector / Dropdown) -->
-            <div>
-              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                Action Selection <span class="text-rose-500">*</span>
-              </label>
-              <div class="grid grid-cols-2 gap-3">
-                <!-- Accept Action Option Card -->
-                <button
-                  type="button"
-                  @click="formData.action = 'accept'"
-                  :class="[
-                    'p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 cursor-pointer',
-                    formData.action === 'accept'
-                      ? 'border-emerald-600 bg-emerald-50/70 shadow-sm ring-1 ring-emerald-500/30'
-                      : 'border-slate-200 bg-[#f4f6f9]/50 hover:bg-[#f4f6f9] text-slate-600'
-                  ]"
-                >
-                  <div
-                    class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white flex-shrink-0"
-                    :class="formData.action === 'accept' ? 'bg-emerald-600' : 'bg-slate-300'"
-                  >
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM13.707 8.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <span class="font-bold text-xs block" :class="formData.action === 'accept' ? 'text-emerald-800' : 'text-slate-800'">
-                      Accept (Pass)
-                    </span>
-                    <span class="text-[10px] text-slate-500">Permit packet forwarding</span>
-                  </div>
-                </button>
-
-                <!-- Drop Action Option Card -->
-                <button
-                  type="button"
-                  @click="formData.action = 'drop'"
-                  :class="[
-                    'p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 cursor-pointer',
-                    formData.action === 'drop'
-                      ? 'border-rose-600 bg-rose-50/70 shadow-sm ring-1 ring-rose-500/30'
-                      : 'border-slate-200 bg-[#f4f6f9]/50 hover:bg-[#f4f6f9] text-slate-600'
-                  ]"
-                >
-                  <div
-                    class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white flex-shrink-0"
-                    :class="formData.action === 'drop' ? 'bg-rose-600' : 'bg-slate-300'"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                    </svg>
-                  </div>
-                  <div>
-                    <span class="font-bold text-xs block" :class="formData.action === 'drop' ? 'text-rose-800' : 'text-slate-800'">
-                      Drop (Block)
-                    </span>
-                    <span class="text-[10px] text-slate-500">Silently discard packets</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            <!-- 5. Status Toggle (Active / Disabled) -->
-            <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
-              <div>
-                <span class="text-xs font-bold text-slate-800">Rule Initial State</span>
-                <p class="text-[10px] text-slate-400">Activate rule immediately upon successful compilation</p>
-              </div>
-              <div class="flex items-center gap-2">
-                <button
-                  type="button"
-                  role="switch"
-                  :aria-checked="formData.enabled"
-                  @click="formData.enabled = !formData.enabled"
-                  class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#0072ce] focus:ring-offset-2"
-                  :class="formData.enabled ? 'bg-[#0072ce]' : 'bg-slate-300'"
-                >
-                  <span
-                    aria-hidden="true"
-                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
-                    :class="formData.enabled ? 'translate-x-5' : 'translate-x-0'"
-                  ></span>
-                </button>
-                <span class="text-xs font-bold font-mono" :class="formData.enabled ? 'text-emerald-600' : 'text-slate-400'">
-                  {{ formData.enabled ? 'Enabled' : 'Disabled' }}
-                </span>
-              </div>
-            </div>
-          </form>
-
           </div>
+
+          <!-- 5. Status Toggle (Active / Disabled) -->
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold text-slate-800">Rule Initial State</span>
+              <p class="text-[10px] text-slate-400">Activate rule immediately upon successful compilation</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="formData.enabled"
+                @click="formData.enabled = !formData.enabled"
+                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#0072ce] focus:ring-offset-2"
+                :class="formData.enabled ? 'bg-[#0072ce]' : 'bg-slate-300'"
+              >
+                <span
+                  aria-hidden="true"
+                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
+                  :class="formData.enabled ? 'translate-x-5' : 'translate-x-0'"
+                ></span>
+              </button>
+              <span class="text-xs font-bold font-mono" :class="formData.enabled ? 'text-emerald-600' : 'text-slate-400'">
+                {{ formData.enabled ? 'Enabled' : 'Disabled' }}
+              </span>
+            </div>
+          </div>
+        </form>
+
+        <!-- Action Footer -->
+        <div class="px-6 py-4 bg-[#f4f6f9] border-t border-slate-200 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            @click="closeModal"
+            :disabled="isSubmitting"
+            class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="handleSubmit"
+            :disabled="isSubmitting"
+            class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
+          >
+            <svg v-if="isSubmitting" class="w-3.5 h-3.5 animate-spin text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <svg v-else class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{{ isSubmitting ? 'Saving & Applying Rule...' : 'Save & Apply Rule' }}</span>
+          </button>
         </div>
       </div>
     </transition>
@@ -820,7 +834,7 @@
     >
       <div
         v-if="isInlineObjectModalOpen"
-        class="fixed inset-0 z-60 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4"
+        class="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4"
         @keydown.esc="isInlineObjectModalOpen = false"
       >
         <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col">
@@ -987,7 +1001,7 @@
     >
       <div
         v-if="isInlineServiceModalOpen"
-        class="fixed inset-0 z-60 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4"
+        class="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4"
         @keydown.esc="isInlineServiceModalOpen = false"
       >
         <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col">
