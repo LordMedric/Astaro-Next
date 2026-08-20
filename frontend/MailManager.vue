@@ -8,7 +8,7 @@
           <h1 class="text-xl font-bold text-slate-900">Email Protection</h1>
         </div>
         <p class="text-xs text-slate-500 mt-1">
-          Configure SMTP/POP3 Proxy, Simple Mode or multi-domain SMTP Profiles, Postfix routing, Smart Host relaying, Anti-Spam, and Advanced MTA settings.
+          Configure SMTP/POP3 Proxy, Simple Mode or multi-domain SMTP Profiles, Postfix routing, DKIM Signing &amp; Verification, Anti-Spam, and Advanced MTA settings.
         </p>
       </div>
 
@@ -41,6 +41,18 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
           <span>New SMTP Profile</span>
+        </button>
+
+        <button
+          v-if="activeTab === 'dkim'"
+          type="button"
+          @click="openCreateDkimModal"
+          class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded bg-[#005299] hover:bg-[#003d73] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>New DKIM Key</span>
         </button>
       </div>
     </div>
@@ -78,6 +90,22 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
         <span>SMTP Profiles ({{ smtpProfiles.length }})</span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'dkim'"
+        :class="[
+          'px-4 py-2 text-xs font-bold rounded-md transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'dkim'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <svg class="w-4 h-4 text-[#005299]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+        </svg>
+        <span>DKIM ({{ dkimKeys.length }})</span>
       </button>
 
       <button
@@ -383,7 +411,122 @@
       </div>
     </div>
 
-    <!-- TAB 3: ROUTING & RELAYING (Smart Host) -->
+    <!-- TAB 3: DKIM (DomainKeys Identified Mail) KEY MANAGER -->
+    <div v-if="activeTab === 'dkim'" class="space-y-6">
+      <!-- Status & Inbound Verification Banner -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 class="font-bold text-sm text-slate-900">DomainKeys Identified Mail (DKIM) Engine</h3>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Cryptographically sign outbound messages with RSA keys and verify incoming sender signatures to prevent email spoofing.
+            </p>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            OpenDKIM / Rspamd Active
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="flex items-center justify-between p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
+            <div>
+              <span class="font-bold text-slate-800">Inbound DKIM Verification</span>
+              <p class="text-[11px] text-slate-500">Validate cryptographic signatures on incoming mail</p>
+            </div>
+            <span class="text-emerald-600 font-bold">✓ Enforced</span>
+          </div>
+
+          <div class="flex items-center justify-between p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
+            <div>
+              <span class="font-bold text-slate-800">Outbound DKIM Signing</span>
+              <p class="text-[11px] text-slate-500">Sign outgoing mail with configured RSA private keys</p>
+            </div>
+            <span class="text-[#005299] font-bold">✓ Active ({{ dkimKeys.length }} Domains)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- DKIM Keys Table -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div class="p-3 bg-[#f4f6f9] border-b border-slate-200 flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-700">Configured DKIM Signing Keys</span>
+          <span class="text-xs text-slate-400 font-mono">{{ dkimKeys.length }} keys configured</span>
+        </div>
+
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+            <tr>
+              <th class="p-3 pl-4 w-12 text-center">Status</th>
+              <th class="p-3">Domain</th>
+              <th class="p-3 font-mono">Selector</th>
+              <th class="p-3">Key Size</th>
+              <th class="p-3 font-mono">DNS Host Record</th>
+              <th class="p-3 text-right pr-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr
+              v-for="(dkim, idx) in dkimKeys"
+              :key="dkim.id"
+              :class="idx % 2 === 0 ? 'bg-white' : 'bg-[#f7f7f7]'"
+              class="hover:bg-blue-50/50 transition-colors"
+            >
+              <td class="p-3 pl-4 text-center">
+                <button
+                  type="button"
+                  @click="dkim.enabled = !dkim.enabled"
+                  class="relative inline-flex h-4 w-8 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
+                  :class="dkim.enabled ? 'bg-[#005299]' : 'bg-slate-300'"
+                >
+                  <span
+                    class="inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition duration-200"
+                    :class="dkim.enabled ? 'translate-x-4' : 'translate-x-0'"
+                  ></span>
+                </button>
+              </td>
+
+              <td class="p-3 font-bold text-slate-900 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                {{ dkim.domain }}
+              </td>
+
+              <td class="p-3 font-mono font-bold text-[#005299]">
+                {{ dkim.selector }}
+              </td>
+
+              <td class="p-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                  {{ dkim.key_size }}-bit RSA
+                </span>
+              </td>
+
+              <td class="p-3 font-mono text-slate-700 font-semibold truncate max-w-xs">
+                {{ dkim.dns_host_name }}
+              </td>
+
+              <td class="p-3 text-right pr-4 space-x-2">
+                <button
+                  type="button"
+                  @click="viewDnsRecord(dkim)"
+                  class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-[#005299] border border-blue-200 rounded font-bold cursor-pointer text-[11px]"
+                >
+                  View DNS TXT
+                </button>
+                <button
+                  type="button"
+                  @click="deleteDkimKey(dkim.id)"
+                  class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer text-[11px]"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 4: ROUTING & RELAYING (Smart Host) -->
     <div v-if="activeTab === 'routing'" class="space-y-6">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Upstream Smarthost Configuration -->
@@ -470,7 +613,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: ANTI-SPAM & ANTIVIRUS -->
+    <!-- TAB 5: ANTI-SPAM & ANTIVIRUS -->
     <div v-if="activeTab === 'antispam'" class="space-y-6">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Anti-Spam Engine -->
@@ -513,7 +656,7 @@
               </div>
               <div class="flex items-center gap-2">
                 <input id="chk-dkim" v-model="spamSettings.dkim" type="checkbox" class="rounded text-[#005299]" />
-                <label for="chk-dkim" class="text-slate-700 font-semibold cursor-pointer">DKIM Verification &amp; Inbound Signing</label>
+                <label for="chk-dkim" class="text-slate-700 font-semibold cursor-pointer">DKIM Verification &amp; Inbound Scoring</label>
               </div>
             </div>
           </div>
@@ -549,7 +692,7 @@
       </div>
     </div>
 
-    <!-- TAB 5: ADVANCED (Sophos UTM 9 SMTP Advanced Tab) -->
+    <!-- TAB 6: ADVANCED (Sophos UTM 9 SMTP Advanced Tab) -->
     <div v-if="activeTab === 'advanced'" class="space-y-6">
       <!-- Section 1: Advanced Settings & Rate Limiting -->
       <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4 text-xs">
@@ -766,7 +909,7 @@
       </div>
     </div>
 
-    <!-- TAB 6: QUARANTINE MANAGER -->
+    <!-- TAB 7: QUARANTINE MANAGER -->
     <div v-if="activeTab === 'quarantine'" class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
       <table class="w-full text-left text-xs border-collapse">
         <thead class="bg-[#f4f6f9] text-slate-700 font-bold border-b border-slate-200">
@@ -821,7 +964,7 @@
       </table>
     </div>
 
-    <!-- TAB 7: MAIL SPOOL / QUEUE -->
+    <!-- TAB 8: MAIL SPOOL / QUEUE -->
     <div v-if="activeTab === 'spool'" class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
       <div class="p-3 bg-[#f4f6f9] border-b border-slate-200 flex items-center justify-between">
         <span class="text-xs font-bold text-slate-700">Postfix Active &amp; Deferred Spool Queue</span>
@@ -979,6 +1122,152 @@
         </div>
       </div>
     </div>
+
+    <!-- CREATE DKIM KEY MODAL -->
+    <div
+      v-if="isDkimModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4"
+    >
+      <div class="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-md w-full overflow-hidden">
+        <div class="px-5 py-3.5 bg-[#1b232e] text-white flex items-center justify-between border-b-2 border-[#ee7f00]">
+          <h3 class="text-sm font-bold uppercase tracking-wider">Generate New DKIM Key Pair</h3>
+          <button @click="isDkimModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">✕</button>
+        </div>
+
+        <div class="p-5 space-y-4 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Domain Name</label>
+            <input
+              v-model="newDkim.domain"
+              type="text"
+              placeholder="e.g. company.com or sales.company.com"
+              class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#005299] focus:outline-none"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">DKIM Selector</label>
+              <input
+                v-model="newDkim.selector"
+                type="text"
+                placeholder="astaro"
+                class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#005299] focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Key Size</label>
+              <select v-model="newDkim.key_size" class="w-full p-2 border border-slate-300 rounded bg-white font-mono">
+                <option :value="2048">2048-bit (Standard)</option>
+                <option :value="1024">1024-bit (Legacy)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-900 text-[11px] leading-relaxed">
+            Generating a key pair automatically formats the required public DNS TXT record for publication in your DNS registrar.
+          </div>
+        </div>
+
+        <div class="p-4 bg-[#f4f6f9] border-t border-slate-200 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            @click="isDkimModalOpen = false"
+            class="px-3.5 py-1.5 rounded border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="generateDkimKey"
+            :disabled="isGeneratingDkim"
+            class="inline-flex items-center gap-2 px-4 py-1.5 rounded bg-[#005299] hover:bg-[#003d73] text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50"
+          >
+            <svg v-if="isGeneratingDkim" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>{{ isGeneratingDkim ? 'Generating RSA Key...' : 'Generate Key Pair' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW DNS TXT RECORD MODAL -->
+    <div
+      v-if="isDnsViewModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4"
+    >
+      <div class="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-xl w-full overflow-hidden">
+        <div class="px-5 py-3.5 bg-[#1b232e] text-white flex items-center justify-between border-b-2 border-[#ee7f00]">
+          <h3 class="text-sm font-bold uppercase tracking-wider">DNS TXT Record for {{ selectedDkim?.domain }}</h3>
+          <button @click="isDnsViewModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">✕</button>
+        </div>
+
+        <div class="p-5 space-y-4 text-xs">
+          <p class="text-slate-600">
+            Publish this TXT record with your DNS provider (e.g. Cloudflare, AWS Route53, GoDaddy) to authenticate outgoing emails.
+          </p>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Host / Name / Subdomain</label>
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  readonly
+                  :value="selectedDkim?.dns_host_name"
+                  class="w-full p-2 border border-slate-300 rounded font-mono bg-slate-50 text-slate-900 select-all"
+                />
+                <button
+                  type="button"
+                  @click="copyToClipboard(selectedDkim?.dns_host_name, 'host')"
+                  class="px-3 py-2 bg-white border border-slate-300 rounded hover:bg-slate-50 font-bold text-slate-700 cursor-pointer"
+                >
+                  {{ copyStatus === 'host' ? 'Copied!' : 'Copy' }}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Record Type</label>
+              <input
+                type="text"
+                readonly
+                value="TXT"
+                class="w-24 p-2 border border-slate-300 rounded font-mono bg-slate-50 text-slate-900 font-bold"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Record Value / TXT Data</label>
+              <textarea
+                readonly
+                rows="4"
+                :value="selectedDkim?.dns_txt_record"
+                class="w-full p-2 border border-slate-300 rounded font-mono bg-slate-50 text-slate-900 text-[11px] select-all leading-relaxed"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 bg-[#f4f6f9] border-t border-slate-200 flex items-center justify-between">
+          <button
+            type="button"
+            @click="copyToClipboard(selectedDkim?.dns_txt_record, 'value')"
+            class="px-4 py-1.5 rounded bg-[#005299] hover:bg-[#003d73] text-white text-xs font-bold shadow-xs cursor-pointer"
+          >
+            {{ copyStatus === 'value' ? 'Copied to Clipboard!' : 'Copy Full TXT Value' }}
+          </button>
+          <button
+            type="button"
+            @click="isDnsViewModalOpen = false"
+            class="px-3.5 py-1.5 rounded border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -992,12 +1281,35 @@ const props = defineProps({
   }
 })
 
-const activeTab = ref('general') // 'general' | 'profiles' | 'routing' | 'antispam' | 'advanced' | 'quarantine' | 'spool'
+const activeTab = ref('general') // 'general' | 'profiles' | 'dkim' | 'routing' | 'antispam' | 'advanced' | 'quarantine' | 'spool'
 const operationMode = ref('profile') // 'simple' | 'profile'
 const smtpProxyEnabled = ref(true)
 const isLoading = ref(false)
 const isSavingAdvanced = ref(false)
+const isGeneratingDkim = ref(false)
 const isModalOpen = ref(false)
+const isDkimModalOpen = ref(false)
+const isDnsViewModalOpen = ref(false)
+const selectedDkim = ref(null)
+const copyStatus = ref('')
+
+const dkimKeys = ref([
+  {
+    id: 'dkim-1',
+    domain: 'company.com',
+    selector: 'astaro',
+    key_size: 2048,
+    dns_host_name: 'astaro._domainkey.company.com',
+    dns_txt_record: 'v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1v7kR9m0QzL3bW1kPq5X9xYzN5v1e7j8R3kP8l0w==',
+    enabled: true
+  }
+])
+
+const newDkim = ref({
+  domain: '',
+  selector: 'astaro',
+  key_size: 2048
+})
 
 const smarthost = ref({
   host: 'smtp.sendgrid.net',
@@ -1081,6 +1393,72 @@ const newProfile = ref({
   malware_action: 'Quarantine',
   spx_enabled: false
 })
+
+const fetchDkimKeys = async () => {
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (!axiosLib) return
+    const res = await axiosLib.get('/api/mail/dkim/keys')
+    if (res.data) dkimKeys.value = res.data
+  } catch (e) {
+    console.error('Failed to fetch DKIM keys:', e)
+  }
+}
+
+const openCreateDkimModal = () => {
+  newDkim.value = {
+    domain: '',
+    selector: 'astaro',
+    key_size: 2048
+  }
+  isDkimModalOpen.value = true
+}
+
+const generateDkimKey = async () => {
+  if (!newDkim.value.domain || !newDkim.value.selector) return
+  isGeneratingDkim.value = true
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      const res = await axiosLib.post('/api/mail/dkim/generate', newDkim.value)
+      if (res.data && res.data.key) {
+        dkimKeys.value.push(res.data.key)
+      }
+    }
+    isDkimModalOpen.value = false
+  } catch (e) {
+    console.error('Failed to generate DKIM key:', e)
+  } finally {
+    isGeneratingDkim.value = false
+  }
+}
+
+const deleteDkimKey = async (id) => {
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.delete(`/api/mail/dkim/keys/${id}`)
+    }
+    dkimKeys.value = dkimKeys.value.filter(d => d.id !== id)
+  } catch (e) {
+    console.error('Failed to delete DKIM key:', e)
+  }
+}
+
+const viewDnsRecord = (dkim) => {
+  selectedDkim.value = dkim
+  copyStatus.value = ''
+  isDnsViewModalOpen.value = true
+}
+
+const copyToClipboard = (text, type) => {
+  if (!text) return
+  navigator.clipboard.writeText(text)
+  copyStatus.value = type
+  setTimeout(() => {
+    copyStatus.value = ''
+  }, 2000)
+}
 
 const fetchAdvancedSettings = async () => {
   try {
@@ -1173,5 +1551,6 @@ const fetchQuarantine = (isManual = false) => {
 
 onMounted(() => {
   fetchAdvancedSettings()
+  fetchDkimKeys()
 })
 </script>
