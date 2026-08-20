@@ -97,6 +97,10 @@
         'nat-rules': Vue.defineAsyncComponent(() => loadModule('./NatRules.vue', options)),
         'live-logs': Vue.defineAsyncComponent(() => loadModule('./LiveLogs.vue', options)),
         'users-view': Vue.defineAsyncComponent(() => loadModule('./Users.vue', options)),
+        'network-services': Vue.defineAsyncComponent(() => loadModule('./NetworkServices.vue', options)),
+        'intrusion-prevention': Vue.defineAsyncComponent(() => loadModule('./IntrusionPrevention.vue', options)),
+        'system-settings': Vue.defineAsyncComponent(() => loadModule('./SystemSettings.vue', options)),
+        'executive-reports': Vue.defineAsyncComponent(() => loadModule('./ExecutiveReports.vue', options)),
         'main-layout': Vue.defineAsyncComponent(() => loadModule('./MainLayout.vue', options))
       },
       data() {
@@ -126,12 +130,25 @@
             v-else-if="currentItem === 'live_logs' || currentItem === 'logs' || currentItem === 'logging' || currentItem === 'conntrack' || currentItem === 'connections'"
             :authToken="authToken"
           />
+          <executive-reports
+            v-else-if="currentItem === 'executive_reports' || currentItem === 'reports' || currentItem === 'executive_report' || currentItem === 'analytics'"
+            :authToken="authToken"
+          />
           <web-protection
             v-else-if="currentItem === 'web' || currentItem === 'web_protection' || currentItem === 'zenarmor' || currentItem === 'zenarmor_profiles'"
             :authToken="authToken"
           />
           <mail-manager
             v-else-if="currentItem === 'email' || currentItem === 'mail_manager' || currentItem === 'mail' || currentItem === 'mail_quarantine' || currentItem === 'postfix'"
+            :authToken="authToken"
+          />
+          <waf-settings
+            v-else-if="currentItem === 'web_server' || currentItem === 'waf_reverse_proxy' || currentItem === 'waf'"
+            :authToken="authToken"
+            @close="currentItem = 'rules_policies'"
+          />
+          <intrusion-prevention
+            v-else-if="currentItem === 'ips' || currentItem === 'intrusion_prevention' || currentItem === 'suricata' || currentItem === 'antidos'"
             :authToken="authToken"
           />
           <firewall-rules
@@ -154,18 +171,21 @@
             v-else-if="currentItem === 'network' || currentItem === 'interfaces' || currentItem === 'network_interfaces'"
             :authToken="authToken"
           />
+          <network-services
+            v-else-if="currentItem === 'network_services' || currentItem === 'dhcp' || currentItem === 'dns' || currentItem === 'dyndns' || currentItem === 'ntp'"
+            :authToken="authToken"
+          />
           <vpn-settings
             v-else-if="currentItem === 'vpn' || currentItem === 'vpn_settings' || currentItem === 'wireguard' || currentItem === 'wireguard_vpn' || currentItem === 'ipsec' || currentItem === 'openvpn'"
+            :authToken="authToken"
+          />
+          <system-settings
+            v-else-if="currentItem === 'system_settings' || currentItem === 'settings' || currentItem === 'webadmin_settings' || currentItem === 'shell_access'"
             :authToken="authToken"
           />
           <certificates-view
             v-else-if="currentItem === 'certificates' || currentItem === 'certs' || currentItem === 'pki'"
             :authToken="authToken"
-          />
-          <waf-settings
-            v-else-if="currentItem === 'web_server' || currentItem === 'waf_reverse_proxy' || currentItem === 'waf'"
-            :authToken="authToken"
-            @close="currentItem = 'rules_policies'"
           />
           <control-center v-else :authToken="authToken" />
         </main-layout>

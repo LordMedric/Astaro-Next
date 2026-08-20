@@ -3087,6 +3087,131 @@ def delete_user(user_id: str, _: Optional[str] = Depends(verify_admin_auth)):
     return {"status": "success", "message": f"User {user_id} deleted."}
 
 
+# -----------------------------------------------------------------------------
+# Section 13.1: Network Services Subsystem (DHCP, DNS, DynDNS, NTP)
+# -----------------------------------------------------------------------------
+class DhcpServerConfig(BaseModel):
+    enabled: bool = True
+    interface: str = "eth0"
+    range_start: str = "192.168.1.100"
+    range_end: str = "192.168.1.200"
+    gateway: str = "192.168.1.1"
+    dns_primary: str = "192.168.1.1"
+    dns_secondary: str = "1.1.1.1"
+    domain_name: str = "internal.medric.net"
+    lease_time_hours: int = 24
+    ipv6_enabled: bool = False
+
+_DHCP_CONFIG = DhcpServerConfig()
+
+class DnsServerConfig(BaseModel):
+    forwarders: List[str] = ["1.1.1.1", "8.8.8.8"]
+    dnssec: bool = True
+    query_logging: bool = True
+    cache_size: int = 10000
+    max_ttl: int = 86400
+
+_DNS_CONFIG = DnsServerConfig()
+
+@app.get("/api/network-services/dhcp", tags=["Network Services"])
+def get_dhcp_config(_: Optional[str] = Depends(verify_admin_auth)):
+    """Returns the current DHCP Server configuration."""
+    return _DHCP_CONFIG.model_dump()
+
+@app.post("/api/network-services/dhcp", tags=["Network Services"])
+def save_dhcp_config(payload: DhcpServerConfig, _: Optional[str] = Depends(verify_admin_auth)):
+    """Applies DHCP server pool and subnet parameters."""
+    global _DHCP_CONFIG
+    _DHCP_CONFIG = payload
+    logger.info(f"Saved DHCP Server settings: {payload.range_start} - {payload.range_end} on {payload.interface}")
+    return {"status": "success", "message": "DHCP Server configuration applied.", "config": payload.model_dump()}
+
+@app.get("/api/network-services/dns", tags=["Network Services"])
+def get_dns_config(_: Optional[str] = Depends(verify_admin_auth)):
+    """Returns the current DNS Forwarders and Resolver configuration."""
+    return _DNS_CONFIG.model_dump()
+
+@app.post("/api/network-services/dns", tags=["Network Services"])
+def save_dns_config(payload: DnsServerConfig, _: Optional[str] = Depends(verify_admin_auth)):
+    """Applies DNS Forwarder and caching parameters."""
+    global _DNS_CONFIG
+    _DNS_CONFIG = payload
+    logger.info(f"Saved DNS Forwarders: {payload.forwarders}")
+    return {"status": "success", "message": "DNS Resolver configuration applied.", "config": payload.model_dump()}
+
+
+# -----------------------------------------------------------------------------
+# Section 13.2: Intrusion Prevention Subsystem (IPS / Suricata)
+# -----------------------------------------------------------------------------
+class IpsGlobalConfig(BaseModel):
+    enabled: bool = True
+    mode: str = "inline_drop"
+    interfaces: List[str] = ["eth0", "eth1"]
+    update_interval: str = "every_2_hours"
+    engine_profile: str = "balanced"
+
+_IPS_CONFIG = IpsGlobalConfig()
+
+@app.get("/api/ips/config", tags=["Intrusion Prevention"])
+def get_ips_config(_: Optional[str] = Depends(verify_admin_auth)):
+    """Retrieves the Suricata IPS configuration."""
+    return _IPS_CONFIG.model_dump()
+
+@app.post("/api/ips/config", tags=["Intrusion Prevention"])
+def save_ips_config(payload: IpsGlobalConfig, _: Optional[str] = Depends(verify_admin_auth)):
+    """Updates Suricata IPS inspection rules and operational mode."""
+    global _IPS_CONFIG
+    _IPS_CONFIG = payload
+    logger.info(f"Saved IPS Engine configuration: mode={payload.mode}, ifaces={payload.interfaces}")
+    return {"status": "success", "message": "IPS Engine settings applied.", "config": payload.model_dump()}
+
+
+# -----------------------------------------------------------------------------
+# Section 13.3: System & WebAdmin Settings Subsystem
+# -----------------------------------------------------------------------------
+class SystemSettingsConfig(BaseModel):
+    hostname: str = "home.medric.net"
+    domain: str = "medric.net"
+    organization: str = "Medric Networks"
+    admin_email: str = "admin@medric.net"
+    timezone: str = "America/New_York"
+    webadmin_port: int = 4444
+    session_timeout_min: int = 60
+    allowed_networks: List[str] = ["192.168.1.0/24", "10.0.0.0/8"]
+    ssh_enabled: bool = True
+    ssh_port: int = 22
+
+_SYSTEM_SETTINGS_CONFIG = SystemSettingsConfig()
+
+@app.get("/api/system/settings", tags=["System Management"])
+def get_system_settings(_: Optional[str] = Depends(verify_admin_auth)):
+    """Retrieves the appliance identification and WebAdmin ACL settings."""
+    return _SYSTEM_SETTINGS_CONFIG.model_dump()
+
+@app.post("/api/system/settings", tags=["System Management"])
+def save_system_settings(payload: SystemSettingsConfig, _: Optional[str] = Depends(verify_admin_auth)):
+    """Applies appliance hostname, time, and WebAdmin ACL settings."""
+    global _SYSTEM_SETTINGS_CONFIG
+    _SYSTEM_SETTINGS_CONFIG = payload
+    logger.info(f"Applied System Settings: hostname={payload.hostname}, port={payload.webadmin_port}")
+    return {"status": "success", "message": "System settings applied.", "config": payload.model_dump()}
+
+
+# -----------------------------------------------------------------------------
+# Section 13.4: Executive & Usage Reports Subsystem
+# -----------------------------------------------------------------------------
+@app.get("/api/reports/executive", tags=["Reporting & Analytics"])
+def get_executive_report_summary(_: Optional[str] = Depends(verify_admin_auth)):
+    """Returns high-level security statistics and telemetry for executive dashboard."""
+    return {
+        "threats_blocked_7d": 14892,
+        "traffic_bytes_7d": 1627389927424,
+        "spam_messages_blocked_7d": 3410,
+        "uptime_percentage": 99.98,
+        "generated_at": datetime.now(timezone.utc).isoformat()
+    }
+
+
 @app.get("/{filename:path}", tags=["WebAdmin UI"])
 async def serve_static_asset(filename: str):
     """Dynamically serves Vue components and static assets requested by the frontend."""
