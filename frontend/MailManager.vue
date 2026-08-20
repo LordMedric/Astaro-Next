@@ -8,7 +8,7 @@
           <h1 class="text-xl font-bold text-slate-900">Email Protection</h1>
         </div>
         <p class="text-xs text-slate-500 mt-1">
-          Configure SMTP/POP3 Proxy, Simple Mode or multi-domain SMTP Profiles, Postfix routing, Smart Host relaying, Anti-Spam, and Quarantine.
+          Configure SMTP/POP3 Proxy, Simple Mode or multi-domain SMTP Profiles, Postfix routing, Smart Host relaying, Anti-Spam, and Advanced MTA settings.
         </p>
       </div>
 
@@ -114,6 +114,22 @@
 
       <button
         type="button"
+        @click="activeTab = 'advanced'"
+        :class="[
+          'px-4 py-2 text-xs font-bold rounded-md transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'advanced'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <svg class="w-4 h-4 text-[#005299]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+        </svg>
+        <span>Advanced</span>
+      </button>
+
+      <button
+        type="button"
         @click="activeTab = 'quarantine'"
         :class="[
           'px-4 py-2 text-xs font-bold rounded-md transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
@@ -147,7 +163,6 @@
 
     <!-- TAB 1: GLOBAL & OPERATION MODE (Simple Mode vs Profile Mode) -->
     <div v-if="activeTab === 'general'" class="space-y-6">
-      <!-- Operation Mode Selector Card -->
       <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
@@ -256,7 +271,7 @@
           </div>
           <div class="p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
             <div class="text-slate-500 text-[10px] uppercase font-bold">Max Message Size</div>
-            <div class="text-slate-900 font-mono font-bold text-sm mt-1">50 MB</div>
+            <div class="text-slate-900 font-mono font-bold text-sm mt-1">{{ advancedSettings.max_message_size_mb }} MB</div>
           </div>
         </div>
       </div>
@@ -534,7 +549,224 @@
       </div>
     </div>
 
-    <!-- TAB 5: QUARANTINE MANAGER -->
+    <!-- TAB 5: ADVANCED (Sophos UTM 9 SMTP Advanced Tab) -->
+    <div v-if="activeTab === 'advanced'" class="space-y-6">
+      <!-- Section 1: Advanced Settings & Rate Limiting -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4 text-xs">
+        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-sm text-slate-900">Advanced Settings</h3>
+            <p class="text-slate-500 mt-0.5">HELO greetings, postmaster notification address, and MTA connection concurrency limits.</p>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#005299] border border-blue-200">
+            Postfix MTA Core
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">SMTP Hostname (HELO / EHLO)</label>
+            <input
+              v-model="advancedSettings.smtp_hostname"
+              type="text"
+              placeholder="e.g. mail.company.com or astaro-gateway.internal"
+              class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#005299] focus:outline-none"
+            />
+            <p class="text-[10px] text-slate-400 mt-1">FQDN greeting string transmitted during the SMTP EHLO handshake.</p>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Postmaster Address</label>
+            <input
+              v-model="advancedSettings.postmaster_address"
+              type="email"
+              placeholder="postmaster@company.com"
+              class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#005299] focus:outline-none"
+            />
+            <p class="text-[10px] text-slate-400 mt-1">Recipient of delivery failure bounce notices and administrative alerts.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-2 border-t border-slate-100">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Max Message Size (MB)</label>
+            <input
+              v-model="advancedSettings.max_message_size_mb"
+              type="number"
+              min="1"
+              max="500"
+              class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#005299] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Max Connections</label>
+            <input
+              v-model="advancedSettings.max_connections"
+              type="number"
+              min="10"
+              max="1000"
+              class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#005299] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Max Connections / Host</label>
+            <input
+              v-model="advancedSettings.max_connections_per_host"
+              type="number"
+              min="1"
+              max="100"
+              class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#005299] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Max Recipients / Msg</label>
+            <input
+              v-model="advancedSettings.max_recipients_per_message"
+              type="number"
+              min="1"
+              max="500"
+              class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#005299] focus:outline-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: TLS / SSL Settings & Strict Cipher Suites -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4 text-xs">
+        <div class="border-b border-slate-100 pb-3">
+          <h3 class="font-bold text-sm text-slate-900">TLS / SSL Encryption &amp; Certificate Binding</h3>
+          <p class="text-slate-500 mt-0.5">STARTTLS opportunistic and mandatory encryption on inbound and outbound SMTP.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">TLS Certificate for SMTP</label>
+            <select
+              v-model="advancedSettings.tls_cert_name"
+              class="w-full p-2 border border-slate-300 rounded bg-white font-semibold focus:border-[#005299] focus:outline-none"
+            >
+              <option value="Default Appliance SSL">Default Appliance SSL (Self-Signed)</option>
+              <option value="Let's Encrypt Wildcard">Let's Encrypt Wildcard (*.company.com)</option>
+              <option value="Custom Corporate PKI">Custom Corporate PKI Certificate</option>
+            </select>
+          </div>
+
+          <div class="space-y-2 pt-2">
+            <div class="flex items-center gap-2">
+              <input id="adv-tls-req" v-model="advancedSettings.tls_required" type="checkbox" class="rounded text-[#005299]" />
+              <label for="adv-tls-req" class="text-slate-700 font-semibold cursor-pointer">Require TLS Negotiation (STARTTLS Mandatory)</label>
+            </div>
+            <div class="flex items-center gap-2">
+              <input id="adv-tls-strict" v-model="advancedSettings.tls_strict_ciphers" type="checkbox" class="rounded text-[#005299]" />
+              <label for="adv-tls-strict" class="text-slate-700 font-semibold cursor-pointer">Enforce Strict TLS 1.2 / TLS 1.3 Ciphers with PFS</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Advanced Security Checks (HELO, Sender Domain, BATV) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4 text-xs">
+        <div class="border-b border-slate-100 pb-3">
+          <h3 class="font-bold text-sm text-slate-900">Advanced Security Checks &amp; Bounce Validation</h3>
+          <p class="text-slate-500 mt-0.5">Strict MTA validation rules to block forged envelopes, malformed HELOs, and backscatter NDR spam.</p>
+        </div>
+
+        <div class="space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="flex items-start gap-2 p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
+              <input id="adv-strict-helo" v-model="advancedSettings.strict_helo_checking" type="checkbox" class="mt-0.5 rounded text-[#005299]" />
+              <div>
+                <label for="adv-strict-helo" class="font-bold text-slate-900 cursor-pointer">Strict HELO / EHLO</label>
+                <p class="text-[11px] text-slate-500 mt-0.5">Reject connecting MTAs with invalid or non-FQDN hostnames.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-2 p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
+              <input id="adv-verify-domain" v-model="advancedSettings.verify_sender_domain" type="checkbox" class="mt-0.5 rounded text-[#005299]" />
+              <div>
+                <label for="adv-verify-domain" class="font-bold text-slate-900 cursor-pointer">Verify Sender MX</label>
+                <p class="text-[11px] text-slate-500 mt-0.5">Reject senders whose domain lacks valid DNS MX or A records.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-2 p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
+              <input id="adv-reject-unverified" v-model="advancedSettings.reject_unverified_senders" type="checkbox" class="mt-0.5 rounded text-[#005299]" />
+              <div>
+                <label for="adv-reject-unverified" class="font-bold text-slate-900 cursor-pointer">Reject Unverified</label>
+                <p class="text-[11px] text-slate-500 mt-0.5">Drop emails if sender address fails SMTP probe check.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- BATV (Bounce Address Tag Validation) -->
+          <div class="p-4 bg-purple-50 rounded-xl border border-purple-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <input id="adv-batv" v-model="advancedSettings.batv_enabled" type="checkbox" class="rounded text-purple-700" />
+                <label for="adv-batv" class="font-bold text-purple-950 cursor-pointer text-xs">BATV (Bounce Address Tag Validation)</label>
+              </div>
+              <span class="text-[10px] font-mono font-bold bg-purple-200 text-purple-900 px-2 py-0.5 rounded">Backscatter Protection</span>
+            </div>
+            <p class="text-[11px] text-purple-800 leading-relaxed">
+              BATV digitally signs the envelope sender (MAIL FROM) of outbound emails. Incoming bounce messages (NDRs) without a valid HMAC signature are automatically rejected, completely eliminating backscatter spam.
+            </p>
+            <div v-if="advancedSettings.batv_enabled" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div>
+                <label class="block font-bold text-purple-900 mb-1">BATV Secret Key</label>
+                <input
+                  v-model="advancedSettings.batv_secret"
+                  type="text"
+                  class="w-full p-2 border border-purple-300 rounded font-mono text-slate-900 bg-white focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Footers & Legal Disclaimers -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4 text-xs">
+        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-sm text-slate-900">Footers &amp; Legal Disclaimers</h3>
+            <p class="text-slate-500 mt-0.5">Automatically append corporate legal disclaimer text to all outbound messages.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="adv-footer-chk" v-model="advancedSettings.append_disclaimer" type="checkbox" class="rounded text-[#005299]" />
+            <label for="adv-footer-chk" class="text-slate-700 font-bold cursor-pointer">Append Disclaimer</label>
+          </div>
+        </div>
+
+        <div v-if="advancedSettings.append_disclaimer" class="space-y-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">HTML / Plain Text Disclaimer Content</label>
+            <textarea
+              v-model="advancedSettings.disclaimer_html"
+              rows="4"
+              class="w-full p-3 border border-slate-300 rounded font-mono focus:border-[#005299] focus:outline-none"
+              placeholder="e.g. <p>This email and any attachments are confidential...</p>"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save Button Bar -->
+      <div class="flex items-center justify-end gap-3 p-4 bg-white rounded-xl border border-slate-200 shadow-xs">
+        <button
+          type="button"
+          @click="saveAdvancedSettings"
+          :disabled="isSavingAdvanced"
+          class="inline-flex items-center gap-2 px-5 py-2 rounded bg-[#005299] hover:bg-[#003d73] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+        >
+          <svg v-if="isSavingAdvanced" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>{{ isSavingAdvanced ? 'Saving Postfix Configuration...' : 'Save Advanced Settings' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 6: QUARANTINE MANAGER -->
     <div v-if="activeTab === 'quarantine'" class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
       <table class="w-full text-left text-xs border-collapse">
         <thead class="bg-[#f4f6f9] text-slate-700 font-bold border-b border-slate-200">
@@ -589,7 +821,7 @@
       </table>
     </div>
 
-    <!-- TAB 6: MAIL SPOOL / QUEUE -->
+    <!-- TAB 7: MAIL SPOOL / QUEUE -->
     <div v-if="activeTab === 'spool'" class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
       <div class="p-3 bg-[#f4f6f9] border-b border-slate-200 flex items-center justify-between">
         <span class="text-xs font-bold text-slate-700">Postfix Active &amp; Deferred Spool Queue</span>
@@ -760,10 +992,11 @@ const props = defineProps({
   }
 })
 
-const activeTab = ref('general') // 'general' | 'profiles' | 'routing' | 'antispam' | 'quarantine' | 'spool'
+const activeTab = ref('general') // 'general' | 'profiles' | 'routing' | 'antispam' | 'advanced' | 'quarantine' | 'spool'
 const operationMode = ref('profile') // 'simple' | 'profile'
 const smtpProxyEnabled = ref(true)
 const isLoading = ref(false)
+const isSavingAdvanced = ref(false)
 const isModalOpen = ref(false)
 
 const smarthost = ref({
@@ -780,6 +1013,25 @@ const spamSettings = ref({
   greylisting: true,
   spf: true,
   dkim: true
+})
+
+const advancedSettings = ref({
+  smtp_hostname: 'mail.astaro-gateway.internal',
+  postmaster_address: 'postmaster@astaro-gateway.internal',
+  max_message_size_mb: 50,
+  max_connections: 100,
+  max_connections_per_host: 10,
+  max_recipients_per_message: 50,
+  tls_required: true,
+  tls_cert_name: 'Default Appliance SSL',
+  tls_strict_ciphers: true,
+  strict_helo_checking: true,
+  verify_sender_domain: true,
+  reject_unverified_senders: true,
+  batv_enabled: true,
+  batv_secret: 'astaro_batv_secret_key_970',
+  append_disclaimer: false,
+  disclaimer_html: '<p style="color:gray;font-size:11px;">This email and any attachments are confidential and intended solely for the use of the individual or entity to whom they are addressed.</p>'
 })
 
 const blockedExtensions = ref('.exe, .scr, .bat, .vbs, .js, .pif, .hta, .cmd')
@@ -829,6 +1081,33 @@ const newProfile = ref({
   malware_action: 'Quarantine',
   spx_enabled: false
 })
+
+const fetchAdvancedSettings = async () => {
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (!axiosLib) return
+    const res = await axiosLib.get('/api/mail/advanced')
+    if (res.data) advancedSettings.value = res.data
+  } catch (e) {
+    console.error('Failed to fetch advanced settings:', e)
+  }
+}
+
+const saveAdvancedSettings = async () => {
+  isSavingAdvanced.value = true
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.post('/api/mail/advanced', advancedSettings.value)
+    }
+  } catch (e) {
+    console.error('Failed to save advanced settings:', e)
+  } finally {
+    setTimeout(() => {
+      isSavingAdvanced.value = false
+    }, 400)
+  }
+}
 
 const openCreateProfileModal = () => {
   newProfile.value = {
@@ -892,5 +1171,7 @@ const fetchQuarantine = (isManual = false) => {
   }, 600)
 }
 
-onMounted(() => {})
+onMounted(() => {
+  fetchAdvancedSettings()
+})
 </script>

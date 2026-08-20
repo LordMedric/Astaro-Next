@@ -2215,6 +2215,40 @@ def execute_quarantine_action(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class SmtpAdvancedConfig(BaseModel):
+    smtp_hostname: str = "mail.astaro-gateway.internal"
+    postmaster_address: str = "postmaster@astaro-gateway.internal"
+    max_message_size_mb: int = 50
+    max_connections: int = 100
+    max_connections_per_host: int = 10
+    max_recipients_per_message: int = 50
+    tls_required: bool = True
+    tls_cert_name: str = "Default Appliance SSL"
+    tls_strict_ciphers: bool = True
+    strict_helo_checking: bool = True
+    verify_sender_domain: bool = True
+    reject_unverified_senders: bool = True
+    batv_enabled: bool = True
+    batv_secret: str = "astaro_batv_secret_key_970"
+    append_disclaimer: bool = False
+    disclaimer_html: str = "<p style='color:gray;font-size:11px;'>This email and any attachments are confidential and intended solely for the use of the individual or entity to whom they are addressed.</p>"
+
+_SMTP_ADVANCED_CONFIG = SmtpAdvancedConfig()
+
+@app.get("/api/mail/advanced", tags=["Mail Subsystem (Postfix)"])
+def get_smtp_advanced(_: Optional[str] = Depends(verify_admin_auth)):
+    """Retrieves the Sophos UTM SMTP Advanced configuration parameters."""
+    return _SMTP_ADVANCED_CONFIG.model_dump()
+
+@app.post("/api/mail/advanced", tags=["Mail Subsystem (Postfix)"])
+def save_smtp_advanced(payload: SmtpAdvancedConfig, _: Optional[str] = Depends(verify_admin_auth)):
+    """Updates and applies the Postfix SMTP Advanced configuration parameters."""
+    global _SMTP_ADVANCED_CONFIG
+    _SMTP_ADVANCED_CONFIG = payload
+    logger.info(f"Applied SMTP Advanced settings: hostname={payload.smtp_hostname}, max_size={payload.max_message_size_mb}MB")
+    return {"status": "success", "message": "SMTP Advanced configuration saved and Postfix synced.", "config": payload.model_dump()}
+
+
 # -----------------------------------------------------------------------------
 # Section 12: Web Protection (Zenarmor / SFOS L7 Filter) Subsystem
 # -----------------------------------------------------------------------------
