@@ -557,9 +557,9 @@ const navGroups = [
       },
       {
         id: 'web_server',
-        aliases: ['waf_reverse_proxy', 'waf', 'waf_settings', 'nginx_waf'],
-        label: 'Web Server',
-        badge: 'Nginx WAF',
+        aliases: ['webserver_protection', 'web_server', 'waf_reverse_proxy', 'waf', 'waf_settings', 'nginx_waf'],
+        label: 'Webserver Protection',
+        badge: 'WAF',
         icon: WebServerIcon
       }
     ]
