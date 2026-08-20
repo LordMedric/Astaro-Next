@@ -267,11 +267,14 @@
                 v-model="newNet.type"
                 class="w-full p-2 border border-slate-300 rounded focus:border-[#005299] focus:outline-none bg-white font-bold"
               >
-                <option value="Host">Host (Single IP)</option>
-                <option value="Network">Network (Subnet CIDR)</option>
-                <option value="Range">IP Range</option>
-                <option value="DNS Host">DNS Host (FQDN)</option>
-                <option value="Network Group">Network Group (Multi-IP/Subnet)</option>
+                <option value="Host">Host</option>
+                <option value="DNS host">DNS host</option>
+                <option value="DNS group">DNS group</option>
+                <option value="Network">Network</option>
+                <option value="Range">Range</option>
+                <option value="Multicast group">Multicast group</option>
+                <option value="Network group">Network group</option>
+                <option value="Availability Group">Availability Group</option>
               </select>
             </div>
             <div>
@@ -280,7 +283,7 @@
                 v-model="newNet.interface"
                 class="w-full p-2 border border-slate-300 rounded focus:border-[#005299] focus:outline-none bg-white"
               >
-                <option value="Any">&lt;&lt; Any &gt;&gt;</option>
+                <option value="&lt;&lt; Any &gt;&gt;">&lt;&lt; Any &gt;&gt;</option>
                 <option value="LAN">Internal (LAN)</option>
                 <option value="WAN">External (WAN)</option>
                 <option value="DMZ">DMZ</option>
@@ -288,33 +291,64 @@
             </div>
           </div>
 
-          <!-- Group Member Picker (if Network Group) -->
-          <div v-if="newNet.type === 'Network Group'" class="space-y-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+          <!-- Network Subnet Form -->
+          <div v-if="newNet.type === 'Network'" class="space-y-3 p-3 bg-blue-50/50 rounded-lg border border-blue-200">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">IPv4 address *</label>
+                <input v-model="newNet.address" type="text" placeholder="192.168.1.0" class="w-full p-2 border border-slate-300 rounded font-mono bg-white" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Netmask *</label>
+                <select v-model="newNet.netmask" class="w-full p-2 border border-slate-300 rounded font-mono bg-white">
+                  <option value="/24 (255.255.255.0)">/24 (255.255.255.0)</option>
+                  <option value="/16 (255.255.0.0)">/16 (255.255.0.0)</option>
+                  <option value="/8 (255.0.0.0)">/8 (255.0.0.0)</option>
+                  <option value="/28 (255.255.255.240)">/28 (255.255.255.240)</option>
+                  <option value="/29 (255.255.255.248)">/29 (255.255.255.248)</option>
+                  <option value="/30 (255.255.255.252)">/30 (255.255.255.252)</option>
+                  <option value="/32 (255.255.255.255)">/32 (255.255.255.255)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Range Form -->
+          <div v-else-if="newNet.type === 'Range'" class="space-y-3 p-3 bg-amber-50/50 rounded-lg border border-amber-200">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">From IPv4 address *</label>
+                <input v-model="newNet.from_ip" type="text" placeholder="192.168.1.100" class="w-full p-2 border border-slate-300 rounded font-mono bg-white" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">To IPv4 address *</label>
+                <input v-model="newNet.to_ip" type="text" placeholder="192.168.1.200" class="w-full p-2 border border-slate-300 rounded font-mono bg-white" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Group Member Picker (if Network Group / DNS group / Availability Group) -->
+          <div v-else-if="newNet.type === 'Network group' || newNet.type === 'DNS group' || newNet.type === 'Availability Group' || newNet.type === 'Multicast group'" class="space-y-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
             <div class="flex items-center justify-between">
-              <label class="block font-bold text-purple-900">Group Members (IPs / Subnets / Hosts)</label>
-              <span class="text-[10px] text-purple-700 font-mono">Comma-separated or list</span>
+              <label class="block font-bold text-purple-900">Members (IPs / Subnets / FQDNs / Objects)</label>
+              <span class="text-[10px] text-purple-700 font-mono">Comma-separated list</span>
             </div>
             <textarea
               v-model="newNet.address"
               rows="3"
-              placeholder="e.g. 192.168.1.100, 192.168.2.0/24, 10.0.0.50"
+              placeholder="e.g. 192.168.1.100, 192.168.2.0/24, (Internal Server)"
               class="w-full p-2 border border-purple-300 rounded font-mono bg-white text-slate-900 focus:outline-none focus:border-purple-600"
             ></textarea>
-            <div class="text-[10px] text-purple-700 flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Matches any member IP or CIDR range when referenced in Firewall/NAT rules.</span>
-            </div>
           </div>
 
-          <div v-else>
-            <label class="block font-bold text-slate-700 mb-1">IPv4 Address / Netmask / FQDN</label>
+          <!-- Host / DNS host Form -->
+          <div v-else class="space-y-2">
+            <label class="block font-bold text-slate-700 mb-1">{{ newNet.type === 'DNS host' ? 'Hostname (FQDN)' : 'IPv4 Address' }} *</label>
             <input
               v-model="newNet.address"
               type="text"
-              placeholder="e.g. 192.168.1.100 or 10.0.0.0/24"
-              class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#005299] focus:outline-none"
+              :placeholder="newNet.type === 'DNS host' ? 'server.example.com' : '192.168.1.100'"
+              class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#005299] focus:outline-none bg-white"
             />
           </div>
 
