@@ -368,11 +368,28 @@
                 <span v-else class="text-slate-400">—</span>
               </td>
 
-              <td class="p-3 text-right pr-4">
+              <td class="p-3 text-right pr-4 space-x-1.5 whitespace-nowrap">
+                <button
+                  type="button"
+                  @click="openEditProfileModal(prof)"
+                  class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded font-bold cursor-pointer text-[11px]"
+                  title="Edit this SMTP profile"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  @click="cloneProfile(prof)"
+                  class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-[#005299] border border-blue-200 rounded font-bold cursor-pointer text-[11px]"
+                  title="Clone / Duplicate this profile"
+                >
+                  Clone
+                </button>
                 <button
                   type="button"
                   @click="deleteProfile(prof.id)"
-                  class="text-rose-600 hover:text-rose-800 text-[11px] font-bold cursor-pointer"
+                  class="px-2 py-1 text-rose-600 hover:text-rose-800 font-bold cursor-pointer text-[11px]"
+                  title="Delete profile"
                 >
                   Delete
                 </button>
@@ -982,7 +999,9 @@
     >
       <div class="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-lg w-full overflow-hidden">
         <div class="px-5 py-3.5 bg-[#1b232e] text-white flex items-center justify-between border-b-2 border-[#ee7f00]">
-          <h3 class="text-sm font-bold uppercase tracking-wider">Create SMTP Profile</h3>
+          <h3 class="text-sm font-bold uppercase tracking-wider">
+            {{ editingProfileId ? 'Edit SMTP Profile' : 'Create SMTP Profile' }}
+          </h3>
           <button @click="isModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">✕</button>
         </div>
 
@@ -1067,7 +1086,7 @@
             @click="saveProfile"
             class="px-4 py-1.5 rounded bg-[#005299] hover:bg-[#003d73] text-white text-xs font-bold shadow-xs cursor-pointer"
           >
-            Save Profile
+            {{ editingProfileId ? 'Save Changes' : 'Create Profile' }}
           </button>
         </div>
       </div>
@@ -1437,7 +1456,10 @@ const saveAdvancedSettings = async () => {
   }
 }
 
+const editingProfileId = ref(null)
+
 const openCreateProfileModal = () => {
+  editingProfileId.value = null
   newProfile.value = {
     name: '',
     domains_input: '',
@@ -1450,20 +1472,63 @@ const openCreateProfileModal = () => {
   isModalOpen.value = true
 }
 
+const openEditProfileModal = (prof) => {
+  editingProfileId.value = prof.id
+  newProfile.value = {
+    name: prof.name,
+    domains_input: Array.isArray(prof.domains) ? prof.domains.join(', ') : prof.domains,
+    target_host: prof.target_host,
+    recipient_verification: prof.recipient_verification,
+    spam_action: prof.spam_action,
+    malware_action: prof.malware_action,
+    spx_enabled: prof.spx_enabled
+  }
+  isModalOpen.value = true
+}
+
+const cloneProfile = (prof) => {
+  editingProfileId.value = null
+  newProfile.value = {
+    name: `${prof.name} (Clone)`,
+    domains_input: Array.isArray(prof.domains) ? prof.domains.join(', ') : prof.domains,
+    target_host: prof.target_host,
+    recipient_verification: prof.recipient_verification,
+    spam_action: prof.spam_action,
+    malware_action: prof.malware_action,
+    spx_enabled: prof.spx_enabled
+  }
+  isModalOpen.value = true
+}
+
 const saveProfile = () => {
   if (!newProfile.value.name || !newProfile.value.domains_input) return
   const doms = newProfile.value.domains_input.split(',').map(d => d.trim()).filter(Boolean)
-  smtpProfiles.value.push({
-    id: smtpProfiles.value.length + 1,
-    name: newProfile.value.name,
-    domains: doms,
-    target_host: newProfile.value.target_host,
-    recipient_verification: newProfile.value.recipient_verification,
-    spam_action: newProfile.value.spam_action,
-    malware_action: newProfile.value.malware_action,
-    spx_enabled: newProfile.value.spx_enabled,
-    enabled: true
-  })
+  
+  if (editingProfileId.value !== null) {
+    const existing = smtpProfiles.value.find(p => p.id === editingProfileId.value)
+    if (existing) {
+      existing.name = newProfile.value.name
+      existing.domains = doms
+      existing.target_host = newProfile.value.target_host
+      existing.recipient_verification = newProfile.value.recipient_verification
+      existing.spam_action = newProfile.value.spam_action
+      existing.malware_action = newProfile.value.malware_action
+      existing.spx_enabled = newProfile.value.spx_enabled
+    }
+  } else {
+    smtpProfiles.value.push({
+      id: smtpProfiles.value.length + 1,
+      name: newProfile.value.name,
+      domains: doms,
+      target_host: newProfile.value.target_host,
+      recipient_verification: newProfile.value.recipient_verification,
+      spam_action: newProfile.value.spam_action,
+      malware_action: newProfile.value.malware_action,
+      spx_enabled: newProfile.value.spx_enabled,
+      enabled: true
+    })
+  }
+  editingProfileId.value = null
   isModalOpen.value = false
 }
 
