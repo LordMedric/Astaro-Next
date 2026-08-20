@@ -2216,22 +2216,29 @@ def execute_quarantine_action(
 
 
 class SmtpAdvancedConfig(BaseModel):
-    smtp_hostname: str = "mail.astaro-gateway.internal"
-    postmaster_address: str = "postmaster@astaro-gateway.internal"
+    header_modifications: str = "X-Astaro-Scanned: true"
+    transparent_mode_ports: List[int] = [25]
+    skip_transparent_hosts: List[str] = ["(LAN) (Network)"]
+    allow_smtp_traffic_for_listed_hosts: bool = True
+    tls_cert_name: str = "medricnetworks-2026"
+    tls_version: str = "TLS v1.2"
+    require_tls_hosts: List[str] = []
+    require_tls_sender_domains: List[str] = []
+    skip_tls_hosts: List[str] = ["(LAN) (Network)"]
+    dkim_private_key: str = ""
+    dkim_key_selector: str = "key 1"
+    dkim_domains: List[str] = ["medric.net", "medricnetworks.com", "castletrublue.com"]
+    use_footer: bool = False
+    footer_text: str = "This email and any attachments are confidential and intended solely for the use of the individual or entity to whom they are addressed."
+    footers_mode: str = "Inline, unicode conversion"
+    smtp_hostname: str = "mail.medricnetworks.com"
+    postmaster_address: str = "medric.castle@medric.net"
+    batv_secret: str = "UNSET"
     max_message_size_mb: int = 50
-    max_connections: int = 100
+    max_connections: int = 20
     max_connections_per_host: int = 10
-    max_recipients_per_message: int = 50
-    tls_required: bool = True
-    tls_cert_name: str = "Default Appliance SSL"
-    tls_strict_ciphers: bool = True
-    strict_helo_checking: bool = True
-    verify_sender_domain: bool = True
-    reject_unverified_senders: bool = True
-    batv_enabled: bool = True
-    batv_secret: str = "astaro_batv_secret_key_970"
-    append_disclaimer: bool = False
-    disclaimer_html: str = "<p style='color:gray;font-size:11px;'>This email and any attachments are confidential and intended solely for the use of the individual or entity to whom they are addressed.</p>"
+    max_mails_per_connection: int = 1000
+    max_rcpt_per_mail: int = 100
 
 _SMTP_ADVANCED_CONFIG = SmtpAdvancedConfig()
 

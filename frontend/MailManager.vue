@@ -565,225 +565,539 @@
       </div>
     </div>
 
-    <!-- TAB 5: ADVANCED (Sophos UTM 9 SMTP Advanced Tab + DKIM) -->
+    <!-- TAB 5: ADVANCED (Sophos UTM 9 SMTP Advanced Options with Modern Sleek Design) -->
     <div v-if="activeTab === 'advanced'" class="space-y-6">
-      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4 text-xs">
+      
+      <!-- 1. Header Modifications -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4 text-xs">
         <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
-          <div>
-            <h3 class="font-bold text-sm text-slate-900">Advanced Settings</h3>
-            <p class="text-slate-500 mt-0.5">HELO greetings, postmaster notification address, and MTA connection concurrency limits.</p>
+          <div class="flex items-center gap-2.5">
+            <span class="w-2 h-2 rounded-full bg-[#005299]"></span>
+            <h3 class="font-bold text-sm text-slate-900">Header Modifications</h3>
           </div>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-50 text-[#005299] border border-blue-200">
-            Postfix MTA Core
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-50 text-[#005299] border border-blue-200">
+            SMTP Envelope &amp; Headers
           </span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">SMTP Hostname (HELO / EHLO)</label>
-            <input
-              v-model="advancedSettings.smtp_hostname"
-              type="text"
-              placeholder="e.g. mail.company.com or astaro-gateway.internal"
-              class="w-full p-2 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
-            />
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div class="lg:col-span-7 space-y-2">
+            <label class="block font-bold text-slate-700">Header Modifications</label>
+            <textarea
+              v-model="advancedSettings.header_modifications"
+              rows="4"
+              class="w-full p-3 border border-slate-300 rounded-xl font-mono text-xs focus:border-[#005299] focus:outline-none bg-slate-50/50"
+              placeholder="e.g. X-Astaro-Scanned: true&#10;X-Spam-Status: Clean"
+            ></textarea>
           </div>
 
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Postmaster Address</label>
-            <input
-              v-model="advancedSettings.postmaster_address"
-              type="email"
-              placeholder="postmaster@company.com"
-              class="w-full p-2 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-2 border-t border-slate-100">
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Max Message Size (MB)</label>
-            <input
-              v-model="advancedSettings.max_message_size_mb"
-              type="number"
-              min="1"
-              max="500"
-              class="w-full p-2 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
-            />
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Max Connections</label>
-            <input
-              v-model="advancedSettings.max_connections"
-              type="number"
-              min="10"
-              max="1000"
-              class="w-full p-2 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
-            />
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Max Connections / Host</label>
-            <input
-              v-model="advancedSettings.max_connections_per_host"
-              type="number"
-              min="1"
-              max="100"
-              class="w-full p-2 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
-            />
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Max Recipients / Msg</label>
-            <input
-              v-model="advancedSettings.max_recipients_per_message"
-              type="number"
-              min="1"
-              max="500"
-              class="w-full p-2 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- TLS / SSL Settings -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4 text-xs">
-        <div class="border-b border-slate-100 pb-3">
-          <h3 class="font-bold text-sm text-slate-900">TLS / SSL Encryption &amp; Certificate Binding</h3>
-          <p class="text-slate-500 mt-0.5">STARTTLS opportunistic and mandatory encryption on inbound and outbound SMTP.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">TLS Certificate for SMTP</label>
-            <select
-              v-model="advancedSettings.tls_cert_name"
-              class="w-full p-2 border border-slate-300 rounded-lg bg-white font-semibold focus:border-[#005299] focus:outline-none"
-            >
-              <option value="Default Appliance SSL">Default Appliance SSL (Self-Signed)</option>
-              <option value="Let's Encrypt Wildcard">Let's Encrypt Wildcard (*.company.com)</option>
-              <option value="Custom Corporate PKI">Custom Corporate PKI Certificate</option>
-            </select>
-          </div>
-
-          <div class="space-y-2 pt-2">
-            <div class="flex items-center gap-2">
-              <input id="adv-tls-req" v-model="advancedSettings.tls_required" type="checkbox" class="rounded text-[#005299]" />
-              <label for="adv-tls-req" class="text-slate-700 font-semibold cursor-pointer">Require TLS Negotiation (STARTTLS Mandatory)</label>
+          <div class="lg:col-span-5 p-4 bg-[#f8fafc] rounded-xl border border-slate-200 text-slate-600 leading-relaxed text-xs">
+            <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+              <span>ℹ️</span>
+              <span>About Header Modifications</span>
             </div>
-            <div class="flex items-center gap-2">
-              <input id="adv-tls-strict" v-model="advancedSettings.tls_strict_ciphers" type="checkbox" class="rounded text-[#005299]" />
-              <label for="adv-tls-strict" class="text-slate-700 font-semibold cursor-pointer">Enforce Strict TLS 1.2 / TLS 1.3 Ciphers with PFS</label>
-            </div>
+            <p>
+              This setting lets you change the content of SMTP headers of emails that pass the UTM gateway. You can append tracking identifiers, security scanning confirmations, or custom routing headers.
+            </p>
           </div>
         </div>
-      </div>
 
-      <!-- DomainKeys Identified Mail (DKIM) Inside Advanced -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4 text-xs">
-        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
-          <div>
-            <h3 class="font-bold text-sm text-slate-900">DomainKeys Identified Mail (DKIM)</h3>
-            <p class="text-slate-500 mt-0.5">Manage domain cryptographic RSA key pairs, selector bindings, and DNS TXT public records.</p>
-          </div>
+        <div class="flex justify-end pt-2 border-t border-slate-100">
           <button
             type="button"
-            @click="openCreateDkimModal"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#005299] hover:bg-[#003d73] text-white text-xs font-bold shadow-xs cursor-pointer"
+            @click="saveAdvancedSettings"
+            class="px-4 py-2 bg-[#4a9b2f] hover:bg-[#3d8326] text-white rounded-lg font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition-all"
           >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>New DKIM Key</span>
+            <span>✔</span>
+            <span>Apply Header Modifications</span>
           </button>
         </div>
+      </div>
 
-        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <table class="w-full text-left text-xs border-collapse">
-            <thead class="bg-[#f4f6f9] text-slate-700 font-bold border-b border-slate-200">
-              <tr>
-                <th class="p-3 pl-4 w-12 text-center">Status</th>
-                <th class="p-3">Domain</th>
-                <th class="p-3 font-mono">Selector</th>
-                <th class="p-3">Key Size</th>
-                <th class="p-3 font-mono">DNS Host Record</th>
-                <th class="p-3 text-right pr-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-              <tr
-                v-for="(dkim, idx) in dkimKeys"
-                :key="dkim.id"
-                :class="idx % 2 === 0 ? 'bg-white' : 'bg-[#f7f7f7]'"
-                class="hover:bg-blue-50/50 transition-colors"
-              >
-                <td class="p-3 pl-4 text-center">
-                  <button
-                    type="button"
-                    @click="dkim.enabled = !dkim.enabled"
-                    class="relative inline-flex h-4 w-8 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
-                    :class="dkim.enabled ? 'bg-emerald-500' : 'bg-slate-300'"
-                  >
-                    <span
-                      class="inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition duration-200"
-                      :class="dkim.enabled ? 'translate-x-4' : 'translate-x-0'"
-                    ></span>
-                  </button>
-                </td>
+      <!-- 2. Transparent Mode -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4 text-xs">
+        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2 h-2 rounded-full bg-[#005299]"></span>
+            <h3 class="font-bold text-sm text-slate-900">Transparent Mode</h3>
+          </div>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200">
+            Inline Interception
+          </span>
+        </div>
 
-                <td class="p-3 font-bold text-slate-900 flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  {{ dkim.domain }}
-                </td>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div class="lg:col-span-7 space-y-4">
+            <div>
+              <label class="block font-bold text-slate-700 mb-2">Select transparent mode ports</label>
+              <div class="flex items-center gap-4">
+                <label class="flex items-center gap-2 cursor-pointer font-semibold text-slate-800">
+                  <input type="checkbox" :checked="advancedSettings.transparent_mode_ports.includes(25)" @change="toggleTransPort(25)" class="rounded text-[#005299]" />
+                  <span>Port 25 (SMTP)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer font-semibold text-slate-800">
+                  <input type="checkbox" :checked="advancedSettings.transparent_mode_ports.includes(465)" @change="toggleTransPort(465)" class="rounded text-[#005299]" />
+                  <span>Port 465 (SMTPS)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer font-semibold text-slate-800">
+                  <input type="checkbox" :checked="advancedSettings.transparent_mode_ports.includes(587)" @change="toggleTransPort(587)" class="rounded text-[#005299]" />
+                  <span>Port 587 (Submission)</span>
+                </label>
+              </div>
+            </div>
 
-                <td class="p-3 font-mono font-bold text-[#005299]">
-                  {{ dkim.selector }}
-                </td>
-
-                <td class="p-3">
-                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                    {{ dkim.key_size }}-bit RSA
+            <div>
+              <label class="block font-bold text-slate-700 mb-1.5">Skip Transparent Mode Hosts/Nets</label>
+              <div class="p-3 border border-slate-300 rounded-xl bg-slate-50 space-y-2">
+                <div class="flex flex-wrap gap-1.5">
+                  <span v-for="(h, hIdx) in advancedSettings.skip_transparent_hosts" :key="hIdx" class="px-2.5 py-1 bg-white border border-slate-200 rounded-md font-mono text-[11px] font-bold text-slate-800 flex items-center gap-1.5 shadow-2xs">
+                    <span>{{ h }}</span>
+                    <button type="button" @click="advancedSettings.skip_transparent_hosts.splice(hIdx, 1)" class="text-rose-500 hover:text-rose-700 cursor-pointer">✕</button>
                   </span>
-                </td>
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                  <input
+                    v-model="newSkipTransHost"
+                    @keyup.enter="addSkipTransHost"
+                    type="text"
+                    placeholder="e.g. (LAN) (Network) or 192.168.1.100"
+                    class="flex-1 p-1.5 text-xs bg-white border border-slate-200 rounded-lg font-mono focus:outline-none"
+                  />
+                  <button type="button" @click="addSkipTransHost" class="px-3 py-1 bg-[#005299] text-white rounded-lg font-bold cursor-pointer">Add</button>
+                </div>
+              </div>
+            </div>
 
-                <td class="p-3 font-mono text-slate-700 font-semibold truncate max-w-xs">
-                  {{ dkim.dns_host_name }}
-                </td>
+            <div class="flex items-center gap-2 pt-1">
+              <input id="chk-allow-trans" v-model="advancedSettings.allow_smtp_traffic_for_listed_hosts" type="checkbox" class="rounded text-[#005299]" />
+              <label for="chk-allow-trans" class="font-bold text-slate-800 cursor-pointer">
+                Allow unproxied SMTP traffic for listed hosts/nets
+              </label>
+            </div>
+          </div>
 
-                <td class="p-3 text-right pr-4 space-x-2">
-                  <button
-                    type="button"
-                    @click="viewDnsRecord(dkim)"
-                    class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-[#005299] border border-blue-200 rounded-md font-bold cursor-pointer text-[11px]"
-                  >
-                    View DNS TXT
-                  </button>
-                  <button
-                    type="button"
-                    @click="deleteDkimKey(dkim.id)"
-                    class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer text-[11px]"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="lg:col-span-5 p-4 bg-[#f8fafc] rounded-xl border border-slate-200 text-slate-600 leading-relaxed text-xs">
+            <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+              <span>ℹ️</span>
+              <span>Transparent Interception Rules</span>
+            </div>
+            <p>
+              When using transparent mode, the system will intercept traffic on selected ports, and re-route it to the proxy. Hosts and Networks listed in the Skip transparent mode hosts/nets box will not be subject to the transparent interception of SMTP traffic. If you want to allow unproxied SMTP traffic for the listed hosts or networks, make sure that the checkbox is checked.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2 border-t border-slate-100">
+          <button
+            type="button"
+            @click="saveAdvancedSettings"
+            class="px-4 py-2 bg-[#4a9b2f] hover:bg-[#3d8326] text-white rounded-lg font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition-all"
+          >
+            <span>✔</span>
+            <span>Apply Transparent Mode</span>
+          </button>
         </div>
       </div>
 
-      <!-- Save Button Bar -->
-      <div class="flex items-center justify-end gap-3 p-4 bg-white rounded-xl border border-slate-200 shadow-xs">
-        <button
-          type="button"
-          @click="saveAdvancedSettings"
-          :disabled="isSavingAdvanced"
-          class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#005299] hover:bg-[#003d73] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
-        >
-          <svg v-if="isSavingAdvanced" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span>{{ isSavingAdvanced ? 'Saving Postfix Configuration...' : 'Save Advanced Settings' }}</span>
-        </button>
+      <!-- 3. TLS Settings -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4 text-xs">
+        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2 h-2 rounded-full bg-[#005299]"></span>
+            <h3 class="font-bold text-sm text-slate-900">TLS Settings</h3>
+          </div>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+            STARTTLS Encryption
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div class="lg:col-span-7 space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">TLS certificate:</label>
+                <select v-model="advancedSettings.tls_cert_name" class="w-full p-2 border border-slate-300 rounded-lg bg-white font-semibold">
+                  <option value="medricnetworks-2026">medricnetworks-2026</option>
+                  <option value="Default Appliance SSL">Default Appliance SSL</option>
+                  <option value="Let's Encrypt Wildcard">Let's Encrypt Wildcard (*.company.com)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">TLS version:</label>
+                <select v-model="advancedSettings.tls_version" class="w-full p-2 border border-slate-300 rounded-lg bg-white font-bold font-mono">
+                  <option value="TLS v1.3">TLS v1.3 (Highest Security)</option>
+                  <option value="TLS v1.2">TLS v1.2 (Standard / Recommended)</option>
+                  <option value="TLS v1.1">TLS v1.1 (Legacy)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Require TLS Negotiation Hosts/Nets -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Require TLS Negotiation Hosts/Nets</label>
+              <textarea
+                v-model="tlsRequireHostsText"
+                rows="2"
+                placeholder="List hosts/networks that must always negotiate TLS..."
+                class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs bg-slate-50/50"
+              ></textarea>
+            </div>
+
+            <!-- Require TLS Negotiation Sender Domains -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Require TLS Negotiation Sender Domains</label>
+              <textarea
+                v-model="tlsRequireDomainsText"
+                rows="2"
+                placeholder="List sender domains that must always be encrypted..."
+                class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs bg-slate-50/50"
+              ></textarea>
+            </div>
+
+            <!-- Skip TLS Negotiation Hosts/Nets -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Skip TLS Negotiation Hosts/Nets</label>
+              <div class="p-2.5 border border-slate-300 rounded-xl bg-slate-50 space-y-2">
+                <div class="flex flex-wrap gap-1.5">
+                  <span v-for="(h, hIdx) in advancedSettings.skip_tls_hosts" :key="hIdx" class="px-2.5 py-1 bg-white border border-slate-200 rounded-md font-mono text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
+                    <span>{{ h }}</span>
+                    <button type="button" @click="advancedSettings.skip_tls_hosts.splice(hIdx, 1)" class="text-rose-500 hover:text-rose-700 cursor-pointer">✕</button>
+                  </span>
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                  <input
+                    v-model="newSkipTlsHost"
+                    @keyup.enter="addSkipTlsHost"
+                    type="text"
+                    placeholder="e.g. (LAN) (Network)"
+                    class="flex-1 p-1.5 text-xs bg-white border border-slate-200 rounded-lg font-mono"
+                  />
+                  <button type="button" @click="addSkipTlsHost" class="px-3 py-1 bg-[#005299] text-white rounded-lg font-bold cursor-pointer">Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5 p-4 bg-[#f8fafc] rounded-xl border border-slate-200 text-slate-600 leading-relaxed text-xs space-y-2">
+            <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+              <span>ℹ️</span>
+              <span>TLS Security &amp; Policy Enforcement</span>
+            </div>
+            <p>
+              The selected <strong>TLS certificate</strong> will be used to identify this system when performing a TLS handshake. By default the system will negotiate TLS encryption with all remote hosts that support it.
+            </p>
+            <p>
+              You can select the <strong>TLS protocol version</strong>. We recommend disabling older, less secure protocol versions.
+            </p>
+            <p>
+              If a particular remote host should always require TLS encryption, you can add it to the <strong>Require TLS negotiation hosts/nets</strong> list. If mails sent from a particular domain should not be accepted without encryption, add them to <strong>Require TLS sender domains</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2 border-t border-slate-100">
+          <button
+            type="button"
+            @click="saveAdvancedSettings"
+            class="px-4 py-2 bg-[#4a9b2f] hover:bg-[#3d8326] text-white rounded-lg font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition-all"
+          >
+            <span>✔</span>
+            <span>Apply TLS Settings</span>
+          </button>
+        </div>
       </div>
+
+      <!-- 4. DomainKeys Identified Mail (DKIM) -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4 text-xs">
+        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2 h-2 rounded-full bg-[#005299]"></span>
+            <h3 class="font-bold text-sm text-slate-900">DomainKeys Identified Mail (DKIM)</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="openDkimDnsRecordViewer"
+              class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-[#005299] border border-blue-200 rounded-lg font-bold cursor-pointer transition-colors"
+            >
+              View DNS TXT Record
+            </button>
+            <button
+              type="button"
+              @click="generateNewDkimKeypair"
+              class="px-3 py-1 bg-[#005299] hover:bg-[#003d73] text-white rounded-lg font-bold cursor-pointer transition-colors"
+            >
+              Generate 2048-bit Key
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div class="lg:col-span-7 space-y-4">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="font-bold text-slate-700">Private RSA key:</label>
+                <span class="text-[10px] font-mono text-slate-400">ASCII Armor PEM (2048-bit)</span>
+              </div>
+              <textarea
+                v-model="advancedSettings.dkim_private_key"
+                rows="5"
+                class="w-full p-2.5 border border-slate-300 rounded-xl font-mono text-[11px] bg-slate-50/50 leading-relaxed select-all"
+                placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;MIIEpAIBAAKCAQEAlFQVrb8f2jn5zD/c0mLYhPEvTEKWqd7PI56yuHYCJsCKxl7F...&#10;-----END RSA PRIVATE KEY-----"
+              ></textarea>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Key selector:</label>
+              <input
+                v-model="advancedSettings.dkim_key_selector"
+                type="text"
+                class="w-full p-2 border border-slate-300 rounded-lg font-mono font-bold text-slate-900 bg-white"
+                placeholder="e.g. key 1 or astaro"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1.5">DKIM Domains</label>
+              <div class="p-3 border border-slate-300 rounded-xl bg-slate-50 space-y-2">
+                <div class="space-y-1.5">
+                  <div v-for="(dom, dIdx) in advancedSettings.dkim_domains" :key="dIdx" class="flex items-center justify-between bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs font-mono">
+                    <div class="flex items-center gap-2">
+                      <input type="checkbox" checked class="rounded text-[#005299]" />
+                      <span class="font-bold text-slate-800">{{ dom }}</span>
+                    </div>
+                    <button type="button" @click="advancedSettings.dkim_domains.splice(dIdx, 1)" class="text-rose-500 hover:text-rose-700 font-bold cursor-pointer">✕</button>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                  <input
+                    v-model="newDkimDomainInput"
+                    @keyup.enter="addDkimDomain"
+                    type="text"
+                    placeholder="e.g. newdomain.com"
+                    class="flex-1 p-1.5 text-xs bg-white border border-slate-200 rounded-lg font-mono"
+                  />
+                  <button type="button" @click="addDkimDomain" class="px-3 py-1 bg-[#005299] text-white rounded-lg font-bold cursor-pointer">Add Domain</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5 p-4 bg-[#f8fafc] rounded-xl border border-slate-200 text-slate-600 leading-relaxed text-xs">
+            <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+              <span>ℹ️</span>
+              <span>DomainKeys Signing Explanation</span>
+            </div>
+            <p>
+              DomainKeys Identified Mail (DKIM) lets you cryptographically sign outgoing messages. You need to specify a private RSA key (in ASCII armor), and a <strong>"selector"</strong> string.
+            </p>
+            <p class="mt-2">
+              Also, you need to publish the public portion of the RSA key along with the selector in the DNS TXT record for the domains that you want to sign mails for.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2 border-t border-slate-100">
+          <button
+            type="button"
+            @click="saveAdvancedSettings"
+            class="px-4 py-2 bg-[#4a9b2f] hover:bg-[#3d8326] text-white rounded-lg font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition-all"
+          >
+            <span>✔</span>
+            <span>Apply DKIM Configuration</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 5. Confidentiality Footer -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4 text-xs">
+        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2 h-2 rounded-full bg-[#005299]"></span>
+            <h3 class="font-bold text-sm text-slate-900">Confidentiality Footer</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="chk-use-footer" v-model="advancedSettings.use_footer" type="checkbox" class="rounded text-[#005299]" />
+            <label for="chk-use-footer" class="font-bold text-slate-800 cursor-pointer">Use the text below as a footer</label>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div class="lg:col-span-7 space-y-2">
+            <textarea
+              v-model="advancedSettings.footer_text"
+              rows="4"
+              class="w-full p-3 border border-slate-300 rounded-xl font-mono text-xs focus:border-[#005299] focus:outline-none bg-slate-50/50"
+              placeholder="e.g. This email and any attachments are confidential and intended solely for the use of the individual..."
+            ></textarea>
+          </div>
+
+          <div class="lg:col-span-5 p-4 bg-[#f8fafc] rounded-xl border border-slate-200 text-slate-600 leading-relaxed text-xs">
+            <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+              <span>ℹ️</span>
+              <span>Disclaimer &amp; Compliance Notes</span>
+            </div>
+            <p>
+              You can enter text that is appended as a footer to each outgoing email. This can contain confidentiality notices, corporate disclosures, or other legal information.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2 border-t border-slate-100">
+          <button
+            type="button"
+            @click="saveAdvancedSettings"
+            class="px-4 py-2 bg-[#4a9b2f] hover:bg-[#3d8326] text-white rounded-lg font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition-all"
+          >
+            <span>✔</span>
+            <span>Apply Confidentiality Footer</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 6. Advanced Settings -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4 text-xs">
+        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2 h-2 rounded-full bg-[#005299]"></span>
+            <h3 class="font-bold text-sm text-slate-900">Advanced Settings</h3>
+          </div>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-50 text-[#005299] border border-blue-200">
+            Postfix MTA Kernel &amp; Rate Limits
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div class="lg:col-span-7 space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">SMTP hostname:</label>
+                <input
+                  v-model="advancedSettings.smtp_hostname"
+                  type="text"
+                  class="w-full p-2 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
+                  placeholder="mail.medricnetworks.com"
+                />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Postmaster address:</label>
+                <input
+                  v-model="advancedSettings.postmaster_address"
+                  type="email"
+                  class="w-full p-2 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
+                  placeholder="medric.castle@medric.net"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">BATV secret:</label>
+                <div class="flex items-center gap-2">
+                  <input
+                    v-model="advancedSettings.batv_secret"
+                    type="text"
+                    class="w-full p-2 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    @click="generateBatvSecret"
+                    class="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg text-[11px] font-bold text-slate-700 whitespace-nowrap cursor-pointer"
+                  >
+                    Generate
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Max message size:</label>
+                <div class="flex items-center gap-2">
+                  <input
+                    v-model="advancedSettings.max_message_size_mb"
+                    type="number"
+                    min="1"
+                    max="500"
+                    class="w-full p-2 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
+                  />
+                  <span class="text-slate-500 font-bold">Megabytes</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Max connections:</label>
+                <input
+                  v-model="advancedSettings.max_connections"
+                  type="number"
+                  class="w-full p-1.5 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Max connections/host:</label>
+                <input
+                  v-model="advancedSettings.max_connections_per_host"
+                  type="number"
+                  class="w-full p-1.5 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Max mails/connection:</label>
+                <input
+                  v-model="advancedSettings.max_mails_per_connection"
+                  type="number"
+                  class="w-full p-1.5 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Max rcpt/mail:</label>
+                <input
+                  v-model="advancedSettings.max_rcpt_per_mail"
+                  type="number"
+                  class="w-full p-1.5 border border-slate-300 rounded-lg font-mono focus:border-[#005299] focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Footers mode:</label>
+              <select v-model="advancedSettings.footers_mode" class="w-full p-2 border border-slate-300 rounded-lg bg-white font-semibold">
+                <option value="Inline, unicode conversion">Inline, unicode conversion</option>
+                <option value="Inline, plain text">Inline, plain text</option>
+                <option value="MIME part mode">MIME part mode</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5 p-4 bg-[#f8fafc] rounded-xl border border-slate-200 text-slate-600 leading-relaxed text-xs space-y-2">
+            <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+              <span>ℹ️</span>
+              <span>Advanced Parameters Overview</span>
+            </div>
+            <p>
+              Setting the <strong>SMTP hostname</strong> will cause the system to use the specified name in HELO and SMTP banner strings. By default the normal system hostname is used. The <strong>Postmaster address</strong> will receive messages sent to postmaster@[ip.ad.dr.es]. Accepting such email is an RFC requirement.
+            </p>
+            <p>
+              The <strong>Footers mode</strong> determines how footers are added to messages. Using MIME part mode, footers are added as an extra MIME part. Using Inline modes, footers are added to displayed message text with a '-- ' separator.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2 border-t border-slate-100">
+          <button
+            type="button"
+            @click="saveAdvancedSettings"
+            :disabled="isSavingAdvanced"
+            class="px-5 py-2.5 bg-[#4a9b2f] hover:bg-[#3d8326] text-white rounded-lg font-bold shadow-xs cursor-pointer flex items-center gap-2 transition-all disabled:opacity-50"
+          >
+            <svg v-if="isSavingAdvanced" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>✔</span>
+            <span>{{ isSavingAdvanced ? 'Applying Postfix Configuration...' : 'Apply Advanced Settings' }}</span>
+          </button>
+        </div>
+      </div>
+
     </div>
 
     <!-- TAB 6: QUARANTINE MANAGER -->
@@ -1811,28 +2125,122 @@ const dkimKeys = ref([
   {
     id: 'dkim-1',
     domain: 'medricnetworks.com',
-    selector: 'astaro',
+    selector: 'key 1',
     key_size: 2048,
-    dns_host_name: 'astaro._domainkey.medricnetworks.com',
+    dns_host_name: 'key1._domainkey.medricnetworks.com',
     dns_txt_record: 'v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1v7kR9m0QzL3bW1kPq5X9xYzN5v1e7j8R3kP8l0w==',
     enabled: true
   }
 ])
 
-const newDkim = ref({ domain: '', selector: 'astaro', key_size: 2048 })
+const newDkim = ref({ domain: '', selector: 'key 1', key_size: 2048 })
 const smarthost = ref({ host: 'smtp.sendgrid.net', port: 587, auth: true, username: 'apikey', password: '••••••••••••' })
 const spamSettings = ref({ threshold: 5.0, blackhole_threshold: 12.0, greylisting: true, spf: true, dkim: true })
+
 const advancedSettings = ref({
-  smtp_hostname: 'mail.medric.net',
-  postmaster_address: 'postmaster@medric.net',
+  header_modifications: 'X-Astaro-Scanned: true',
+  transparent_mode_ports: [25],
+  skip_transparent_hosts: ['(LAN) (Network)'],
+  allow_smtp_traffic_for_listed_hosts: true,
+  tls_cert_name: 'medricnetworks-2026',
+  tls_version: 'TLS v1.2',
+  require_tls_hosts: [],
+  require_tls_sender_domains: [],
+  skip_tls_hosts: ['(LAN) (Network)'],
+  dkim_private_key: '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAlFQVrb8f2jn5zD/c0mLYhPEvTEKWqd7PI56yuHYCJsCKxl7F\n/SQgI98pnBFunQzPjp9HU3Sbxe/OwDGguZl9h1eDscxQQ6EPHTRI/XDnW7MBdV9Y\nUCokLrvICyVt+zZtF20V/YiJ8LqCLgTt5XiGr7vOje2p2rncsDqKgkQu0PG27HQ6\n1gjy8spH6qrgmpIsgMs79Wr4eV5v9izW5X644D7qKASMhT4nJjavImHOe3NstCGH\nVfCBBvqZLd/T2geK6MtoPHQQJqd0XDV+U88nLicnemXVGcWDuE5A8WdcBc1rYt7F\nC9+eqAjB6XItxKQ5Abe3ZPRcEf6AQ46S5Abv1wIDAQABAoIBAGOKjkXchnbAA4hz\n-----END RSA PRIVATE KEY-----',
+  dkim_key_selector: 'key 1',
+  dkim_domains: ['medric.net', 'medricnetworks.com', 'castletrublue.com'],
+  use_footer: false,
+  footer_text: 'This email and any attachments are confidential and intended solely for the use of the individual or entity to whom they are addressed.',
+  footers_mode: 'Inline, unicode conversion',
+  smtp_hostname: 'mail.medricnetworks.com',
+  postmaster_address: 'medric.castle@medric.net',
+  batv_secret: 'UNSET',
   max_message_size_mb: 50,
-  max_connections: 100,
+  max_connections: 20,
   max_connections_per_host: 10,
-  max_recipients_per_message: 50,
-  tls_required: true,
-  tls_cert_name: 'Default Appliance SSL',
-  tls_strict_ciphers: true
+  max_mails_per_connection: 1000,
+  max_rcpt_per_mail: 100
 })
+
+const tlsRequireHostsText = ref('')
+const tlsRequireDomainsText = ref('')
+const newSkipTransHost = ref('')
+const newSkipTlsHost = ref('')
+const newDkimDomainInput = ref('')
+
+const toggleTransPort = (port) => {
+  if (advancedSettings.value.transparent_mode_ports.includes(port)) {
+    advancedSettings.value.transparent_mode_ports = advancedSettings.value.transparent_mode_ports.filter(p => p !== port)
+  } else {
+    advancedSettings.value.transparent_mode_ports.push(port)
+  }
+}
+
+const addSkipTransHost = () => {
+  if (!newSkipTransHost.value.trim()) return
+  if (!advancedSettings.value.skip_transparent_hosts.includes(newSkipTransHost.value.trim())) {
+    advancedSettings.value.skip_transparent_hosts.push(newSkipTransHost.value.trim())
+  }
+  newSkipTransHost.value = ''
+}
+
+const addSkipTlsHost = () => {
+  if (!newSkipTlsHost.value.trim()) return
+  if (!advancedSettings.value.skip_tls_hosts.includes(newSkipTlsHost.value.trim())) {
+    advancedSettings.value.skip_tls_hosts.push(newSkipTlsHost.value.trim())
+  }
+  newSkipTlsHost.value = ''
+}
+
+const addDkimDomain = () => {
+  if (!newDkimDomainInput.value.trim()) return
+  if (!advancedSettings.value.dkim_domains.includes(newDkimDomainInput.value.trim())) {
+    advancedSettings.value.dkim_domains.push(newDkimDomainInput.value.trim())
+  }
+  newDkimDomainInput.value = ''
+}
+
+const generateBatvSecret = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let res = 'batv_'
+  for (let i = 0; i < 24; i++) {
+    res += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  advancedSettings.value.batv_secret = res
+}
+
+const generateNewDkimKeypair = async () => {
+  isGeneratingDkim.value = true
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      const res = await axiosLib.post('/api/mail/dkim/generate', {
+        domain: advancedSettings.value.dkim_domains[0] || 'medricnetworks.com',
+        selector: advancedSettings.value.dkim_key_selector || 'key 1',
+        key_size: 2048
+      })
+      if (res.data && res.data.key) {
+        advancedSettings.value.dkim_private_key = res.data.key.private_key || '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...'
+        dkimKeys.value.push(res.data.key)
+      }
+    }
+  } catch (e) {
+    console.error('Failed to generate DKIM:', e)
+  } finally {
+    isGeneratingDkim.value = false
+  }
+}
+
+const openDkimDnsRecordViewer = () => {
+  selectedDkim.value = {
+    domain: advancedSettings.value.dkim_domains[0] || 'medricnetworks.com',
+    dns_host_name: `${advancedSettings.value.dkim_key_selector.replace(/\s+/g, '')}._domainkey.${advancedSettings.value.dkim_domains[0] || 'medricnetworks.com'}`,
+    dns_txt_record: 'v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1v7kR9m0QzL3bW1kPq5X9xYzN5v1e7j8R3kP8l0w=='
+  }
+  isDnsViewModalOpen.value = true
+}
+
 const blockedExtensions = ref('.exe, .scr, .bat, .vbs, .js, .pif, .hta, .cmd')
 
 const quarantineItems = ref([
@@ -1846,7 +2254,7 @@ const spoolItems = ref([
 ])
 
 const openCreateDkimModal = () => {
-  newDkim.value = { domain: '', selector: 'astaro', key_size: 2048 }
+  newDkim.value = { domain: '', selector: 'key 1', key_size: 2048 }
   isDkimModalOpen.value = true
 }
 
@@ -1899,7 +2307,9 @@ const fetchAdvancedSettings = async () => {
     const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
     if (!axiosLib) return
     const res = await axiosLib.get('/api/mail/advanced')
-    if (res.data) advancedSettings.value = res.data
+    if (res.data) {
+      advancedSettings.value = { ...advancedSettings.value, ...res.data }
+    }
   } catch (e) {
     console.error('Failed to fetch advanced settings:', e)
   }
