@@ -42,18 +42,6 @@
           </svg>
           <span>New SMTP Profile</span>
         </button>
-
-        <button
-          v-if="activeTab === 'dkim'"
-          type="button"
-          @click="openCreateDkimModal"
-          class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded bg-[#005299] hover:bg-[#003d73] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
-        >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          <span>New DKIM Key</span>
-        </button>
       </div>
     </div>
 
@@ -90,22 +78,6 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
         <span>SMTP Profiles ({{ smtpProfiles.length }})</span>
-      </button>
-
-      <button
-        type="button"
-        @click="activeTab = 'dkim'"
-        :class="[
-          'px-4 py-2 text-xs font-bold rounded-md transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
-          activeTab === 'dkim'
-            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-        ]"
-      >
-        <svg class="w-4 h-4 text-[#005299]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-        </svg>
-        <span>DKIM ({{ dkimKeys.length }})</span>
       </button>
 
       <button
@@ -153,7 +125,7 @@
         <svg class="w-4 h-4 text-[#005299]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
         </svg>
-        <span>Advanced</span>
+        <span>Advanced (DKIM / TLS / BATV)</span>
       </button>
 
       <button
@@ -411,122 +383,7 @@
       </div>
     </div>
 
-    <!-- TAB 3: DKIM (DomainKeys Identified Mail) KEY MANAGER -->
-    <div v-if="activeTab === 'dkim'" class="space-y-6">
-      <!-- Status & Inbound Verification Banner -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div>
-            <h3 class="font-bold text-sm text-slate-900">DomainKeys Identified Mail (DKIM) Engine</h3>
-            <p class="text-xs text-slate-500 mt-0.5">
-              Cryptographically sign outbound messages with RSA keys and verify incoming sender signatures to prevent email spoofing.
-            </p>
-          </div>
-          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            OpenDKIM / Rspamd Active
-          </span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div class="flex items-center justify-between p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
-            <div>
-              <span class="font-bold text-slate-800">Inbound DKIM Verification</span>
-              <p class="text-[11px] text-slate-500">Validate cryptographic signatures on incoming mail</p>
-            </div>
-            <span class="text-emerald-600 font-bold">✓ Enforced</span>
-          </div>
-
-          <div class="flex items-center justify-between p-3 bg-[#f4f6f9] rounded-lg border border-slate-200">
-            <div>
-              <span class="font-bold text-slate-800">Outbound DKIM Signing</span>
-              <p class="text-[11px] text-slate-500">Sign outgoing mail with configured RSA private keys</p>
-            </div>
-            <span class="text-[#005299] font-bold">✓ Active ({{ dkimKeys.length }} Domains)</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- DKIM Keys Table -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div class="p-3 bg-[#f4f6f9] border-b border-slate-200 flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-700">Configured DKIM Signing Keys</span>
-          <span class="text-xs text-slate-400 font-mono">{{ dkimKeys.length }} keys configured</span>
-        </div>
-
-        <table class="w-full text-left text-xs border-collapse">
-          <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
-            <tr>
-              <th class="p-3 pl-4 w-12 text-center">Status</th>
-              <th class="p-3">Domain</th>
-              <th class="p-3 font-mono">Selector</th>
-              <th class="p-3">Key Size</th>
-              <th class="p-3 font-mono">DNS Host Record</th>
-              <th class="p-3 text-right pr-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            <tr
-              v-for="(dkim, idx) in dkimKeys"
-              :key="dkim.id"
-              :class="idx % 2 === 0 ? 'bg-white' : 'bg-[#f7f7f7]'"
-              class="hover:bg-blue-50/50 transition-colors"
-            >
-              <td class="p-3 pl-4 text-center">
-                <button
-                  type="button"
-                  @click="dkim.enabled = !dkim.enabled"
-                  class="relative inline-flex h-4 w-8 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
-                  :class="dkim.enabled ? 'bg-[#005299]' : 'bg-slate-300'"
-                >
-                  <span
-                    class="inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition duration-200"
-                    :class="dkim.enabled ? 'translate-x-4' : 'translate-x-0'"
-                  ></span>
-                </button>
-              </td>
-
-              <td class="p-3 font-bold text-slate-900 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                {{ dkim.domain }}
-              </td>
-
-              <td class="p-3 font-mono font-bold text-[#005299]">
-                {{ dkim.selector }}
-              </td>
-
-              <td class="p-3">
-                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                  {{ dkim.key_size }}-bit RSA
-                </span>
-              </td>
-
-              <td class="p-3 font-mono text-slate-700 font-semibold truncate max-w-xs">
-                {{ dkim.dns_host_name }}
-              </td>
-
-              <td class="p-3 text-right pr-4 space-x-2">
-                <button
-                  type="button"
-                  @click="viewDnsRecord(dkim)"
-                  class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-[#005299] border border-blue-200 rounded font-bold cursor-pointer text-[11px]"
-                >
-                  View DNS TXT
-                </button>
-                <button
-                  type="button"
-                  @click="deleteDkimKey(dkim.id)"
-                  class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer text-[11px]"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- TAB 4: ROUTING & RELAYING (Smart Host) -->
+    <!-- TAB 3: ROUTING & RELAYING (Smart Host) -->
     <div v-if="activeTab === 'routing'" class="space-y-6">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Upstream Smarthost Configuration -->
@@ -613,7 +470,7 @@
       </div>
     </div>
 
-    <!-- TAB 5: ANTI-SPAM & ANTIVIRUS -->
+    <!-- TAB 4: ANTI-SPAM & ANTIVIRUS -->
     <div v-if="activeTab === 'antispam'" class="space-y-6">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Anti-Spam Engine -->
@@ -655,8 +512,8 @@
                 <label for="chk-spf" class="text-slate-700 font-semibold cursor-pointer">SPF Verification (Sender Policy Framework)</label>
               </div>
               <div class="flex items-center gap-2">
-                <input id="chk-dkim" v-model="spamSettings.dkim" type="checkbox" class="rounded text-[#005299]" />
-                <label for="chk-dkim" class="text-slate-700 font-semibold cursor-pointer">DKIM Verification &amp; Inbound Scoring</label>
+                <input id="chk-dkim-verify" v-model="spamSettings.dkim" type="checkbox" class="rounded text-[#005299]" />
+                <label for="chk-dkim-verify" class="text-slate-700 font-semibold cursor-pointer">Inbound DKIM Verification &amp; Spam Scoring</label>
               </div>
             </div>
           </div>
@@ -692,7 +549,7 @@
       </div>
     </div>
 
-    <!-- TAB 6: ADVANCED (Sophos UTM 9 SMTP Advanced Tab) -->
+    <!-- TAB 5: ADVANCED (Sophos UTM 9 SMTP Advanced Tab + DKIM) -->
     <div v-if="activeTab === 'advanced'" class="space-y-6">
       <!-- Section 1: Advanced Settings & Rate Limiting -->
       <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4 text-xs">
@@ -867,7 +724,100 @@
         </div>
       </div>
 
-      <!-- Section 4: Footers & Legal Disclaimers -->
+      <!-- Section 4: DomainKeys Identified Mail (DKIM) Inside Advanced -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4 text-xs">
+        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-sm text-slate-900">DomainKeys Identified Mail (DKIM)</h3>
+            <p class="text-slate-500 mt-0.5">Manage domain cryptographic RSA key pairs, selector bindings, and DNS TXT public records.</p>
+          </div>
+          <button
+            type="button"
+            @click="openCreateDkimModal"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#005299] hover:bg-[#003d73] text-white text-xs font-bold shadow-xs cursor-pointer"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>New DKIM Key</span>
+          </button>
+        </div>
+
+        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-[#f4f6f9] text-slate-700 font-bold border-b border-slate-200">
+              <tr>
+                <th class="p-3 pl-4 w-12 text-center">Status</th>
+                <th class="p-3">Domain</th>
+                <th class="p-3 font-mono">Selector</th>
+                <th class="p-3">Key Size</th>
+                <th class="p-3 font-mono">DNS Host Record</th>
+                <th class="p-3 text-right pr-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr
+                v-for="(dkim, idx) in dkimKeys"
+                :key="dkim.id"
+                :class="idx % 2 === 0 ? 'bg-white' : 'bg-[#f7f7f7]'"
+                class="hover:bg-blue-50/50 transition-colors"
+              >
+                <td class="p-3 pl-4 text-center">
+                  <button
+                    type="button"
+                    @click="dkim.enabled = !dkim.enabled"
+                    class="relative inline-flex h-4 w-8 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
+                    :class="dkim.enabled ? 'bg-[#005299]' : 'bg-slate-300'"
+                  >
+                    <span
+                      class="inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition duration-200"
+                      :class="dkim.enabled ? 'translate-x-4' : 'translate-x-0'"
+                    ></span>
+                  </button>
+                </td>
+
+                <td class="p-3 font-bold text-slate-900 flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  {{ dkim.domain }}
+                </td>
+
+                <td class="p-3 font-mono font-bold text-[#005299]">
+                  {{ dkim.selector }}
+                </td>
+
+                <td class="p-3">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                    {{ dkim.key_size }}-bit RSA
+                  </span>
+                </td>
+
+                <td class="p-3 font-mono text-slate-700 font-semibold truncate max-w-xs">
+                  {{ dkim.dns_host_name }}
+                </td>
+
+                <td class="p-3 text-right pr-4 space-x-2">
+                  <button
+                    type="button"
+                    @click="viewDnsRecord(dkim)"
+                    class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-[#005299] border border-blue-200 rounded font-bold cursor-pointer text-[11px]"
+                  >
+                    View DNS TXT
+                  </button>
+                  <button
+                    type="button"
+                    @click="deleteDkimKey(dkim.id)"
+                    class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer text-[11px]"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 5: Footers & Legal Disclaimers -->
       <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4 text-xs">
         <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
           <div>
@@ -909,7 +859,7 @@
       </div>
     </div>
 
-    <!-- TAB 7: QUARANTINE MANAGER -->
+    <!-- TAB 6: QUARANTINE MANAGER -->
     <div v-if="activeTab === 'quarantine'" class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
       <table class="w-full text-left text-xs border-collapse">
         <thead class="bg-[#f4f6f9] text-slate-700 font-bold border-b border-slate-200">
@@ -964,7 +914,7 @@
       </table>
     </div>
 
-    <!-- TAB 8: MAIL SPOOL / QUEUE -->
+    <!-- TAB 7: MAIL SPOOL / QUEUE -->
     <div v-if="activeTab === 'spool'" class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
       <div class="p-3 bg-[#f4f6f9] border-b border-slate-200 flex items-center justify-between">
         <span class="text-xs font-bold text-slate-700">Postfix Active &amp; Deferred Spool Queue</span>
@@ -1281,7 +1231,7 @@ const props = defineProps({
   }
 })
 
-const activeTab = ref('general') // 'general' | 'profiles' | 'dkim' | 'routing' | 'antispam' | 'advanced' | 'quarantine' | 'spool'
+const activeTab = ref('general') // 'general' | 'profiles' | 'routing' | 'antispam' | 'advanced' | 'quarantine' | 'spool'
 const operationMode = ref('profile') // 'simple' | 'profile'
 const smtpProxyEnabled = ref(true)
 const isLoading = ref(false)
