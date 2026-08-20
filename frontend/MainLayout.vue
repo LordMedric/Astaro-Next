@@ -550,9 +550,9 @@ const navGroups = [
       },
       {
         id: 'email',
-        aliases: ['mail_manager', 'mail', 'mail_quarantine', 'postfix'],
-        label: 'Email',
-        badge: 'Mail Manager',
+        aliases: ['email_protection', 'mail_protection', 'mail_manager', 'mail', 'mail_quarantine', 'postfix', 'smtp'],
+        label: 'Email Protection',
+        badge: 'SMTP/POP3',
         icon: EmailIcon
       },
       {
