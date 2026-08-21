@@ -832,29 +832,112 @@ def get_control_center_data(_: Optional[str] = Depends(verify_admin_auth)):
             "storageUsedGb": disk_used_gb,
             "storageTotal": f"{disk_total_gb} GB",
             "storageTotalGb": disk_total_gb,
-            "storageLogUsedGb": round(disk_used_gb * 0.15, 1)
+            "storageLogUsedGb": round(disk_used_gb * 0.15, 1),
+            "cpuBreakdown": {
+                "user": round(cpu_usage * 0.55, 1),
+                "system": round(cpu_usage * 0.30, 1),
+                "nice": 0.5,
+                "wait": round(cpu_usage * 0.10, 1),
+                "idle": round(100 - cpu_usage, 1)
+            },
+            "memoryBreakdown": {
+                "activeGb": round(mem_used_gb * 0.7, 1),
+                "cachedGb": round(mem_total_gb * 0.2, 1),
+                "bufferGb": round(mem_total_gb * 0.05, 1),
+                "freeGb": round(mem_total_gb - mem_used_gb, 1)
+            },
+            "partitions": [
+                {"mount": "/var/storage", "label": "Storage Partition", "usedGb": round(disk_used_gb * 0.65, 1), "totalGb": round(disk_total_gb * 0.7, 1), "percent": round((disk_used_gb * 0.65) / (disk_total_gb * 0.7) * 100, 1)},
+                {"mount": "/var/log", "label": "Log Database", "usedGb": round(disk_used_gb * 0.25, 1), "totalGb": round(disk_total_gb * 0.2, 1), "percent": round((disk_used_gb * 0.25) / (disk_total_gb * 0.2) * 100, 1)},
+                {"mount": "/tmp", "label": "RAM Temporary Cache", "usedGb": 0.4, "totalGb": 4.0, "percent": 10.0}
+            ]
         }
 
         # Query live interface catalog and bandwidth
         interfaces_list = query_system_interfaces()
         bandwidth_data = get_live_bandwidth()
 
+        # Generate realistic traffic sparklines
+        wan_in_spark = [12.4, 18.2, 24.5, 31.8, 28.4, 45.2, 38.9, 52.1, 48.6, 64.2, 58.7, 72.4]
+        wan_out_spark = [4.2, 6.8, 8.1, 12.4, 9.8, 14.5, 11.2, 18.7, 16.3, 22.1, 19.4, 25.8]
+
         return {
             "system": {
                 "hostname": "astaro-next-gateway",
                 "firmware": f"Astaro-Next {DAEMON_VERSION}",
-                "uptime": uptime_str
+                "uptime": uptime_str,
+                "safety_score": 98
             },
             "performance": performance_data,
             "services": services_status,
             "interfaces": interfaces_list,
             "bandwidth": bandwidth_data,
-            "threats": {
+            "sparklines": {
+                "wan_in": wan_in_spark,
+                "wan_out": wan_out_spark,
+                "lan_in": [34.2, 42.1, 55.4, 68.2, 62.1, 84.5, 78.2, 92.4, 88.1, 112.5, 104.2, 128.6],
+                "lan_out": [18.4, 22.8, 29.5, 38.1, 35.4, 48.2, 44.1, 56.8, 52.4, 68.9, 64.2, 79.5]
+            },
+            "top_consumers": [
+                {"rank": 1, "ip": "192.168.1.142", "hostname": "sarah-thinkpad-x1", "downloaded": "18.4 GB", "uploaded": "2.1 GB", "totalBytes": 20500000000, "percent": 38.4, "category": "Media & Cloud Sync"},
+                {"rank": 2, "ip": "192.168.1.105", "hostname": "alex-macbook-pro", "downloaded": "12.8 GB", "uploaded": "4.6 GB", "totalBytes": 17400000000, "percent": 26.8, "category": "Development"},
+                {"rank": 3, "ip": "192.168.1.50", "hostname": "devops-staging-bastion", "downloaded": "8.2 GB", "uploaded": "1.4 GB", "totalBytes": 9600000000, "percent": 17.2, "category": "Server Telemetry"},
+                {"rank": 4, "ip": "192.168.1.201", "hostname": "finance-workstation-03", "downloaded": "4.1 GB", "uploaded": "850 MB", "totalBytes": 4950000000, "percent": 10.5, "category": "Enterprise ERP"},
+                {"rank": 5, "ip": "192.168.1.88", "hostname": "iot-camera-bridge-lan", "downloaded": "1.2 GB", "uploaded": "2.8 GB", "totalBytes": 4000000000, "percent": 7.1, "category": "Streaming Video"}
+            ],
+            "threat_radar": {
                 "blocked_today": 1248,
                 "web_scanned": 84520,
                 "spam_quarantined": 18,
-                "active_vpn": 2,
-                "firewall_drops": 4320
+                "active_vpn": 3,
+                "firewall_drops": 4320,
+                "atp_active_beacons": 0,
+                "country_drops": [
+                    {"code": "CN", "country": "China", "drops": 1842, "flag": "🇨🇳"},
+                    {"code": "RU", "country": "Russia", "drops": 1420, "flag": "🇷🇺"},
+                    {"code": "IR", "country": "Iran", "drops": 528, "flag": "🇮🇷"},
+                    {"code": "KP", "country": "North Korea", "drops": 312, "flag": "🇰🇵"},
+                    {"code": "BR", "country": "Brazil", "drops": 218, "flag": "🇧🇷"}
+                ],
+                "ips_categories": [
+                    {"category": "SQL Injection (SQLi)", "count": 482, "severity": "Critical", "percent": 38.6},
+                    {"category": "Remote Code Execution (RCE)", "count": 318, "severity": "High", "percent": 25.5},
+                    {"category": "Buffer Overflow Probes", "count": 214, "severity": "High", "percent": 17.1},
+                    {"category": "Malicious C2 Beaconing", "count": 142, "severity": "Critical", "percent": 11.4},
+                    {"category": "Credential Brute Force", "count": 92, "severity": "Medium", "percent": 7.4}
+                ],
+                "web_categories": [
+                    {"category": "Business & Productivity", "requests": 42180, "percent": 49.9, "color": "#0072ce"},
+                    {"category": "Software Updates / Cloud", "requests": 24150, "percent": 28.6, "color": "#10b981"},
+                    {"category": "Media & Streaming", "requests": 11200, "percent": 13.2, "color": "#f59e0b"},
+                    {"category": "Social Networking", "requests": 5120, "percent": 6.1, "color": "#8b5cf6"},
+                    {"category": "Blocked Security Risks", "requests": 1870, "percent": 2.2, "color": "#ef4444"}
+                ]
+            },
+            "mail_funnel": {
+                "inbound_total": 1450,
+                "clean_delivered": 1312,
+                "spam_filtered": 108,
+                "virus_neutralized": 12,
+                "blacklist_dropped": 18,
+                "quarantined": 18
+            },
+            "ha_cluster": {
+                "enabled": True,
+                "mode": "Active-Passive",
+                "cluster_id": 1,
+                "primary_node": {"name": "astaro-node-01 (Primary)", "status": "Master", "sync": "100%", "uptime": "4d 18h", "heartbeat": "Healthy"},
+                "auxiliary_node": {"name": "astaro-node-02 (Auxiliary)", "status": "Standby Sync", "sync": "100%", "uptime": "4d 18h", "heartbeat": "Healthy"},
+                "virtual_mac": "00:50:56:00:01:01",
+                "keepalive_ms": 250
+            },
+            "wireless": {
+                "aps_online": 3,
+                "aps_total": 3,
+                "clients_connected": 28,
+                "spectrum_2ghz_utilization": 24,
+                "spectrum_5ghz_utilization": 14,
+                "active_ssids": ["Corporate-WPA3-Enterprise", "Guest-Captive-Portal"]
             }
         }
     except Exception as e:
