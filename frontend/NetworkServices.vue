@@ -1,12 +1,12 @@
 <template>
   <div class="space-y-6">
-    <!-- Top Modern Breadcrumb & Action Banner -->
-    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <!-- Standardized Page Header -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-6 bg-[#005299] rounded-xs"></span>
-          <h1 class="text-xl font-bold text-slate-900 tracking-tight">Network Services (DHCP & DNS)</h1>
-          <span class="bg-blue-50 text-[#005299] text-xs font-bold px-2.5 py-0.5 rounded-full border border-blue-200">
+        <div class="flex items-center gap-2.5">
+          <span class="w-1.5 h-6 bg-[#ee7f00] rounded-xs inline-block"></span>
+          <h1 class="text-xl font-bold text-slate-900 tracking-tight">Network Services (DHCP &amp; DNS)</h1>
+          <span class="text-[11px] bg-blue-50 text-[#0072ce] font-medium font-mono px-2 py-0.5 rounded border border-blue-200">
             Dnsmasq / CoreDNS Engine
           </span>
         </div>
@@ -15,28 +15,90 @@
         </p>
       </div>
 
-      <!-- Tab Navigation Pills -->
-      <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 overflow-x-auto text-xs font-semibold">
+      <div class="flex items-center gap-2.5 flex-wrap">
         <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          @click="activeTab = tab.id"
-          :class="[
-            'px-3.5 py-1.5 rounded-md transition-all whitespace-nowrap cursor-pointer',
-            activeTab === tab.id
-              ? 'bg-white text-[#005299] shadow-xs font-bold'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-          ]"
+          type="button"
+          @click="refreshCurrentTab"
+          :disabled="isLoading"
+          class="px-3.5 py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer active:bg-slate-100"
+          title="Refresh active services"
         >
-          <span class="flex items-center gap-1.5">
-            <component :is="tab.icon" class="w-3.5 h-3.5" />
-            <span>{{ tab.label }}</span>
-            <span v-if="tab.badge" class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 text-[#005299]">
-              {{ tab.badge }}
-            </span>
-          </span>
+          <svg :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#0072ce]' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>Refresh</span>
+        </button>
+
+        <button
+          v-if="activeTab === 'reservations'"
+          type="button"
+          @click="openAddReservationModal"
+          class="px-4 py-2 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>+ Add Reservation...</span>
+        </button>
+
+        <button
+          v-else-if="activeTab === 'static_dns'"
+          type="button"
+          @click="openAddDnsModal"
+          class="px-4 py-2 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>+ Add DNS Record...</span>
+        </button>
+
+        <button
+          v-else-if="activeTab === 'dhcp'"
+          type="button"
+          @click="saveDhcpSettings"
+          :disabled="isSaving"
+          class="px-4 py-2 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+        >
+          <span v-if="isSaving" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          <span>Apply DHCP Settings</span>
+        </button>
+
+        <button
+          v-else-if="activeTab === 'dns'"
+          type="button"
+          @click="saveDnsSettings"
+          class="px-4 py-2 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+        >
+          <span>Save DNS Settings</span>
         </button>
       </div>
+    </div>
+
+    <!-- Standardized Flat Tab Navigation Strip (UTM 9 Style) -->
+    <div class="flex border-b border-slate-200 gap-1 bg-[#f4f6f9] p-1.5 rounded-t-xl overflow-x-auto text-xs font-bold">
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        type="button"
+        @click="activeTab = tab.id"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === tab.id
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <component :is="tab.icon" class="w-4 h-4 text-[#0072ce]" />
+        <span>{{ tab.label }}</span>
+        <span
+          v-if="tab.badge"
+          class="px-1.5 py-0.2 rounded-full text-[10px] font-mono"
+          :class="activeTab === tab.id ? 'bg-[#0072ce] text-white' : 'bg-slate-200 text-slate-700'"
+        >
+          {{ tab.badge }}
+        </span>
+      </button>
     </div>
 
     <!-- TAB 1: DHCP SERVER CONFIGURATION -->
@@ -46,20 +108,20 @@
         <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
           <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="w-1.5 h-4 bg-[#005299] rounded-xs"></span>
+              <span class="w-1.5 h-4 bg-[#0072ce] rounded-xs"></span>
               <h2 class="text-sm font-bold text-slate-800">DHCP Server Global Settings</h2>
             </div>
             <!-- Global DHCP Switch -->
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" v-model="dhcpConfig.enabled" class="sr-only peer" />
-              <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#005299]"></div>
+              <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0072ce]"></div>
               <span class="ml-2 text-xs font-bold" :class="dhcpConfig.enabled ? 'text-emerald-600' : 'text-slate-400'">
                 {{ dhcpConfig.enabled ? 'Enabled' : 'Disabled' }}
               </span>
             </label>
           </div>
 
-          <div class="p-6 space-y-5">
+          <div class="p-6 space-y-5 text-xs">
             <!-- Listening Interface & Subnet -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -81,7 +143,7 @@
             <!-- IP Range Pool -->
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
               <div class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-[#005299]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-[#0072ce]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
                 <span>Dynamic IPv4 Lease Range</span>
@@ -125,24 +187,11 @@
               </div>
 
               <div class="flex items-center gap-3 pt-4">
-                <input type="checkbox" id="ipv6_stateful" v-model="dhcpConfig.ipv6_enabled" class="rounded text-[#005299] focus:ring-blue-500 h-4 w-4" />
+                <input type="checkbox" id="ipv6_stateful" v-model="dhcpConfig.ipv6_enabled" class="rounded text-[#0072ce] focus:ring-blue-500 h-4 w-4" />
                 <label for="ipv6_stateful" class="text-xs font-bold text-slate-700 cursor-pointer">
-                  Enable DHCPv6 Stateful Addressing & SLAAC RA
+                  Enable DHCPv6 Stateful Addressing &amp; SLAAC RA
                 </label>
               </div>
-            </div>
-
-            <!-- Apply Button -->
-            <div class="pt-4 border-t border-slate-200 flex justify-end">
-              <button
-                type="button"
-                @click="saveDhcpSettings"
-                :disabled="isSaving"
-                class="px-5 py-2 bg-[#005299] hover:bg-[#003d73] text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer flex items-center gap-2 transition-all"
-              >
-                <span v-if="isSaving" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                <span>{{ isSaving ? 'Applying Settings...' : 'Apply DHCP Settings' }}</span>
-              </button>
             </div>
           </div>
         </div>
@@ -163,7 +212,7 @@
               <span class="font-bold text-slate-900">{{ activeLeasesCount }} / {{ totalPoolSize }}</span>
             </div>
             <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-              <div class="bg-[#005299] h-2.5 rounded-full transition-all duration-500" :style="{ width: `${poolUtilizationPct}%` }"></div>
+              <div class="bg-[#0072ce] h-2.5 rounded-full transition-all duration-500" :style="{ width: `${poolUtilizationPct}%` }"></div>
             </div>
             <div class="text-[11px] text-right text-slate-500 font-mono">{{ poolUtilizationPct }}% Allocated</div>
           </div>
@@ -188,7 +237,7 @@
         <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">DHCP Relay Agent</h3>
-            <input type="checkbox" v-model="dhcpRelay.enabled" class="rounded text-[#005299] h-4 w-4" />
+            <input type="checkbox" v-model="dhcpRelay.enabled" class="rounded text-[#0072ce] h-4 w-4" />
           </div>
           <p class="text-[11px] text-slate-500">Forward broadcast DHCP requests to an external enterprise DHCP Server (e.g. Windows Server DHCP).</p>
           <div v-if="dhcpRelay.enabled" class="space-y-2 pt-2">
@@ -201,40 +250,39 @@
 
     <!-- TAB 2: STATIC IP RESERVATIONS -->
     <div v-if="activeTab === 'reservations'" class="space-y-4">
-      <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-        <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-          <div>
-            <h2 class="text-sm font-bold text-slate-800">Static DHCP Address Reservations</h2>
-            <p class="text-xs text-slate-500">Bind MAC addresses to dedicated IPv4 addresses permanently.</p>
-          </div>
-          <button
-            type="button"
-            @click="openAddReservationModal"
-            class="px-3.5 py-1.5 bg-[#005299] hover:bg-[#003d73] text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Add Reservation</span>
-          </button>
+      <!-- Search toolbar -->
+      <div class="flex items-center justify-between bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs text-xs">
+        <div class="relative w-72">
+          <input
+            v-model="resSearchQuery"
+            type="text"
+            placeholder="Search hostnames, MACs, reserved IPs..."
+            class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-[#0072ce] focus:outline-none"
+          />
+          <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
         </div>
+        <span class="font-mono text-slate-500 font-bold">Showing {{ filteredReservations.length }} of {{ staticReservations.length }}</span>
+      </div>
 
+      <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-700">
             <thead class="bg-slate-100/75 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
               <tr>
                 <th class="py-3 px-4">Hostname / Device</th>
-                <th class="py-3 px-4">MAC Address</th>
-                <th class="py-3 px-4">Reserved IP Address</th>
+                <th class="py-3 px-4 font-mono">MAC Address</th>
+                <th class="py-3 px-4 font-mono">Reserved IP Address</th>
                 <th class="py-3 px-4">Comment</th>
                 <th class="py-3 px-4">Status</th>
-                <th class="py-3 px-4 text-right">Actions</th>
+                <th class="py-3 px-4 text-right pr-4">Actions</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 font-medium">
-              <tr v-for="res in staticReservations" :key="res.id" class="hover:bg-slate-50/80 transition-colors">
+              <tr v-for="res in filteredReservations" :key="res.id" class="hover:bg-slate-50/80 transition-colors">
                 <td class="py-3 px-4 font-bold text-slate-900 flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                  <span class="w-2 h-2 rounded-full bg-[#0072ce]"></span>
                   <span>{{ res.hostname }}</span>
                 </td>
                 <td class="py-3 px-4 font-mono text-slate-600">{{ res.mac }}</td>
@@ -245,13 +293,14 @@
                     Active
                   </span>
                 </td>
-                <td class="py-3 px-4 text-right space-x-2">
-                  <button @click="editReservation(res)" class="text-blue-600 hover:text-blue-800 font-bold cursor-pointer">Edit</button>
-                  <button @click="deleteReservation(res.id)" class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer">Delete</button>
+                <td class="py-3 px-4 text-right pr-4 space-x-1.5 whitespace-nowrap">
+                  <button @click="editReservation(res)" class="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded text-[11px] font-bold shadow-2xs cursor-pointer">Edit</button>
+                  <button @click="cloneReservation(res)" class="px-2 py-1 bg-white hover:bg-slate-50 text-amber-700 border border-slate-300 rounded text-[11px] font-bold shadow-2xs cursor-pointer">Clone</button>
+                  <button @click="deleteReservation(res.id)" class="px-2 py-1 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded text-[11px] font-bold shadow-2xs cursor-pointer">Delete</button>
                 </td>
               </tr>
-              <tr v-if="staticReservations.length === 0">
-                <td colspan="6" class="py-8 text-center text-slate-400">No static reservations configured. Click 'Add Reservation' to map a MAC to an IP.</td>
+              <tr v-if="filteredReservations.length === 0">
+                <td colspan="6" class="py-8 text-center text-slate-400">No static reservations configured. Click '+ Add Reservation...' to map a MAC to an IP.</td>
               </tr>
             </tbody>
           </table>
@@ -262,33 +311,16 @@
     <!-- TAB 3: LIVE DHCP LEASES -->
     <div v-if="activeTab === 'leases'" class="space-y-4">
       <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-        <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-          <div>
-            <h2 class="text-sm font-bold text-slate-800">Active DHCP Leases Table</h2>
-            <p class="text-xs text-slate-500">Live connected devices assigned an IP address by the Astaro DHCP server.</p>
-          </div>
-          <button
-            type="button"
-            @click="fetchLeases"
-            class="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5"
-          >
-            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span>Refresh Leases</span>
-          </button>
-        </div>
-
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-700">
             <thead class="bg-slate-100/75 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
               <tr>
                 <th class="py-3 px-4">Client Hostname</th>
-                <th class="py-3 px-4">Assigned IP</th>
-                <th class="py-3 px-4">MAC Address</th>
-                <th class="py-3 px-4">Vendor / Type</th>
-                <th class="py-3 px-4">Lease Expiration</th>
-                <th class="py-3 px-4 text-right">Quick Action</th>
+                <th class="py-3 px-4 font-mono">Assigned IP</th>
+                <th class="py-3 px-4 font-mono">MAC Address</th>
+                <th class="py-3 px-4">Vendor / Device</th>
+                <th class="py-3 px-4 font-mono">Lease Expiration</th>
+                <th class="py-3 px-4 text-right pr-4">Quick Action</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 font-medium">
@@ -302,16 +334,16 @@
                   </span>
                 </td>
                 <td class="py-3 px-4 text-slate-500 font-mono text-[11px]">{{ lease.expires }}</td>
-                <td class="py-3 px-4 text-right space-x-2">
+                <td class="py-3 px-4 text-right pr-4 space-x-1.5">
                   <button
                     @click="convertLeaseToStatic(lease)"
-                    class="px-2 py-1 bg-blue-50 text-[#005299] hover:bg-blue-100 rounded text-[11px] font-bold cursor-pointer"
+                    class="px-2.5 py-1 bg-blue-50 text-[#0072ce] hover:bg-blue-100 rounded border border-blue-200 text-[11px] font-bold cursor-pointer"
                   >
                     Make Static
                   </button>
                   <button
                     @click="releaseLease(lease.ip)"
-                    class="text-rose-600 hover:text-rose-800 text-[11px] font-bold cursor-pointer ml-1"
+                    class="px-2 py-1 bg-white text-rose-600 hover:bg-rose-50 rounded border border-rose-200 text-[11px] font-bold cursor-pointer ml-1"
                   >
                     Release
                   </button>
@@ -329,15 +361,15 @@
         <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
           <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="w-1.5 h-4 bg-[#005299] rounded-xs"></span>
-              <h2 class="text-sm font-bold text-slate-800">Upstream DNS Forwarders & Cache</h2>
+              <span class="w-1.5 h-4 bg-[#0072ce] rounded-xs"></span>
+              <h2 class="text-sm font-bold text-slate-800">Upstream DNS Forwarders &amp; Cache</h2>
             </div>
             <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
               DNSSEC Active
             </span>
           </div>
 
-          <div class="p-6 space-y-5">
+          <div class="p-6 space-y-5 text-xs">
             <!-- Upstream DNS Forwarders List -->
             <div>
               <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Upstream DNS Server IPs</label>
@@ -354,7 +386,7 @@
               <button
                 type="button"
                 @click="addDnsForwarder"
-                class="mt-2 text-xs font-bold text-[#005299] hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+                class="mt-2 text-xs font-bold text-[#0072ce] hover:underline flex items-center gap-1 cursor-pointer"
               >
                 + Add Forwarder IP
               </button>
@@ -367,7 +399,7 @@
                   <div class="text-xs font-bold text-slate-800">DNSSEC Validation</div>
                   <div class="text-[11px] text-slate-500">Cryptographically validate upstream DNS responses to prevent DNS spoofing.</div>
                 </div>
-                <input type="checkbox" v-model="dnsConfig.dnssec" class="rounded text-[#005299] h-4 w-4" />
+                <input type="checkbox" v-model="dnsConfig.dnssec" class="rounded text-[#0072ce] h-4 w-4" />
               </div>
 
               <div class="flex items-center justify-between pt-2 border-t border-slate-200">
@@ -375,7 +407,7 @@
                   <div class="text-xs font-bold text-slate-800">DNS Query Logging</div>
                   <div class="text-[11px] text-slate-500">Log all incoming LAN client DNS queries for reporting and security analytics.</div>
                 </div>
-                <input type="checkbox" v-model="dnsConfig.query_logging" class="rounded text-[#005299] h-4 w-4" />
+                <input type="checkbox" v-model="dnsConfig.query_logging" class="rounded text-[#0072ce] h-4 w-4" />
               </div>
 
               <div class="pt-2 border-t border-slate-200 grid grid-cols-2 gap-4">
@@ -388,16 +420,6 @@
                   <input type="number" v-model.number="dnsConfig.max_ttl" class="w-full bg-white border border-slate-300 rounded-md px-3 py-1.5 text-xs font-mono text-slate-800" />
                 </div>
               </div>
-            </div>
-
-            <div class="pt-4 border-t border-slate-200 flex justify-end">
-              <button
-                type="button"
-                @click="saveDnsSettings"
-                class="px-5 py-2 bg-[#005299] hover:bg-[#003d73] text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
-              >
-                Save DNS Settings
-              </button>
             </div>
           </div>
         </div>
@@ -413,7 +435,7 @@
               @click="applyDnsPreset(['1.1.1.1', '1.0.0.1'])"
               class="w-full text-left p-2.5 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 text-xs transition-colors cursor-pointer"
             >
-              <div class="font-bold text-slate-800">Cloudflare DNS (Fast & Private)</div>
+              <div class="font-bold text-slate-800">Cloudflare DNS (Fast &amp; Private)</div>
               <div class="text-[10px] font-mono text-slate-500">1.1.1.1, 1.0.0.1</div>
             </button>
             <button
@@ -440,28 +462,15 @@
     <!-- TAB 5: STATIC DNS RECORDS -->
     <div v-if="activeTab === 'static_dns'" class="space-y-4">
       <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-        <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-          <div>
-            <h2 class="text-sm font-bold text-slate-800">Static Local DNS Host Overrides</h2>
-            <p class="text-xs text-slate-500">Define local FQDN mappings resolved directly by the appliance before forwarding upstream.</p>
-          </div>
-          <button
-            type="button"
-            class="px-3.5 py-1.5 bg-[#005299] hover:bg-[#003d73] text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5"
-          >
-            + Add DNS Record
-          </button>
-        </div>
-
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-700">
             <thead class="bg-slate-100/75 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
               <tr>
                 <th class="py-3 px-4">FQDN / Hostname</th>
-                <th class="py-3 px-4">Target IP Address</th>
+                <th class="py-3 px-4 font-mono">Target IP Address</th>
                 <th class="py-3 px-4">Type</th>
                 <th class="py-3 px-4">Description</th>
-                <th class="py-3 px-4 text-right">Actions</th>
+                <th class="py-3 px-4 text-right pr-4">Actions</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 font-medium">
@@ -470,8 +479,10 @@
                 <td class="py-3 px-4 font-mono font-bold text-blue-700">{{ rec.ip }}</td>
                 <td class="py-3 px-4"><span class="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-bold font-mono">A Record</span></td>
                 <td class="py-3 px-4 text-slate-500">{{ rec.description || '—' }}</td>
-                <td class="py-3 px-4 text-right space-x-2">
-                  <button @click="deleteDnsRecord(rec.id)" class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer">Delete</button>
+                <td class="py-3 px-4 text-right pr-4 space-x-1.5 whitespace-nowrap">
+                  <button @click="editDnsRecord(rec)" class="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded text-[11px] font-bold shadow-2xs cursor-pointer">Edit</button>
+                  <button @click="cloneDnsRecord(rec)" class="px-2 py-1 bg-white hover:bg-slate-50 text-amber-700 border border-slate-300 rounded text-[11px] font-bold shadow-2xs cursor-pointer">Clone</button>
+                  <button @click="deleteDnsRecord(rec.id)" class="px-2 py-1 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded text-[11px] font-bold shadow-2xs cursor-pointer">Delete</button>
                 </td>
               </tr>
               <tr v-if="staticDnsRecords.length === 0">
@@ -493,11 +504,11 @@
           </div>
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" v-model="dyndnsConfig.enabled" class="sr-only peer" />
-            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#005299]"></div>
+            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0072ce]"></div>
           </label>
         </div>
 
-        <div class="p-6 space-y-4">
+        <div class="p-6 space-y-4 text-xs">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Service Provider</label>
@@ -538,7 +549,7 @@
             <button
               type="button"
               @click="saveDyndnsSettings"
-              class="px-5 py-2 bg-[#005299] hover:bg-[#003d73] text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
+              class="px-5 py-2 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
             >
               Save DynDNS Settings
             </button>
@@ -552,7 +563,7 @@
       <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
         <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="w-1.5 h-4 bg-[#005299] rounded-xs"></span>
+            <span class="w-1.5 h-4 bg-[#0072ce] rounded-xs"></span>
             <h2 class="text-sm font-bold text-slate-800">Network Time Protocol (NTP) Time Daemon</h2>
           </div>
           <span class="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded">
@@ -560,7 +571,7 @@
           </span>
         </div>
 
-        <div class="p-6 space-y-4">
+        <div class="p-6 space-y-4 text-xs">
           <div>
             <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Upstream NTP Servers (1 per line)</label>
             <textarea
@@ -572,7 +583,7 @@
 
           <div class="flex items-center justify-between pt-2">
             <div class="flex items-center gap-2">
-              <input type="checkbox" id="serve_ntp" v-model="ntpConfig.serve_clients" class="rounded text-[#005299] h-4 w-4" />
+              <input type="checkbox" id="serve_ntp" v-model="ntpConfig.serve_clients" class="rounded text-[#0072ce] h-4 w-4" />
               <label for="serve_ntp" class="text-xs font-bold text-slate-700 cursor-pointer">
                 Serve NTP time synchronization to local LAN clients (Port 123)
               </label>
@@ -588,6 +599,96 @@
         </div>
       </div>
     </div>
+
+    <!-- MODAL: ADD / EDIT STATIC RESERVATION -->
+    <transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div
+        v-if="isReservationModalOpen"
+        class="fixed inset-0 z-40 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+        @keydown.esc="isReservationModalOpen = false"
+      >
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden flex flex-col my-6">
+          <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-white">
+              {{ editingResId ? 'Edit Static Reservation' : 'Add Static DHCP Reservation' }}
+            </h3>
+            <button @click="isReservationModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">&times;</button>
+          </div>
+          <form @submit.prevent="saveReservation" class="p-5 space-y-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Hostname / Device Name *</label>
+              <input type="text" required v-model="formRes.hostname" placeholder="e.g. synology-nas" class="w-full p-2 border border-slate-300 rounded" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">MAC Address *</label>
+              <input type="text" required v-model="formRes.mac" placeholder="e.g. 00:11:32:4A:BC:88" class="w-full p-2 border border-slate-300 rounded font-mono" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Reserved IPv4 Address *</label>
+              <input type="text" required v-model="formRes.ip" placeholder="e.g. 192.168.1.10" class="w-full p-2 border border-slate-300 rounded font-mono" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Comment</label>
+              <input type="text" v-model="formRes.comment" placeholder="Optional notes" class="w-full p-2 border border-slate-300 rounded" />
+            </div>
+            <div class="pt-3 border-t border-slate-200 flex justify-between">
+              <button type="button" @click="isReservationModalOpen = false" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
+              <button type="submit" class="px-4 py-1.5 bg-[#0072ce] text-white font-bold rounded shadow-xs cursor-pointer">Save Reservation</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- MODAL: ADD / EDIT STATIC DNS RECORD -->
+    <transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div
+        v-if="isDnsModalOpen"
+        class="fixed inset-0 z-40 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+        @keydown.esc="isDnsModalOpen = false"
+      >
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden flex flex-col my-6">
+          <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-white">
+              {{ editingDnsId ? 'Edit DNS Record' : 'Add Static DNS Host' }}
+            </h3>
+            <button @click="isDnsModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">&times;</button>
+          </div>
+          <form @submit.prevent="saveDnsRecord" class="p-5 space-y-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">FQDN / Hostname *</label>
+              <input type="text" required v-model="formDns.hostname" placeholder="e.g. app.internal.medric.net" class="w-full p-2 border border-slate-300 rounded font-mono" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Target IP Address *</label>
+              <input type="text" required v-model="formDns.ip" placeholder="e.g. 192.168.1.50" class="w-full p-2 border border-slate-300 rounded font-mono" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Description</label>
+              <input type="text" v-model="formDns.description" placeholder="Optional notes" class="w-full p-2 border border-slate-300 rounded" />
+            </div>
+            <div class="pt-3 border-t border-slate-200 flex justify-between">
+              <button type="button" @click="isDnsModalOpen = false" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
+              <button type="submit" class="px-4 py-1.5 bg-[#0072ce] text-white font-bold rounded shadow-xs cursor-pointer">Save Record</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -603,6 +704,15 @@ const props = defineProps({
 
 const activeTab = ref('dhcp')
 const isSaving = ref(false)
+const isLoading = ref(false)
+const resSearchQuery = ref('')
+const isReservationModalOpen = ref(false)
+const isDnsModalOpen = ref(false)
+const editingResId = ref(null)
+const editingDnsId = ref(null)
+
+const formRes = ref({ hostname: '', mac: '', ip: '', comment: '' })
+const formDns = ref({ hostname: '', ip: '', description: '' })
 
 // Tab icons
 const DhcpIcon = {
@@ -641,17 +751,38 @@ const NtpIcon = {
   ])
 }
 
-const tabs = [
+const staticReservations = ref([
+  { id: 1, hostname: 'medric-nas', mac: '00:11:32:4A:BC:88', ip: '192.168.1.10', comment: 'Synology Core Storage' },
+  { id: 2, hostname: 'hp-laserjet', mac: 'A4:5D:36:7E:11:22', ip: '192.168.1.20', comment: 'Office Printer' },
+  { id: 3, hostname: 'proxmox-pve-01', mac: 'BC:24:11:88:99:AA', ip: '192.168.1.50', comment: 'Hypervisor Node 1' },
+  { id: 4, hostname: 'unifi-ap-hd', mac: '74:83:C2:10:44:90', ip: '192.168.1.5', comment: 'Main Floor Access Point' },
+  { id: 5, hostname: 'home-assistant-vm', mac: '52:54:00:12:34:56', ip: '192.168.1.30', comment: 'Home Automation Bridge' }
+])
+
+const activeLeases = ref([
+  { hostname: 'MacBook-Pro-M3', ip: '192.168.1.105', mac: 'F0:18:98:33:44:55', vendor: 'Apple, Inc.', expires: '21h 14m' },
+  { hostname: 'iPhone-15-Pro', ip: '192.168.1.106', mac: '3C:06:30:11:22:33', vendor: 'Apple, Inc.', expires: '18h 05m' },
+  { hostname: 'workstation-dev', ip: '192.168.1.110', mac: 'D8:BB:C1:44:55:66', vendor: 'Intel Corp', expires: '23h 59m' },
+  { hostname: 'smart-tv-livingroom', ip: '192.168.1.115', mac: '64:16:66:77:88:99', vendor: 'LG Electronics', expires: '12h 30m' },
+  { hostname: 'sonos-soundbar', ip: '192.168.1.120', mac: '48:A6:B8:99:AA:BB', vendor: 'Sonos, Inc.', expires: '19h 40m' }
+])
+
+const staticDnsRecords = ref([
+  { id: 1, hostname: 'router.home.medric.net', ip: '192.168.1.1', description: 'Astaro Next Gateway' },
+  { id: 2, hostname: 'nas.internal.medric.net', ip: '192.168.1.10', description: 'Main Storage Cluster' },
+  { id: 3, hostname: 'pve.internal.medric.net', ip: '192.168.1.50', description: 'Proxmox VE Web Console' }
+])
+
+const tabs = computed(() => [
   { id: 'dhcp', label: 'DHCP Server', icon: DhcpIcon },
-  { id: 'reservations', label: 'Static Reservations', icon: StaticIcon, badge: '5' },
-  { id: 'leases', label: 'Live Leases', icon: LeasesIcon, badge: '14' },
+  { id: 'reservations', label: 'Static Reservations', icon: StaticIcon, badge: staticReservations.value.length },
+  { id: 'leases', label: 'Live Leases', icon: LeasesIcon, badge: activeLeases.value.length },
   { id: 'dns', label: 'DNS Forwarders', icon: DnsIcon },
-  { id: 'static_dns', label: 'Static DNS', icon: DnsIcon },
+  { id: 'static_dns', label: 'Static DNS', icon: DnsIcon, badge: staticDnsRecords.value.length },
   { id: 'dyndns', label: 'Dynamic DNS', icon: DynDnsIcon },
   { id: 'ntp', label: 'NTP Time', icon: NtpIcon }
-]
+])
 
-// State models
 const dhcpConfig = ref({
   enabled: true,
   interface: 'eth0',
@@ -670,22 +801,6 @@ const dhcpRelay = ref({
   server_ip: ''
 })
 
-const staticReservations = ref([
-  { id: 1, hostname: 'medric-nas', mac: '00:11:32:4A:BC:88', ip: '192.168.1.10', comment: 'Synology Core Storage' },
-  { id: 2, hostname: 'hp-laserjet', mac: 'A4:5D:36:7E:11:22', ip: '192.168.1.20', comment: 'Office Printer' },
-  { id: 3, hostname: 'proxmox-pve-01', mac: 'BC:24:11:88:99:AA', ip: '192.168.1.50', comment: 'Hypervisor Node 1' },
-  { id: 4, hostname: 'unifi-ap-hd', mac: '74:83:C2:10:44:90', ip: '192.168.1.5', comment: 'Main Floor Access Point' },
-  { id: 5, hostname: 'home-assistant-vm', mac: '52:54:00:12:34:56', ip: '192.168.1.30', comment: 'Home Automation Bridge' }
-])
-
-const activeLeases = ref([
-  { hostname: 'MacBook-Pro-M3', ip: '192.168.1.105', mac: 'F0:18:98:33:44:55', vendor: 'Apple, Inc.', expires: '21h 14m' },
-  { hostname: 'iPhone-15-Pro', ip: '192.168.1.106', mac: '3C:06:30:11:22:33', vendor: 'Apple, Inc.', expires: '18h 05m' },
-  { hostname: 'workstation-dev', ip: '192.168.1.110', mac: 'D8:BB:C1:44:55:66', vendor: 'Intel Corp', expires: '23h 59m' },
-  { hostname: 'smart-tv-livingroom', ip: '192.168.1.115', mac: '64:16:66:77:88:99', vendor: 'LG Electronics', expires: '12h 30m' },
-  { hostname: 'sonos-soundbar', ip: '192.168.1.120', mac: '48:A6:B8:99:AA:BB', vendor: 'Sonos, Inc.', expires: '19h 40m' }
-])
-
 const dnsConfig = ref({
   forwarders: ['1.1.1.1', '8.8.8.8'],
   dnssec: true,
@@ -693,12 +808,6 @@ const dnsConfig = ref({
   cache_size: 10000,
   max_ttl: 86400
 })
-
-const staticDnsRecords = ref([
-  { id: 1, hostname: 'router.home.medric.net', ip: '192.168.1.1', description: 'Astaro Next Gateway' },
-  { id: 2, hostname: 'nas.internal.medric.net', ip: '192.168.1.10', description: 'Main Storage Cluster' },
-  { id: 3, hostname: 'pve.internal.medric.net', ip: '192.168.1.50', description: 'Proxmox VE Web Console' }
-])
 
 const dyndnsConfig = ref({
   enabled: true,
@@ -713,12 +822,96 @@ const ntpConfig = ref({
   serve_clients: true
 })
 
-// Computed
 const totalPoolSize = computed(() => 101)
 const activeLeasesCount = computed(() => activeLeases.value.length)
 const poolUtilizationPct = computed(() => Math.round((activeLeasesCount.value / totalPoolSize.value) * 100))
 
-// Methods
+const filteredReservations = computed(() => {
+  if (!resSearchQuery.value.trim()) return staticReservations.value
+  const q = resSearchQuery.value.toLowerCase()
+  return staticReservations.value.filter(r =>
+    r.hostname.toLowerCase().includes(q) ||
+    r.mac.toLowerCase().includes(q) ||
+    r.ip.toLowerCase().includes(q) ||
+    (r.comment && r.comment.toLowerCase().includes(q))
+  )
+})
+
+const refreshCurrentTab = () => {
+  isLoading.value = true
+  setTimeout(() => { isLoading.value = false }, 300)
+}
+
+const openAddReservationModal = () => {
+  editingResId.value = null
+  formRes.value = { hostname: '', mac: '', ip: '', comment: '' }
+  isReservationModalOpen.value = true
+}
+
+const editReservation = (res) => {
+  editingResId.value = res.id
+  formRes.value = JSON.parse(JSON.stringify(res))
+  isReservationModalOpen.value = true
+}
+
+const cloneReservation = (res) => {
+  editingResId.value = null
+  formRes.value = {
+    ...JSON.parse(JSON.stringify(res)),
+    id: null,
+    hostname: `${res.hostname}-clone`
+  }
+  isReservationModalOpen.value = true
+}
+
+const saveReservation = () => {
+  if (editingResId.value) {
+    const idx = staticReservations.value.findIndex(r => r.id === editingResId.value)
+    if (idx >= 0) staticReservations.value[idx] = { ...formRes.value, id: editingResId.value }
+  } else {
+    staticReservations.value.push({
+      id: Date.now(),
+      ...formRes.value
+    })
+  }
+  isReservationModalOpen.value = false
+}
+
+const openAddDnsModal = () => {
+  editingDnsId.value = null
+  formDns.value = { hostname: '', ip: '', description: '' }
+  isDnsModalOpen.value = true
+}
+
+const editDnsRecord = (rec) => {
+  editingDnsId.value = rec.id
+  formDns.value = JSON.parse(JSON.stringify(rec))
+  isDnsModalOpen.value = true
+}
+
+const cloneDnsRecord = (rec) => {
+  editingDnsId.value = null
+  formDns.value = {
+    ...JSON.parse(JSON.stringify(rec)),
+    id: null,
+    hostname: `clone.${rec.hostname}`
+  }
+  isDnsModalOpen.value = true
+}
+
+const saveDnsRecord = () => {
+  if (editingDnsId.value) {
+    const idx = staticDnsRecords.value.findIndex(d => d.id === editingDnsId.value)
+    if (idx >= 0) staticDnsRecords.value[idx] = { ...formDns.value, id: editingDnsId.value }
+  } else {
+    staticDnsRecords.value.push({
+      id: Date.now(),
+      ...formDns.value
+    })
+  }
+  isDnsModalOpen.value = false
+}
+
 const saveDhcpSettings = async () => {
   isSaving.value = true
   try {
@@ -782,7 +975,7 @@ const deleteDnsRecord = (id) => {
 }
 
 const saveDyndnsSettings = async () => {
-  console.log('Saved DynDNS')
+  alert('DynDNS settings saved.')
 }
 
 const forceDyndnsUpdate = () => {
@@ -791,9 +984,5 @@ const forceDyndnsUpdate = () => {
 
 const syncNtpNow = () => {
   alert('Synchronized hardware RTC and system clock with NTP pool.')
-}
-
-const fetchLeases = async () => {
-  console.log('Fetching live leases...')
 }
 </script>

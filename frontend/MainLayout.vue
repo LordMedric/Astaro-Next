@@ -270,12 +270,15 @@
               </button>
               <button
                 type="button"
-                class="px-3.5 py-1.5 text-xs font-semibold bg-[#0072ce] hover:bg-[#005ea6] text-white rounded-md border border-blue-700 transition-colors shadow-sm flex items-center gap-1.5 active:bg-[#004b87]"
+                @click="handleApplyConfig"
+                :disabled="isApplying"
+                class="px-3.5 py-1.5 text-xs font-semibold bg-[#0072ce] hover:bg-[#005ea6] text-white rounded-md border border-blue-700 transition-colors shadow-sm flex items-center gap-1.5 active:bg-[#004b87] cursor-pointer disabled:opacity-75"
               >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span v-if="isApplying" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
-                <span>Apply Configuration</span>
+                <span>{{ isApplying ? 'Applying...' : 'Apply Configuration' }}</span>
               </button>
             </slot>
           </div>
@@ -792,6 +795,25 @@ const currentItemBadge = computed(() => {
 
 const handleLogout = () => {
   emit('logout')
+}
+
+const isApplying = ref(false)
+
+const handleApplyConfig = async () => {
+  isApplying.value = true
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.get('/api/system/control-center')
+    }
+  } catch (err) {
+    console.error('Apply config error:', err)
+  } finally {
+    setTimeout(() => {
+      isApplying.value = false
+      emit('refresh')
+    }, 600)
+  }
 }
 
 const emitRefresh = () => {

@@ -1,29 +1,25 @@
 <template>
   <div class="space-y-6">
-    <!-- Top Header Banner (Astaro-Next Slate-900 / Modernized Style) -->
-    <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <!-- Standardized Page Header -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <div class="flex items-center gap-2 mb-1">
-          <div class="w-8 h-8 rounded-lg bg-[#ee7f00] flex items-center justify-center text-white font-black text-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-            </svg>
-          </div>
-          <h1 class="text-xl font-bold tracking-tight">Webserver Protection (WAF)</h1>
-          <span class="text-[10px] bg-orange-950 text-orange-300 font-mono font-bold px-2 py-0.5 rounded border border-orange-800/80">
+        <div class="flex items-center gap-2.5">
+          <span class="w-1.5 h-6 bg-[#ee7f00] rounded-xs inline-block"></span>
+          <h1 class="text-xl font-bold text-slate-900 tracking-tight">Webserver Protection (WAF)</h1>
+          <span class="text-[11px] bg-orange-50 text-orange-800 font-medium font-mono px-2 py-0.5 rounded border border-orange-200">
             NGINX &amp; NAXSI L7
           </span>
         </div>
-        <p class="text-xs text-slate-400">
+        <p class="text-xs text-slate-500 mt-1 pl-4">
           Publish web applications with SSL offloading, Reverse Proxy load balancing, Site Path routing, and Layer 7 Web Application Firewall threat protection.
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2.5 flex-wrap">
         <button
           type="button"
           @click="isLiveLogOpen = true"
-          class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+          class="px-3.5 py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer active:bg-slate-100"
         >
           <svg class="w-3.5 h-3.5 text-[#0072ce]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -34,10 +30,10 @@
         <button
           type="button"
           @click="openNginxPreview"
-          class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+          class="px-3.5 py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer active:bg-slate-100"
           title="Inspect generated Nginx & NAXSI configuration"
         >
-          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
           </svg>
           <span>nginx.conf</span>
@@ -46,9 +42,9 @@
         <button
           type="button"
           @click="openCreateModal"
-          class="px-4 py-2 bg-[#0072ce] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+          class="px-4 py-2 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-2 transition-all cursor-pointer"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
           <span>+ New {{ activeTabLabel }}...</span>

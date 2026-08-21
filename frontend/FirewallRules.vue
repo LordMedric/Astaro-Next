@@ -240,7 +240,8 @@
               <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[130px]">Destination Zone</th>
               <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[160px]">Services / Ports</th>
               <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[140px]">Action State</th>
-              <th scope="col" class="py-3 px-4 min-w-[120px] text-center">Status</th>
+              <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[100px] text-center">Status</th>
+              <th scope="col" class="py-3 px-4 min-w-[140px] text-right pr-4">Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200 text-xs">
@@ -389,7 +390,7 @@
               </td>
 
               <!-- 6. Interactive Status Toggle Slider to Enable/Disable Rule -->
-              <td class="py-3.5 px-4 text-center">
+              <td class="py-3.5 px-4 text-center border-r border-slate-200/80">
                 <div class="inline-flex items-center gap-2">
                   <!-- Custom Accessible Toggle Slider Switch -->
                   <button
@@ -410,7 +411,7 @@
                   </button>
                   <span
                     :class="[
-                      'text-[10px] font-mono font-bold uppercase w-12 text-left',
+                      'text-[10px] font-mono font-bold uppercase w-8 text-left',
                       rule.enabled ? 'text-emerald-600' : 'text-slate-400'
                     ]"
                   >
@@ -418,11 +419,36 @@
                   </span>
                 </div>
               </td>
+
+              <!-- 7. Standardized Actions (Edit | Clone | Delete) -->
+              <td class="py-3.5 px-4 text-right pr-4 space-x-1.5 whitespace-nowrap">
+                <button
+                  type="button"
+                  @click="editFirewallRule(rule)"
+                  class="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded text-[11px] font-bold shadow-2xs cursor-pointer"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  @click="cloneFirewallRule(rule)"
+                  class="px-2 py-1 bg-white hover:bg-slate-50 text-amber-700 border border-slate-300 rounded text-[11px] font-bold shadow-2xs cursor-pointer"
+                >
+                  Clone
+                </button>
+                <button
+                  type="button"
+                  @click="deleteFirewallRule(rule.id)"
+                  class="px-2 py-1 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded text-[11px] font-bold shadow-2xs cursor-pointer"
+                >
+                  Delete
+                </button>
+              </td>
             </tr>
 
             <!-- Empty Search / Filter State -->
             <tr v-if="filteredRules.length === 0">
-              <td colspan="7" class="py-12 text-center text-slate-500">
+              <td colspan="8" class="py-12 text-center text-slate-500">
                 <svg class="w-10 h-10 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
@@ -1258,6 +1284,7 @@ const saveInlineService = async () => {
 }
 
 // Form Data Reactive State for Modal Submission
+const editingRuleId = ref(null)
 const formData = reactive({
   name: '',
   src_zone: 'LAN',
@@ -1478,6 +1505,7 @@ const moveRule = async (index, direction) => {
 // Modal Lifecycle Controls
 // -----------------------------------------------------------------------------
 const openAddRuleModal = () => {
+  editingRuleId.value = null
   validationError.value = ''
   formData.name = ''
   formData.src_zone = 'LAN'
@@ -1492,6 +1520,59 @@ const openAddRuleModal = () => {
   formData.enabled = true
   formData.comment = ''
   isModalOpen.value = true
+}
+
+const editFirewallRule = (rule) => {
+  editingRuleId.value = rule.id
+  validationError.value = ''
+  formData.name = rule.name
+  formData.src_zone = rule.src_zone || 'LAN'
+  formData.source_type = rule.source_type || 'Any'
+  formData.source_value = rule.source_value || 'Any'
+  formData.dest_zone = rule.dest_zone || 'WAN'
+  formData.dest_type = rule.dest_type || 'Any'
+  formData.dest_value = rule.dest_value || 'Any'
+  formData.services = rule.services || 'Any'
+  formData.action = rule.action?.toLowerCase() || 'accept'
+  formData.log_traffic = !!rule.log_traffic
+  formData.enabled = rule.enabled !== false
+  formData.comment = rule.comment || ''
+  isModalOpen.value = true
+}
+
+const cloneFirewallRule = (rule) => {
+  editingRuleId.value = null
+  validationError.value = ''
+  formData.name = `${rule.name} (Clone)`
+  formData.src_zone = rule.src_zone || 'LAN'
+  formData.source_type = rule.source_type || 'Any'
+  formData.source_value = rule.source_value || 'Any'
+  formData.dest_zone = rule.dest_zone || 'WAN'
+  formData.dest_type = rule.dest_type || 'Any'
+  formData.dest_value = rule.dest_value || 'Any'
+  formData.services = rule.services || 'Any'
+  formData.action = rule.action?.toLowerCase() || 'accept'
+  formData.log_traffic = !!rule.log_traffic
+  formData.enabled = true
+  formData.comment = rule.comment || ''
+  isModalOpen.value = true
+}
+
+const deleteFirewallRule = async (id) => {
+  const item = rulesList.value.find(r => r.id === id)
+  if (!confirm(`Are you sure you want to delete firewall rule '${item ? item.name : id}'?`)) return
+
+  try {
+    if (!axiosInstance) await initAxios()
+    if (axiosInstance) {
+      await axiosInstance.delete(`/api/firewall/rules/${id}`)
+    }
+  } catch (err) {
+    console.error('Failed to delete rule from backend API:', err)
+  }
+
+  rulesList.value = rulesList.value.filter(r => r.id !== id)
+  showToast('Rule Deleted', `Firewall rule '${item ? item.name : id}' was deleted.`, 'info', 3000)
 }
 
 const closeModal = () => {
