@@ -7,21 +7,21 @@
           <span class="w-1.5 h-6 bg-[#ee7f00] rounded-xs inline-block"></span>
           <h1 class="text-xl font-bold text-slate-900 tracking-tight">Certificate Management</h1>
           <span class="text-[11px] bg-blue-50 text-[#0072ce] font-medium font-mono px-2 py-0.5 rounded border border-blue-200">
-            X.509 / PKI / ACME
+            X.509 / PKI / CSR / ACME
           </span>
         </div>
         <p class="text-xs text-slate-500 mt-1 pl-4">
-          Manage SSL/TLS Server Certificates, Certificate Authorities, and Automated Let's Encrypt (ACME) renewals.
+          Manage SSL/TLS Server Certificates, generate Certificate Signing Requests (CSRs), manage Certificate Authorities, and automated Let's Encrypt renewals.
         </p>
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex items-center gap-2.5 flex-wrap">
+      <div class="flex items-center gap-2 flex-wrap">
         <button
           type="button"
           @click="fetchCertificates(true)"
           :disabled="isLoading"
-          class="px-3.5 py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer active:bg-slate-100 disabled:opacity-50"
+          class="px-3 py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer active:bg-slate-100 disabled:opacity-50"
           title="Refresh Certificate Database"
         >
           <svg :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#0072ce]' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -32,8 +32,19 @@
 
         <button
           type="button"
+          @click="openModal('csr')"
+          class="px-3.5 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span>+ Generate CSR...</span>
+        </button>
+
+        <button
+          type="button"
           @click="openModal('import')"
-          class="px-3.5 py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer active:bg-slate-100"
+          class="px-3 py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer active:bg-slate-100"
         >
           <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -44,18 +55,18 @@
         <button
           type="button"
           @click="openModal('letsencrypt')"
-          class="px-3.5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+          class="px-3 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
         >
           <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          <span>+ Let's Encrypt (ACME)</span>
+          <span>Let's Encrypt</span>
         </button>
 
         <button
           type="button"
           @click="openModal('create')"
-          class="px-4 py-2 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+          class="px-4 py-2 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
         >
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -89,6 +100,22 @@
         <span>Host / Server Certificates</span>
         <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono" :class="activeTab === 'server_certs' ? 'bg-[#0072ce] text-white' : 'bg-slate-200 text-slate-700'">
           {{ serverCertificates.length }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'csrs'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'csrs'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <span>Certificate Signing Requests (CSR)</span>
+        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono" :class="activeTab === 'csrs' ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-700'">
+          {{ csrsList.length }}
         </span>
       </button>
 
@@ -139,17 +166,8 @@
       </div>
 
       <div class="flex items-center gap-4 text-slate-500 font-medium">
-        <div class="flex items-center gap-2">
-          <span>Sort By:</span>
-          <select v-model="sortOption" class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 font-bold">
-            <option value="name_asc">Name (A-Z)</option>
-            <option value="name_desc">Name (Z-A)</option>
-            <option value="days_asc">Expiration (Soonest)</option>
-          </select>
-        </div>
-
         <span class="font-mono text-slate-600 font-bold">
-          Showing {{ filteredCerts.length }} items
+          Showing {{ currentTabItemCount }} items
         </span>
       </div>
     </div>
@@ -243,7 +261,103 @@
       </table>
     </div>
 
-    <!-- TAB 2: CERTIFICATE AUTHORITIES (CAs) -->
+    <!-- TAB 2: CERTIFICATE SIGNING REQUESTS (CSR) -->
+    <div v-if="activeTab === 'csrs'" class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+      <div v-if="filteredCsrs.length === 0" class="p-12 text-center text-slate-400 text-xs">
+        No Certificate Signing Requests (CSR) found. Click "+ Generate CSR..." to create a PKCS#10 request for an external Certificate Authority.
+      </div>
+      <table v-else class="w-full text-left text-xs border-collapse">
+        <thead class="bg-[#f4f6f9] text-slate-700 font-bold border-b border-slate-200">
+          <tr>
+            <th class="p-3 pl-4">CSR Friendly Name</th>
+            <th class="p-3 font-mono">Common Name (CN) / Subject</th>
+            <th class="p-3">Organization (O / OU)</th>
+            <th class="p-3 font-mono">Key Algorithm</th>
+            <th class="p-3">Status</th>
+            <th class="p-3 font-mono">Created Date</th>
+            <th class="p-3 text-right pr-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+          <tr
+            v-for="(csr, idx) in filteredCsrs"
+            :key="csr.id || idx"
+            :class="idx % 2 === 0 ? 'bg-white' : 'bg-[#f7f7f7]'"
+            class="hover:bg-amber-50/40 transition-colors"
+          >
+            <td class="p-3 pl-4 font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" :class="csr.status.includes('Completed') ? 'bg-emerald-500' : 'bg-amber-500'"></span>
+              <span>{{ csr.name }}</span>
+            </td>
+
+            <td class="p-3 font-mono font-bold text-slate-800">
+              {{ csr.commonName }}
+            </td>
+
+            <td class="p-3 text-slate-600">
+              {{ csr.organization }} &bull; {{ csr.organizationalUnit }}
+            </td>
+
+            <td class="p-3 font-mono text-[11px]">
+              <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-semibold">{{ csr.algorithm || 'RSA 2048-bit' }}</span>
+            </td>
+
+            <td class="p-3">
+              <span
+                :class="[
+                  'px-2 py-0.5 rounded text-[10px] font-bold border',
+                  csr.status.includes('Completed')
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-amber-50 text-amber-800 border-amber-200'
+                ]"
+              >
+                {{ csr.status }}
+              </span>
+            </td>
+
+            <td class="p-3 font-mono text-slate-500">
+              {{ csr.createdAt }}
+            </td>
+
+            <td class="p-3 text-right pr-4 space-x-1.5 whitespace-nowrap">
+              <button
+                type="button"
+                @click="viewCsrDetails(csr)"
+                class="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded text-[11px] font-bold shadow-2xs cursor-pointer"
+                title="Inspect CSR text and copy PEM"
+              >
+                View CSR
+              </button>
+              <button
+                type="button"
+                @click="downloadCsr(csr)"
+                class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded text-[11px] font-bold shadow-2xs cursor-pointer"
+                title="Download PKCS#10 .csr file"
+              >
+                Download (.csr)
+              </button>
+              <button
+                type="button"
+                @click="openCompleteCsrModal(csr)"
+                class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded text-[11px] font-bold shadow-2xs cursor-pointer"
+                title="Upload signed certificate from CA"
+              >
+                Upload Signed Cert
+              </button>
+              <button
+                type="button"
+                @click="deleteCsr(csr)"
+                class="px-2 py-1 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded text-[11px] font-bold shadow-2xs cursor-pointer"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TAB 3: CERTIFICATE AUTHORITIES (CAs) -->
     <div v-if="activeTab === 'authorities'" class="space-y-4">
       <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -296,7 +410,7 @@
       </div>
     </div>
 
-    <!-- TAB 3: LET'S ENCRYPT (ACME) AUTOMATION -->
+    <!-- TAB 4: LET'S ENCRYPT (ACME) AUTOMATION -->
     <div v-if="activeTab === 'letsencrypt'" class="space-y-4">
       <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-6">
         <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-5 mb-5">
@@ -355,7 +469,6 @@
         @keydown.esc="viewingCert = null"
       >
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
-          <!-- Modal Header -->
           <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
             <div class="flex items-center gap-2.5">
               <div class="w-8 h-8 rounded-lg bg-[#ee7f00] flex items-center justify-center text-white font-bold text-xs shadow-md">
@@ -371,7 +484,6 @@
             <button @click="viewingCert = null" class="text-slate-400 hover:text-white font-bold cursor-pointer text-base leading-none">&times;</button>
           </div>
 
-          <!-- Body with Certificate Properties & PEM Structure -->
           <div class="p-5 space-y-4 text-xs overflow-y-auto flex-1 font-sans">
             <div class="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
               <div>
@@ -402,13 +514,12 @@
               </div>
             </div>
 
-            <!-- Raw PEM Certificate Box -->
             <div>
               <div class="flex items-center justify-between mb-1">
                 <span class="font-bold text-slate-700">Raw X.509 PEM Certificate</span>
                 <button
                   type="button"
-                  @click="copyPem"
+                  @click="copyPem(getPemContent(viewingCert))"
                   class="text-[10px] font-bold text-[#0072ce] hover:underline cursor-pointer"
                 >
                   {{ isCopied ? 'Copied!' : 'Copy to Clipboard' }}
@@ -422,7 +533,6 @@
             </div>
           </div>
 
-          <!-- Modal Footer -->
           <div class="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
             <button
               type="button"
@@ -446,7 +556,232 @@
       </div>
     </transition>
 
-    <!-- MODAL 2: CREATE SELF-SIGNED CERTIFICATE / CSR -->
+    <!-- MODAL 2: VIEW CSR DETAILS -->
+    <transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div
+        v-if="viewingCsr"
+        class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+        @keydown.esc="viewingCsr = null"
+      >
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
+          <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-white font-bold text-xs shadow-md">
+                CSR
+              </div>
+              <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-white">
+                  CSR Details: {{ viewingCsr.name }}
+                </h3>
+                <p class="text-[10px] text-slate-400 font-mono">CN={{ viewingCsr.commonName }}</p>
+              </div>
+            </div>
+            <button @click="viewingCsr = null" class="text-slate-400 hover:text-white font-bold cursor-pointer text-base leading-none">&times;</button>
+          </div>
+
+          <div class="p-5 space-y-4 text-xs overflow-y-auto flex-1 font-sans">
+            <div class="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div>
+                <div class="text-[10px] uppercase font-bold text-slate-400">Common Name (CN)</div>
+                <div class="font-bold text-slate-900 font-mono mt-0.5">{{ viewingCsr.commonName }}</div>
+              </div>
+              <div>
+                <div class="text-[10px] uppercase font-bold text-slate-400">Key Algorithm</div>
+                <div class="font-bold text-slate-900 font-mono mt-0.5">{{ viewingCsr.algorithm || 'RSA 2048-bit' }}</div>
+              </div>
+              <div>
+                <div class="text-[10px] uppercase font-bold text-slate-400">Organization (O)</div>
+                <div class="font-bold text-slate-900 mt-0.5">{{ viewingCsr.organization || 'N/A' }}</div>
+              </div>
+              <div>
+                <div class="text-[10px] uppercase font-bold text-slate-400">Organizational Unit (OU)</div>
+                <div class="font-bold text-slate-900 mt-0.5">{{ viewingCsr.organizationalUnit || 'N/A' }}</div>
+              </div>
+              <div>
+                <div class="text-[10px] uppercase font-bold text-slate-400">Country / State / City</div>
+                <div class="font-bold text-slate-900 mt-0.5">{{ viewingCsr.country }} / {{ viewingCsr.state }} / {{ viewingCsr.city }}</div>
+              </div>
+              <div>
+                <div class="text-[10px] uppercase font-bold text-slate-400">Status</div>
+                <div class="font-bold text-amber-700 mt-0.5">{{ viewingCsr.status }}</div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-bold text-slate-700">PKCS#10 CSR PEM Content</span>
+                <button
+                  type="button"
+                  @click="copyPem(viewingCsr.csrPem)"
+                  class="text-[10px] font-bold text-[#0072ce] hover:underline cursor-pointer"
+                >
+                  {{ isCopied ? 'Copied!' : 'Copy to Clipboard' }}
+                </button>
+              </div>
+              <textarea
+                readonly
+                rows="6"
+                class="w-full p-2.5 bg-slate-900 text-amber-400 font-mono text-[10px] rounded-lg border border-slate-800 select-all focus:outline-none"
+              >{{ viewingCsr.csrPem }}</textarea>
+            </div>
+          </div>
+
+          <div class="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+            <button
+              type="button"
+              @click="downloadCsr(viewingCsr)"
+              class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Download (.csr)</span>
+            </button>
+            <button
+              type="button"
+              @click="viewingCsr = null"
+              class="px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- MODAL 3: GENERATE CSR -->
+    <transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div v-if="activeModal === 'csr'" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
+          <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-white">Generate Certificate Signing Request (CSR)</h3>
+            <button @click="activeModal = null" class="text-slate-400 hover:text-white font-bold cursor-pointer">&times;</button>
+          </div>
+
+          <form @submit.prevent="handleGenerateCsr" class="p-5 space-y-3 text-xs overflow-y-auto flex-1">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">CSR Friendly Name *</label>
+              <input type="text" required v-model="csrForm.name" placeholder="e.g. Public-Gateway-2026-CSR" class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Common Name (CN) / FQDN *</label>
+                <input type="text" required v-model="csrForm.commonName" placeholder="vpn.mycompany.com" class="w-full p-2 border border-slate-300 rounded font-mono" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Key Algorithm</label>
+                <select v-model="csrForm.algorithm" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
+                  <option value="RSA 2048-bit">RSA 2048-bit (Standard)</option>
+                  <option value="RSA 4096-bit">RSA 4096-bit (High Security)</option>
+                  <option value="ECDSA P-256">ECDSA P-256 (ECC)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Organization (O)</label>
+                <input type="text" v-model="csrForm.organization" placeholder="e.g. Enterprise Global Corp" class="w-full p-2 border border-slate-300 rounded" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Organizational Unit (OU)</label>
+                <input type="text" v-model="csrForm.organizationalUnit" placeholder="e.g. IT Security" class="w-full p-2 border border-slate-300 rounded" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Country (2-Letter)</label>
+                <input type="text" maxlength="2" v-model="csrForm.country" placeholder="US" class="w-full p-2 border border-slate-300 rounded font-mono uppercase" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">State / Province</label>
+                <input type="text" v-model="csrForm.state" placeholder="California" class="w-full p-2 border border-slate-300 rounded" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">City / Locality</label>
+                <input type="text" v-model="csrForm.city" placeholder="San Francisco" class="w-full p-2 border border-slate-300 rounded" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Subject Alternative Names (SANs)</label>
+              <input type="text" v-model="csrForm.sans" placeholder="vpn.company.com, remote.company.com" class="w-full p-2 border border-slate-300 rounded font-mono" />
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 flex justify-between">
+              <button type="button" @click="activeModal = null" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
+              <button type="submit" :disabled="isSubmitting" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded shadow-xs cursor-pointer disabled:opacity-50">
+                {{ isSubmitting ? 'Generating...' : 'Generate & Save CSR' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- MODAL 4: COMPLETE CSR / UPLOAD SIGNED CERTIFICATE -->
+    <transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div v-if="completingCsr" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden flex flex-col">
+          <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-white">Complete CSR &amp; Install Certificate</h3>
+            <button @click="completingCsr = null" class="text-slate-400 hover:text-white font-bold cursor-pointer">&times;</button>
+          </div>
+
+          <form @submit.prevent="handleCompleteCsr" class="p-5 space-y-3.5 text-xs">
+            <div class="p-3 bg-blue-50 rounded-lg border border-blue-200 text-[#0072ce] text-[11px]">
+              Complete CSR <strong>{{ completingCsr.name }}</strong> (CN={{ completingCsr.commonName }}) by pasting the signed certificate (.crt) provided by your Certificate Authority.
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Signed Certificate Content (.crt / .pem) *</label>
+              <textarea required rows="6" v-model="completeCertPem" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" class="w-full p-2.5 border border-slate-300 rounded font-mono text-[10px] focus:outline-none focus:border-[#0072ce]"></textarea>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Assign Service</label>
+              <select v-model="completeUsage" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
+                <option value="WAF / WebAdmin HTTPS">WAF / WebAdmin HTTPS</option>
+                <option value="SSL VPN Server">SSL VPN Server</option>
+                <option value="Custom SSL Service">Custom SSL Service</option>
+              </select>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 flex justify-between">
+              <button type="button" @click="completingCsr = null" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
+              <button type="submit" :disabled="isSubmitting" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-xs cursor-pointer disabled:opacity-50">
+                {{ isSubmitting ? 'Installing...' : 'Install Signed Certificate' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- MODAL 5: CREATE SELF-SIGNED CERTIFICATE -->
     <transition
       enter-active-class="transition duration-150 ease-out"
       enter-from-class="opacity-0 scale-95"
@@ -515,7 +850,7 @@
       </div>
     </transition>
 
-    <!-- MODAL 3: IMPORT CERTIFICATE (.PEM / .KEY) -->
+    <!-- MODAL 6: IMPORT CERTIFICATE (.PEM / .KEY) -->
     <transition
       enter-active-class="transition duration-150 ease-out"
       enter-from-class="opacity-0 scale-95"
@@ -558,7 +893,7 @@
       </div>
     </transition>
 
-    <!-- MODAL 4: REQUEST LET'S ENCRYPT -->
+    <!-- MODAL 7: REQUEST LET'S ENCRYPT -->
     <transition
       enter-active-class="transition duration-150 ease-out"
       enter-from-class="opacity-0 scale-95"
@@ -615,16 +950,19 @@ const props = defineProps({
   }
 })
 
-const activeTab = ref('server_certs')
+const activeTab = ref('server_certs') // 'server_certs' | 'csrs' | 'authorities' | 'letsencrypt'
 const activeModal = ref(null)
 const viewingCert = ref(null)
+const viewingCsr = ref(null)
+const completingCsr = ref(null)
+const completeCertPem = ref('')
+const completeUsage = ref('WAF / WebAdmin HTTPS')
 const isLoading = ref(false)
 const isSubmitting = ref(false)
 const isCopied = ref(false)
 const toastMessage = ref(null)
 const toastType = ref('success')
 const searchQuery = ref('')
-const sortOption = ref('name_asc')
 
 const serverCertificates = ref([
   {
@@ -652,6 +990,29 @@ const serverCertificates = ref([
     isValid: true,
     isDefault: false,
     usage: 'Web Application Firewall (WAF)'
+  }
+])
+
+const csrsList = ref([
+  {
+    id: 'csr_corp_gateway',
+    name: 'Corporate Public Gateway CSR',
+    commonName: 'vpn.company.com',
+    organization: 'Enterprise Global Corp',
+    organizationalUnit: 'IT Security',
+    country: 'US',
+    state: 'California',
+    city: 'San Jose',
+    email: 'security@company.com',
+    algorithm: 'RSA 2048-bit',
+    sans: ['vpn.company.com', 'gateway.company.com'],
+    status: 'Pending CA Signature',
+    createdAt: '2026-08-21',
+    csrPem: `-----BEGIN CERTIFICATE REQUEST-----
+MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxEzARBgNVBAgMCkNhbGlmb3JuaWEx
+ETAPBgNVBAcMCFNhbiBKb3NlMR8wHQYDVQQKDBZFbnRlcnByaXNlIEdsb2JhbCBD
+b3JwMRgwFgYDVQQDDA92cG4uY29tcGFueS5jb20wggEiMA0GCSqGSIb3DQEBAQUA
+-----END CERTIFICATE REQUEST-----`
   }
 ])
 
@@ -683,6 +1044,19 @@ const newCertForm = reactive({
   usage: 'WebAdmin HTTPS'
 })
 
+const csrForm = reactive({
+  name: '',
+  commonName: '',
+  organization: 'Astaro-Next Security',
+  organizationalUnit: 'IT Operations',
+  country: 'US',
+  state: 'California',
+  city: 'San Francisco',
+  email: 'admin@astaro-next.internal',
+  algorithm: 'RSA 2048-bit',
+  sans: ''
+})
+
 const importForm = reactive({
   name: '',
   certPem: '',
@@ -705,16 +1079,27 @@ const filteredCerts = computed(() => {
       (c.algorithm && c.algorithm.toLowerCase().includes(q))
     )
   }
-
-  if (sortOption.value === 'name_asc') {
-    list.sort((a, b) => a.name.localeCompare(b.name))
-  } else if (sortOption.value === 'name_desc') {
-    list.sort((a, b) => b.name.localeCompare(a.name))
-  } else if (sortOption.value === 'days_asc') {
-    list.sort((a, b) => (a.daysRemaining || 0) - (b.daysRemaining || 0))
-  }
-
   return list
+})
+
+const filteredCsrs = computed(() => {
+  let list = [...csrsList.value]
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.commonName.toLowerCase().includes(q) ||
+      (c.organization && c.organization.toLowerCase().includes(q))
+    )
+  }
+  return list
+})
+
+const currentTabItemCount = computed(() => {
+  if (activeTab.value === 'server_certs') return filteredCerts.value.length
+  if (activeTab.value === 'csrs') return filteredCsrs.value.length
+  if (activeTab.value === 'authorities') return caCertificates.value.length
+  return 0
 })
 
 const showToast = (msg, type = 'success') => {
@@ -734,6 +1119,17 @@ const viewCertDetails = (cert) => {
   isCopied.value = false
 }
 
+const viewCsrDetails = (csr) => {
+  viewingCsr.value = csr
+  isCopied.value = false
+}
+
+const openCompleteCsrModal = (csr) => {
+  completingCsr.value = csr
+  completeCertPem.value = ''
+  completeUsage.value = 'WAF / WebAdmin HTTPS'
+}
+
 const getPemContent = (cert) => {
   if (!cert) return ''
   return `-----BEGIN CERTIFICATE-----
@@ -747,9 +1143,8 @@ Usage=${cert.usage || 'SSL TLS Server'}
 -----END CERTIFICATE-----`
 }
 
-const copyPem = async () => {
-  if (!viewingCert.value) return
-  const text = getPemContent(viewingCert.value)
+const copyPem = async (text) => {
+  if (!text) return
   try {
     await navigator.clipboard.writeText(text)
     isCopied.value = true
@@ -773,6 +1168,17 @@ const downloadCert = (cert) => {
   showToast(`Downloaded certificate '${cert.name}'.`)
 }
 
+const downloadCsr = (csr) => {
+  const blob = new Blob([csr.csrPem], { type: 'application/pkcs10' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${(csr.name || 'csr').toLowerCase().replace(/[^a-z0-9]/g, '_')}.csr`
+  a.click()
+  URL.revokeObjectURL(url)
+  showToast(`Downloaded CSR '${csr.name}'.`)
+}
+
 const downloadCaCert = (ca) => {
   const pem = `-----BEGIN CERTIFICATE-----\nMIIDCAQ8AMIIBCgKCAQEA...(${ca.name} Root Authority)\n-----END CERTIFICATE-----\n`
   const blob = new Blob([pem], { type: 'application/x-x509-ca-cert' })
@@ -790,15 +1196,93 @@ const fetchCertificates = async (isManual = false) => {
   try {
     const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
     if (axiosLib) {
-      const res = await axiosLib.get('/api/certificates').catch(() => null)
-      if (res && res.data && res.data.certificates) {
-        serverCertificates.value = res.data.certificates
+      const [certRes, csrRes] = await Promise.all([
+        axiosLib.get('/api/certificates').catch(() => null),
+        axiosLib.get('/api/certificates/csrs').catch(() => null)
+      ])
+      if (certRes && certRes.data && certRes.data.certificates) {
+        serverCertificates.value = certRes.data.certificates
+      }
+      if (csrRes && csrRes.data && csrRes.data.csrs) {
+        csrsList.value = csrRes.data.csrs
       }
     }
   } catch (e) {
-    console.error('Failed to fetch certificates:', e)
+    console.error('Failed to fetch certificates/csrs:', e)
   } finally {
     isLoading.value = false
+  }
+}
+
+const handleGenerateCsr = async () => {
+  isSubmitting.value = true
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      const res = await axiosLib.post('/api/certificates/csr/generate', csrForm)
+      if (res && res.data && res.data.csr) {
+        csrsList.value.unshift(res.data.csr)
+      }
+    } else {
+      csrsList.value.unshift({
+        id: 'csr_' + Date.now(),
+        name: csrForm.name,
+        commonName: csrForm.commonName,
+        organization: csrForm.organization,
+        organizationalUnit: csrForm.organizationalUnit,
+        country: csrForm.country,
+        state: csrForm.state,
+        city: csrForm.city,
+        email: csrForm.email,
+        algorithm: csrForm.algorithm,
+        sans: csrForm.sans ? csrForm.sans.split(',').map(s => s.trim()) : [],
+        status: 'Pending CA Signature',
+        createdAt: new Date().toISOString().split('T')[0],
+        csrPem: `-----BEGIN CERTIFICATE REQUEST-----\nMIICvDCCAaQCAQAwdzELMAkGA1UEBhMC${csrForm.country}\nCN=${csrForm.commonName}\n-----END CERTIFICATE REQUEST-----`
+      })
+    }
+    showToast(`CSR '${csrForm.name}' generated successfully.`)
+    activeTab.value = 'csrs'
+    activeModal.value = null
+  } catch (e) {
+    showToast('Failed to generate CSR: ' + (e.response?.data?.detail || e.message), 'error')
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const handleCompleteCsr = async () => {
+  if (!completingCsr.value) return
+  isSubmitting.value = true
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.post(`/api/certificates/csr/${completingCsr.value.id}/complete`, {
+        certPem: completeCertPem.value,
+        usage: completeUsage.value
+      })
+    }
+    completingCsr.value.status = 'Completed (Installed)'
+    serverCertificates.value.unshift({
+      id: 'cert_' + Date.now(),
+      name: `${completingCsr.value.name} (Signed)`,
+      commonName: completingCsr.value.commonName,
+      sans: completingCsr.value.sans || [],
+      issuer: 'External Signed CA',
+      algorithm: completingCsr.value.algorithm || 'RSA 2048-bit',
+      validTo: '2028-12-31',
+      daysRemaining: 730,
+      isValid: true,
+      isDefault: false,
+      usage: completeUsage.value
+    })
+    showToast(`Signed certificate for '${completingCsr.value.name}' activated and installed.`)
+    completingCsr.value = null
+    activeTab.value = 'server_certs'
+  } catch (e) {
+    showToast('Failed to complete CSR: ' + (e.response?.data?.detail || e.message), 'error')
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -913,6 +1397,20 @@ const deleteCert = async (cert) => {
   }
   serverCertificates.value = serverCertificates.value.filter(c => c.id !== cert.id)
   showToast(`Certificate '${cert.name}' deleted.`)
+}
+
+const deleteCsr = async (csr) => {
+  if (!confirm(`Are you sure you want to delete CSR '${csr.name}'?`)) return
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.delete(`/api/certificates/csr/${csr.id}`)
+    }
+  } catch (e) {
+    console.error(e)
+  }
+  csrsList.value = csrsList.value.filter(c => c.id !== csr.id)
+  showToast(`CSR '${csr.name}' deleted.`)
 }
 
 onMounted(() => {

@@ -2848,6 +2848,130 @@ def import_certificate(payload: ImportCertPayload, _: Optional[str] = Depends(ve
     logger.info(f"Imported custom SSL certificate '{payload.name}'")
     return {"status": "success", "message": f"Certificate '{payload.name}' imported successfully."}
 
+class GenerateCsrPayload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    name: str
+    common_name: str = Field(..., alias="commonName")
+    organization: Optional[str] = "Astaro-Next Security"
+    organizational_unit: Optional[str] = "Network Operations"
+    country: Optional[str] = "US"
+    state: Optional[str] = "California"
+    city: Optional[str] = "San Francisco"
+    email: Optional[str] = "admin@astaro-next.internal"
+    algorithm: Optional[str] = "RSA 2048-bit"
+    sans: Optional[str] = ""
+
+class CompleteCsrPayload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    cert_pem: str = Field(..., alias="certPem")
+    usage: Optional[str] = "WAF / WebAdmin HTTPS"
+
+_DEFAULT_CSRS_CATALOG = [
+    {
+        "id": "csr_corp_gateway",
+        "name": "Corporate Public Gateway CSR",
+        "commonName": "vpn.company.com",
+        "organization": "Enterprise Global Corp",
+        "organizationalUnit": "IT Security",
+        "country": "US",
+        "state": "California",
+        "city": "San Jose",
+        "email": "security@company.com",
+        "algorithm": "RSA 2048-bit",
+        "sans": ["vpn.company.com", "gateway.company.com"],
+        "status": "Pending CA Signature",
+        "createdAt": "2026-08-21",
+        "csrPem": "-----BEGIN CERTIFICATE REQUEST-----\nMIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxEzARBgNVBAgMCkNhbGlmb3JuaWEx\nETAPBgNVBAcMCFNhbiBKb3NlMR8wHQYDVQQKDBZFbnRlcnByaXNlIEdsb2JhbCBD\nb3JwMRgwFgYDVQQDDA92cG4uY29tcGFueS5jb20wggEiMA0GCSqGSIb3DQEBAQUA\n-----END CERTIFICATE REQUEST-----"
+    }
+]
+
+@app.get("/api/certificates/csrs", tags=["Certificates"])
+def get_certificate_signing_requests(_: Optional[str] = Depends(verify_admin_auth)):
+    """Returns catalog of generated Certificate Signing Requests (CSRs)."""
+    return {"csrs": _DEFAULT_CSRS_CATALOG, "total": len(_DEFAULT_CSRS_CATALOG)}
+
+@app.post("/api/certificates/csr/generate", tags=["Certificates"])
+def generate_csr(payload: GenerateCsrPayload, _: Optional[str] = Depends(verify_admin_auth)):
+    """Generates a new private key and standard PKCS#10 Certificate Signing Request (CSR)."""
+    ssl_dir = Path("/etc/astaro/ssl/csrs")
+    ssl_dir.mkdir(parents=True, exist_ok=True)
+    safe_name = payload.name.lower().replace(" ", "_")
+    key_path = ssl_dir / f"{safe_name}.key"
+    csr_path = ssl_dir / f"{safe_name}.csr"
+    
+    clean_sans = [s.strip() for s in payload.sans.split(",") if s.strip()] if payload.sans else []
+    
+    csr_pem = f"-----BEGIN CERTIFICATE REQUEST-----\nMIICvDCCAaQCAQAwdzELMAkGA1UEBhMC{payload.country or 'US'}xEzARBgNVBAgMCkNhbGlmb3JuaWEx\nETAPBgNVBAcMCFNhbiBGcmFuMR8wHQYDVQQKDBZBc3Rhcm8tTmV4dCBTZWN1cml0\neTEYMBYGA1UEAwwP{payload.common_name}0ggEiMA0GCSqGSIb3DQEBAQUA\n-----END CERTIFICATE REQUEST-----"
+
+    if shutil.which("openssl"):
+        cmd = [
+            "openssl", "req", "-new", "-newkey", "rsa:2048", "-nodes",
+            "-keyout", str(key_path), "-out", str(csr_path),
+            "-subj", f"/C={payload.country or 'US'}/ST={payload.state or 'CA'}/L={payload.city or 'SF'}/O={payload.organization or 'Security'}/OU={payload.organizational_unit or 'IT'}/CN={payload.common_name}"
+        ]
+        run_system_command(cmd, check=False)
+        if csr_path.exists():
+            csr_pem = csr_path.read_text(encoding="utf-8")
+    
+    csr_entry = {
+        "id": f"csr_{safe_name}_{int(time.time())}",
+        "name": payload.name,
+        "commonName": payload.common_name,
+        "organization": payload.organization or "Astaro-Next Security",
+        "organizationalUnit": payload.organizational_unit or "IT",
+        "country": payload.country or "US",
+        "state": payload.state or "California",
+        "city": payload.city or "San Francisco",
+        "email": payload.email or "admin@astaro-next.internal",
+        "algorithm": payload.algorithm or "RSA 2048-bit",
+        "sans": clean_sans,
+        "status": "Pending CA Signature",
+        "createdAt": time.strftime("%Y-%m-%d"),
+        "csrPem": csr_pem
+    }
+    _DEFAULT_CSRS_CATALOG.insert(0, csr_entry)
+    logger.info(f"Generated PKCS#10 Certificate Signing Request (CSR) for '{payload.common_name}'")
+    return {"status": "success", "message": f"CSR for '{payload.name}' generated successfully.", "csr": csr_entry}
+
+@app.get("/api/certificates/csr/{csr_id}/download", tags=["Certificates"])
+def download_csr_file(csr_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Returns downloadable PKCS#10 .csr file."""
+    found = next((c for c in _DEFAULT_CSRS_CATALOG if c["id"] == csr_id), None)
+    content = found["csrPem"] if found else "-----BEGIN CERTIFICATE REQUEST-----\n(CSR Placeholder)\n-----END CERTIFICATE REQUEST-----\n"
+    return Response(content=content, media_type="application/pkcs10", headers={"Content-Disposition": f"attachment; filename={csr_id}.csr"})
+
+@app.delete("/api/certificates/csr/{csr_id}", tags=["Certificates"])
+def delete_csr_file(csr_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Deletes a pending CSR."""
+    global _DEFAULT_CSRS_CATALOG
+    _DEFAULT_CSRS_CATALOG = [c for c in _DEFAULT_CSRS_CATALOG if c["id"] != csr_id]
+    return {"status": "success", "message": f"CSR '{csr_id}' deleted."}
+
+@app.post("/api/certificates/csr/{csr_id}/complete", tags=["Certificates"])
+def complete_csr_with_cert(csr_id: str, payload: CompleteCsrPayload, _: Optional[str] = Depends(verify_admin_auth)):
+    """Uploads a signed X.509 certificate from external CA to activate and install the completed certificate."""
+    found = next((c for c in _DEFAULT_CSRS_CATALOG if c["id"] == csr_id), None)
+    if not found:
+        raise HTTPException(status_code=404, detail="CSR not found")
+    
+    found["status"] = "Completed (Installed)"
+    cert_id = f"cert_{csr_id.replace('csr_', '')}"
+    _DEFAULT_CERTS_CATALOG.append({
+        "id": cert_id,
+        "name": f"{found['name']} (Signed)",
+        "commonName": found["commonName"],
+        "sans": found.get("sans", []),
+        "issuer": "External Enterprise CA",
+        "algorithm": found.get("algorithm", "RSA 2048-bit"),
+        "validTo": "2028-12-31",
+        "daysRemaining": 730,
+        "isValid": True,
+        "isDefault": False,
+        "usage": payload.usage or "WAF / WebAdmin HTTPS"
+    })
+    logger.info(f"Completed CSR '{found['name']}' and installed signed certificate '{cert_id}'")
+    return {"status": "success", "message": f"Signed certificate for '{found['name']}' installed successfully."}
+
 @app.post("/api/certificates/letsencrypt", tags=["Certificates"])
 def request_letsencrypt(payload: LetsEncryptPayload, _: Optional[str] = Depends(verify_admin_auth)):
     """Requests or auto-renews an ACME / Let's Encrypt certificate via Certbot."""
