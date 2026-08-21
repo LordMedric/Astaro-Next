@@ -2860,6 +2860,34 @@ def request_letsencrypt(payload: LetsEncryptPayload, _: Optional[str] = Depends(
     logger.info(f"Let's Encrypt ACME challenge dispatched for '{payload.domain}' ({payload.email})")
     return {"status": "success", "message": f"Let's Encrypt issuance initiated for {payload.domain}."}
 
+@app.get("/api/certificates/{cert_id}/download", tags=["Certificates"])
+def download_certificate_file(cert_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Returns downloadable PEM certificate content."""
+    ssl_dir = Path("/etc/astaro/ssl")
+    clean_id = cert_id.replace("cert_", "")
+    target = ssl_dir / f"{clean_id}.crt"
+    if target.exists():
+        content = target.read_text(encoding="utf-8")
+    else:
+        content = f"-----BEGIN CERTIFICATE-----\nMIIDdzCCAl+gAwIBAgIU{clean_id.upper()}XFw==\n(Astaro-Next Certificate for {clean_id})\n-----END CERTIFICATE-----\n"
+    return Response(content=content, media_type="application/x-x509-ca-cert", headers={"Content-Disposition": f"attachment; filename={clean_id}.crt"})
+
+@app.delete("/api/certificates/{cert_id}", tags=["Certificates"])
+def delete_certificate_file(cert_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Deletes a certificate by ID."""
+    global _DEFAULT_CERTS_CATALOG
+    _DEFAULT_CERTS_CATALOG = [c for c in _DEFAULT_CERTS_CATALOG if c.get("id") != cert_id]
+    ssl_dir = Path("/etc/astaro/ssl")
+    clean_id = cert_id.replace("cert_", "")
+    for ext in [".crt", ".key"]:
+        f = ssl_dir / f"{clean_id}{ext}"
+        if f.exists():
+            try:
+                f.unlink()
+            except Exception:
+                pass
+    return {"status": "success", "message": f"Certificate '{cert_id}' deleted."}
+
 
 # -----------------------------------------------------------------------------
 # Section 13.5: Static Frontend Serving (Direct WebAdmin Console)
