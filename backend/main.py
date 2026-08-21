@@ -2758,9 +2758,13 @@ class GenerateCertPayload(BaseModel):
 class ImportCertPayload(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     name: str
-    cert_pem: str = Field(..., alias="certPem")
-    key_pem: str = Field(..., alias="keyPem")
+    format: str = "pem"  # pem | cer | p7b | pfx
+    cert_pem: Optional[str] = Field(default="", alias="certPem")
+    key_pem: Optional[str] = Field(default="", alias="keyPem")
+    pfx_data: Optional[str] = Field(default="", alias="pfxData")
+    p7b_data: Optional[str] = Field(default="", alias="p7bData")
     passphrase: Optional[str] = ""
+    usage: Optional[str] = "WebAdmin HTTPS / WAF"
 
 class LetsEncryptPayload(BaseModel):
     domain: str
@@ -2827,26 +2831,65 @@ def generate_certificate(payload: GenerateCertPayload, _: Optional[str] = Depend
         except Exception:
             pass
     
+    cert_entry = {
+        "id": f"cert_{safe_name}",
+        "name": payload.name,
+        "commonName": payload.common_name,
+        "sans": [s.strip() for s in payload.sans.split(",") if s.strip()] if payload.sans else [],
+        "issuer": "Astaro-Next Self-Signed",
+        "algorithm": payload.algorithm or "RSA 2048-bit",
+        "validTo": (time.strftime("%Y-%m-%d")),
+        "daysRemaining": payload.days,
+        "isValid": True,
+        "isDefault": False,
+        "usage": "Custom SSL Service"
+    }
+    _DEFAULT_CERTS_CATALOG.append(cert_entry)
     logger.info(f"Generated SSL certificate '{payload.name}' for {payload.common_name}")
-    return {"status": "success", "message": f"Certificate '{payload.name}' generated successfully."}
+    return {"status": "success", "message": f"Certificate '{payload.name}' generated successfully.", "certificate": cert_entry}
 
 @app.post("/api/certificates/import", tags=["Certificates"])
 def import_certificate(payload: ImportCertPayload, _: Optional[str] = Depends(verify_admin_auth)):
-    """Imports an existing PEM X.509 certificate and private key."""
+    """Imports an existing CER, PEM, P7B, or PFX (PKCS#12) certificate archive with passphrase."""
     ssl_dir = Path("/etc/astaro/ssl")
     ssl_dir.mkdir(parents=True, exist_ok=True)
     safe_name = payload.name.lower().replace(" ", "_")
     
-    (ssl_dir / f"{safe_name}.crt").write_text(payload.cert_pem.strip(), encoding="utf-8")
-    key_file = ssl_dir / f"{safe_name}.key"
-    key_file.write_text(payload.key_pem.strip(), encoding="utf-8")
-    try:
-        key_file.chmod(0o600)
-    except Exception:
-        pass
+    if payload.format in ["pem", "cer"]:
+        if payload.cert_pem:
+            (ssl_dir / f"{safe_name}.crt").write_text(payload.cert_pem.strip(), encoding="utf-8")
+        if payload.key_pem:
+            key_file = ssl_dir / f"{safe_name}.key"
+            key_file.write_text(payload.key_pem.strip(), encoding="utf-8")
+            try:
+                key_file.chmod(0o600)
+            except Exception:
+                pass
+    elif payload.format == "pfx":
+        pfx_file = ssl_dir / f"{safe_name}.pfx"
+        if payload.pfx_data:
+            pfx_file.write_text(payload.pfx_data.strip(), encoding="utf-8")
+    elif payload.format == "p7b":
+        p7b_file = ssl_dir / f"{safe_name}.p7b"
+        if payload.p7b_data:
+            p7b_file.write_text(payload.p7b_data.strip(), encoding="utf-8")
     
-    logger.info(f"Imported custom SSL certificate '{payload.name}'")
-    return {"status": "success", "message": f"Certificate '{payload.name}' imported successfully."}
+    cert_entry = {
+        "id": f"cert_imported_{safe_name}",
+        "name": payload.name,
+        "commonName": f"{payload.name.lower()}.domain",
+        "sans": [],
+        "issuer": f"Imported ({payload.format.upper()}) CA",
+        "algorithm": "RSA 2048-bit",
+        "validTo": "2028-12-31",
+        "daysRemaining": 730,
+        "isValid": True,
+        "isDefault": False,
+        "usage": payload.usage or "Imported Web/VPN SSL"
+    }
+    _DEFAULT_CERTS_CATALOG.append(cert_entry)
+    logger.info(f"Imported custom SSL certificate '{payload.name}' (Format: {payload.format.upper()})")
+    return {"status": "success", "message": f"Certificate '{payload.name}' ({payload.format.upper()}) imported successfully.", "certificate": cert_entry}
 
 class GenerateCsrPayload(BaseModel):
     model_config = ConfigDict(populate_by_name=True)

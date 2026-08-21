@@ -11,17 +11,17 @@
           </span>
         </div>
         <p class="text-xs text-slate-500 mt-1 pl-4">
-          Manage SSL/TLS Server Certificates, generate Certificate Signing Requests (CSRs), manage Certificate Authorities, and automated Let's Encrypt renewals.
+          Unified certificate management: provision self-signed certificates, generate CSRs, import CER / PEM / P7B / PFX archives, and automate Let's Encrypt renewals.
         </p>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="flex items-center gap-2 flex-wrap">
+      <!-- Action Buttons: Clean Consolidated Header -->
+      <div class="flex items-center gap-2.5 flex-wrap">
         <button
           type="button"
           @click="fetchCertificates(true)"
           :disabled="isLoading"
-          class="px-3 py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer active:bg-slate-100 disabled:opacity-50"
+          class="px-3.5 py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer active:bg-slate-100 disabled:opacity-50"
           title="Refresh Certificate Database"
         >
           <svg :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#0072ce]' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,43 +30,11 @@
           <span>Refresh</span>
         </button>
 
+        <!-- Primary Consolidated "+ New Certificate..." Button -->
         <button
           type="button"
-          @click="openModal('csr')"
-          class="px-3.5 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
-        >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <span>+ Generate CSR...</span>
-        </button>
-
-        <button
-          type="button"
-          @click="openModal('import')"
-          class="px-3 py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer active:bg-slate-100"
-        >
-          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-          </svg>
-          <span>Import (.pem)</span>
-        </button>
-
-        <button
-          type="button"
-          @click="openModal('letsencrypt')"
-          class="px-3 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
-        >
-          <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <span>Let's Encrypt</span>
-        </button>
-
-        <button
-          type="button"
-          @click="openModal('create')"
-          class="px-4 py-2 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+          @click="openNewCertModal('self_signed')"
+          class="px-4 py-2 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-2 transition-all cursor-pointer"
         >
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -145,7 +113,7 @@
             : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
         ]"
       >
-        <span>Let's Encrypt / ACME Auto-Renewal</span>
+        <span>Let's Encrypt / ACME Engine</span>
       </button>
     </div>
 
@@ -175,7 +143,7 @@
     <!-- TAB 1: HOST & SERVER CERTIFICATES TABLE -->
     <div v-if="activeTab === 'server_certs'" class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
       <div v-if="filteredCerts.length === 0" class="p-12 text-center text-slate-400 text-xs">
-        No server certificates found matching your search.
+        No server certificates found matching your search. Click "+ New Certificate..." to add or import.
       </div>
       <table v-else class="w-full text-left text-xs border-collapse">
         <thead class="bg-[#f4f6f9] text-slate-700 font-bold border-b border-slate-200">
@@ -264,7 +232,7 @@
     <!-- TAB 2: CERTIFICATE SIGNING REQUESTS (CSR) -->
     <div v-if="activeTab === 'csrs'" class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
       <div v-if="filteredCsrs.length === 0" class="p-12 text-center text-slate-400 text-xs">
-        No Certificate Signing Requests (CSR) found. Click "+ Generate CSR..." to create a PKCS#10 request for an external Certificate Authority.
+        No Certificate Signing Requests (CSR) found. Click "+ New Certificate..." -> "Generate CSR" to create a PKCS#10 request.
       </div>
       <table v-else class="w-full text-left text-xs border-collapse">
         <thead class="bg-[#f4f6f9] text-slate-700 font-bold border-b border-slate-200">
@@ -427,7 +395,7 @@
           </div>
           <button
             type="button"
-            @click="openModal('letsencrypt')"
+            @click="openNewCertModal('letsencrypt')"
             class="px-4 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
           >
             + Request ACME Certificate
@@ -454,7 +422,299 @@
       </div>
     </div>
 
-    <!-- MODAL 1: VIEW CERTIFICATE DETAILS -->
+    <!-- CONSOLIDATED MODAL: + NEW CERTIFICATE (Includes Self-Signed, CSR, Import CER/PEM/P7B/PFX, Let's Encrypt) -->
+    <transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div
+        v-if="isNewCertModalOpen"
+        class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+        @keydown.esc="isNewCertModalOpen = false"
+      >
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+          <!-- Modal Header -->
+          <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-[#ee7f00] flex items-center justify-center text-white font-bold text-xs shadow-md">
+                TLS
+              </div>
+              <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-white">Add New Certificate / CSR</h3>
+                <p class="text-[10px] text-slate-400">Self-Signed, CSR Generation, File Import (CER/PEM/P7B/PFX), or Let's Encrypt</p>
+              </div>
+            </div>
+            <button @click="isNewCertModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer text-base leading-none">&times;</button>
+          </div>
+
+          <!-- Method Selection Tabs inside Modal -->
+          <div class="flex border-b border-slate-200 bg-[#f4f6f9] p-1.5 text-xs font-bold">
+            <button
+              type="button"
+              @click="creationMethod = 'self_signed'"
+              :class="[
+                'flex-1 py-2 text-center rounded-lg transition-all cursor-pointer',
+                creationMethod === 'self_signed' ? 'bg-white text-[#0072ce] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              ]"
+            >
+              Self-Signed
+            </button>
+            <button
+              type="button"
+              @click="creationMethod = 'csr'"
+              :class="[
+                'flex-1 py-2 text-center rounded-lg transition-all cursor-pointer',
+                creationMethod === 'csr' ? 'bg-white text-amber-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              ]"
+            >
+              Generate CSR
+            </button>
+            <button
+              type="button"
+              @click="creationMethod = 'import'"
+              :class="[
+                'flex-1 py-2 text-center rounded-lg transition-all cursor-pointer',
+                creationMethod === 'import' ? 'bg-white text-[#0072ce] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              ]"
+            >
+              Import File
+            </button>
+            <button
+              type="button"
+              @click="creationMethod = 'letsencrypt'"
+              :class="[
+                'flex-1 py-2 text-center rounded-lg transition-all cursor-pointer',
+                creationMethod === 'letsencrypt' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              ]"
+            >
+              Let's Encrypt
+            </button>
+          </div>
+
+          <!-- Method 1: Generate Self-Signed Certificate -->
+          <form v-if="creationMethod === 'self_signed'" @submit.prevent="handleGenerateCert" class="p-5 space-y-3.5 text-xs overflow-y-auto flex-1">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Certificate Friendly Name *</label>
+              <input type="text" required v-model="newCertForm.name" placeholder="e.g. Internal-WebAdmin-SSL" class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Common Name (CN) / FQDN *</label>
+                <input type="text" required v-model="newCertForm.commonName" placeholder="gateway.internal.local" class="w-full p-2 border border-slate-300 rounded font-mono" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Algorithm &amp; Key Size</label>
+                <select v-model="newCertForm.algorithm" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
+                  <option value="RSA 2048-bit">RSA 2048-bit (Standard)</option>
+                  <option value="RSA 4096-bit">RSA 4096-bit (High Security)</option>
+                  <option value="ECDSA P-256">ECDSA P-256 (Fast/Modern)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Subject Alternative Names (SANs)</label>
+              <input type="text" v-model="newCertForm.sans" placeholder="192.168.1.1, firewall.local, vpn.local" class="w-full p-2 border border-slate-300 rounded font-mono" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Validity (Days)</label>
+                <input type="number" v-model.number="newCertForm.days" class="w-full p-2 border border-slate-300 rounded font-mono" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Assigned Service</label>
+                <select v-model="newCertForm.usage" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
+                  <option value="WebAdmin HTTPS">WebAdmin HTTPS</option>
+                  <option value="WAF / Reverse Proxy">WAF / Reverse Proxy</option>
+                  <option value="SSL VPN Server">SSL VPN Server</option>
+                  <option value="Custom SSL Service">Custom SSL Service</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 flex justify-between">
+              <button type="button" @click="isNewCertModalOpen = false" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
+              <button type="submit" :disabled="isSubmitting" class="px-4 py-1.5 bg-[#0072ce] hover:bg-blue-700 text-white font-bold rounded shadow-xs cursor-pointer disabled:opacity-50">
+                {{ isSubmitting ? 'Generating...' : 'Generate Self-Signed Certificate' }}
+              </button>
+            </div>
+          </form>
+
+          <!-- Method 2: Generate CSR -->
+          <form v-else-if="creationMethod === 'csr'" @submit.prevent="handleGenerateCsr" class="p-5 space-y-3 text-xs overflow-y-auto flex-1">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">CSR Friendly Name *</label>
+              <input type="text" required v-model="csrForm.name" placeholder="e.g. Public-Gateway-2026-CSR" class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Common Name (CN) / FQDN *</label>
+                <input type="text" required v-model="csrForm.commonName" placeholder="vpn.mycompany.com" class="w-full p-2 border border-slate-300 rounded font-mono" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Key Algorithm</label>
+                <select v-model="csrForm.algorithm" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
+                  <option value="RSA 2048-bit">RSA 2048-bit (Standard)</option>
+                  <option value="RSA 4096-bit">RSA 4096-bit (High Security)</option>
+                  <option value="ECDSA P-256">ECDSA P-256 (ECC)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Organization (O)</label>
+                <input type="text" v-model="csrForm.organization" placeholder="e.g. Enterprise Global Corp" class="w-full p-2 border border-slate-300 rounded" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Organizational Unit (OU)</label>
+                <input type="text" v-model="csrForm.organizationalUnit" placeholder="e.g. IT Security" class="w-full p-2 border border-slate-300 rounded" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Country (2-Letter)</label>
+                <input type="text" maxlength="2" v-model="csrForm.country" placeholder="US" class="w-full p-2 border border-slate-300 rounded font-mono uppercase" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">State / Province</label>
+                <input type="text" v-model="csrForm.state" placeholder="California" class="w-full p-2 border border-slate-300 rounded" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">City / Locality</label>
+                <input type="text" v-model="csrForm.city" placeholder="San Francisco" class="w-full p-2 border border-slate-300 rounded" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Subject Alternative Names (SANs)</label>
+              <input type="text" v-model="csrForm.sans" placeholder="vpn.company.com, remote.company.com" class="w-full p-2 border border-slate-300 rounded font-mono" />
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 flex justify-between">
+              <button type="button" @click="isNewCertModalOpen = false" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
+              <button type="submit" :disabled="isSubmitting" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded shadow-xs cursor-pointer disabled:opacity-50">
+                {{ isSubmitting ? 'Generating...' : 'Generate & Save CSR' }}
+              </button>
+            </div>
+          </form>
+
+          <!-- Method 3: Import File (CER, PEM, P7B, PFX) -->
+          <form v-else-if="creationMethod === 'import'" @submit.prevent="handleImportCert" class="p-5 space-y-3.5 text-xs overflow-y-auto flex-1">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Certificate Friendly Name *</label>
+                <input type="text" required v-model="importForm.name" placeholder="e.g. Wildcard-Cert-2026" class="w-full p-2 border border-slate-300 rounded" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Certificate Format Type</label>
+                <select v-model="importForm.format" class="w-full p-2 border border-slate-300 rounded bg-white font-bold text-[#0072ce]">
+                  <option value="pem">PEM / CER (.pem, .crt, .cer - X.509 Text)</option>
+                  <option value="pfx">PKCS#12 / PFX (.pfx, .p12 - Encrypted Archive with Key)</option>
+                  <option value="p7b">PKCS#7 / P7B (.p7b, .p7c - Certificate Chain Bundle)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- PEM / CER Format Fields -->
+            <div v-if="importForm.format === 'pem' || importForm.format === 'cer'" class="space-y-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">X.509 Certificate Content (.cer / .crt / .pem) *</label>
+                <textarea required rows="4" v-model="importForm.certPem" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] focus:outline-none focus:border-[#0072ce]"></textarea>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Private Key (.key / .pem)</label>
+                <textarea rows="3" v-model="importForm.keyPem" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] focus:outline-none focus:border-[#0072ce]"></textarea>
+              </div>
+            </div>
+
+            <!-- PFX / PKCS#12 Format Fields -->
+            <div v-else-if="importForm.format === 'pfx'" class="space-y-3 p-3.5 bg-blue-50/50 rounded-xl border border-blue-200">
+              <div class="text-[11px] font-bold text-[#0072ce]">
+                PKCS#12 (PFX) Container contains both Certificate and Private Key.
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">PFX Base64 / File Content *</label>
+                <textarea required rows="4" v-model="importForm.pfxData" placeholder="Paste PFX Base64 encoded string or upload container file..." class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] bg-white"></textarea>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">PFX Container Passphrase / Password *</label>
+                <input type="password" required v-model="importForm.passphrase" placeholder="••••••••••••" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+              </div>
+            </div>
+
+            <!-- P7B / PKCS#7 Format Fields -->
+            <div v-else-if="importForm.format === 'p7b'" class="space-y-3 p-3.5 bg-amber-50/50 rounded-xl border border-amber-200">
+              <div class="text-[11px] font-bold text-amber-900">
+                PKCS#7 (P7B) Chain Bundle contains public certificates and intermediates.
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">P7B Certificate Chain Content (.p7b / .p7c) *</label>
+                <textarea required rows="4" v-model="importForm.p7bData" placeholder="-----BEGIN PKCS7-----&#10;...&#10;-----END PKCS7-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] bg-white"></textarea>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Matching Private Key (.key) *</label>
+                <textarea required rows="3" v-model="importForm.keyPem" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] bg-white"></textarea>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Assign Service</label>
+              <select v-model="importForm.usage" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
+                <option value="WebAdmin HTTPS">WebAdmin HTTPS</option>
+                <option value="WAF / Reverse Proxy">WAF / Reverse Proxy</option>
+                <option value="SSL VPN Server">SSL VPN Server</option>
+                <option value="Imported Web/VPN SSL">Imported Web/VPN SSL</option>
+              </select>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 flex justify-between">
+              <button type="button" @click="isNewCertModalOpen = false" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
+              <button type="submit" :disabled="isSubmitting" class="px-4 py-1.5 bg-[#0072ce] hover:bg-blue-700 text-white font-bold rounded shadow-xs cursor-pointer disabled:opacity-50">
+                {{ isSubmitting ? 'Importing...' : 'Import & Install Certificate' }}
+              </button>
+            </div>
+          </form>
+
+          <!-- Method 4: Let's Encrypt / ACME -->
+          <form v-else-if="creationMethod === 'letsencrypt'" @submit.prevent="handleRequestLetsEncrypt" class="p-5 space-y-3.5 text-xs overflow-y-auto flex-1">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Public Domain Name *</label>
+              <input type="text" required v-model="leForm.domain" placeholder="e.g. gateway.mycompany.com" class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Admin Email (Expiration Notices) *</label>
+              <input type="email" required v-model="leForm.email" placeholder="admin@mycompany.com" class="w-full p-2 border border-slate-300 rounded" />
+            </div>
+
+            <div class="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-900 text-[11px] space-y-1">
+              <div class="font-bold flex items-center gap-1.5">
+                <span>ACME HTTP-01 Validation</span>
+              </div>
+              <p>Ensure port 80 (HTTP) on WAN interface is reachable from Let's Encrypt ACME verification servers.</p>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 flex justify-between">
+              <button type="button" @click="isNewCertModalOpen = false" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
+              <button type="submit" :disabled="isSubmitting" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-xs cursor-pointer disabled:opacity-50">
+                {{ isSubmitting ? 'Requesting...' : 'Request &amp; Install ACME Certificate' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- MODAL: VIEW CERTIFICATE DETAILS -->
     <transition
       enter-active-class="transition duration-150 ease-out"
       enter-from-class="opacity-0 scale-95"
@@ -556,7 +816,7 @@
       </div>
     </transition>
 
-    <!-- MODAL 2: VIEW CSR DETAILS -->
+    <!-- MODAL: VIEW CSR DETAILS -->
     <transition
       enter-active-class="transition duration-150 ease-out"
       enter-from-class="opacity-0 scale-95"
@@ -656,86 +916,7 @@
       </div>
     </transition>
 
-    <!-- MODAL 3: GENERATE CSR -->
-    <transition
-      enter-active-class="transition duration-150 ease-out"
-      enter-from-class="opacity-0 scale-95"
-      enter-to-class="opacity-100 scale-100"
-      leave-active-class="transition duration-100 ease-in"
-      leave-from-class="opacity-100 scale-100"
-      leave-to-class="opacity-0 scale-95"
-    >
-      <div v-if="activeModal === 'csr'" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
-          <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-white">Generate Certificate Signing Request (CSR)</h3>
-            <button @click="activeModal = null" class="text-slate-400 hover:text-white font-bold cursor-pointer">&times;</button>
-          </div>
-
-          <form @submit.prevent="handleGenerateCsr" class="p-5 space-y-3 text-xs overflow-y-auto flex-1">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">CSR Friendly Name *</label>
-              <input type="text" required v-model="csrForm.name" placeholder="e.g. Public-Gateway-2026-CSR" class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none" />
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Common Name (CN) / FQDN *</label>
-                <input type="text" required v-model="csrForm.commonName" placeholder="vpn.mycompany.com" class="w-full p-2 border border-slate-300 rounded font-mono" />
-              </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Key Algorithm</label>
-                <select v-model="csrForm.algorithm" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
-                  <option value="RSA 2048-bit">RSA 2048-bit (Standard)</option>
-                  <option value="RSA 4096-bit">RSA 4096-bit (High Security)</option>
-                  <option value="ECDSA P-256">ECDSA P-256 (ECC)</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Organization (O)</label>
-                <input type="text" v-model="csrForm.organization" placeholder="e.g. Enterprise Global Corp" class="w-full p-2 border border-slate-300 rounded" />
-              </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Organizational Unit (OU)</label>
-                <input type="text" v-model="csrForm.organizationalUnit" placeholder="e.g. IT Security" class="w-full p-2 border border-slate-300 rounded" />
-              </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-3">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Country (2-Letter)</label>
-                <input type="text" maxlength="2" v-model="csrForm.country" placeholder="US" class="w-full p-2 border border-slate-300 rounded font-mono uppercase" />
-              </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">State / Province</label>
-                <input type="text" v-model="csrForm.state" placeholder="California" class="w-full p-2 border border-slate-300 rounded" />
-              </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">City / Locality</label>
-                <input type="text" v-model="csrForm.city" placeholder="San Francisco" class="w-full p-2 border border-slate-300 rounded" />
-              </div>
-            </div>
-
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Subject Alternative Names (SANs)</label>
-              <input type="text" v-model="csrForm.sans" placeholder="vpn.company.com, remote.company.com" class="w-full p-2 border border-slate-300 rounded font-mono" />
-            </div>
-
-            <div class="pt-3 border-t border-slate-200 flex justify-between">
-              <button type="button" @click="activeModal = null" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
-              <button type="submit" :disabled="isSubmitting" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded shadow-xs cursor-pointer disabled:opacity-50">
-                {{ isSubmitting ? 'Generating...' : 'Generate & Save CSR' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </transition>
-
-    <!-- MODAL 4: COMPLETE CSR / UPLOAD SIGNED CERTIFICATE -->
+    <!-- MODAL: COMPLETE CSR / UPLOAD SIGNED CERTIFICATE -->
     <transition
       enter-active-class="transition duration-150 ease-out"
       enter-from-class="opacity-0 scale-95"
@@ -780,163 +961,6 @@
         </div>
       </div>
     </transition>
-
-    <!-- MODAL 5: CREATE SELF-SIGNED CERTIFICATE -->
-    <transition
-      enter-active-class="transition duration-150 ease-out"
-      enter-from-class="opacity-0 scale-95"
-      enter-to-class="opacity-100 scale-100"
-      leave-active-class="transition duration-100 ease-in"
-      leave-from-class="opacity-100 scale-100"
-      leave-to-class="opacity-0 scale-95"
-    >
-      <div v-if="activeModal === 'create'" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden flex flex-col">
-          <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-white">Generate Self-Signed X.509 Certificate</h3>
-            <button @click="activeModal = null" class="text-slate-400 hover:text-white font-bold cursor-pointer">&times;</button>
-          </div>
-
-          <form @submit.prevent="handleGenerateCert" class="p-5 space-y-3.5 text-xs">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Certificate Friendly Name *</label>
-              <input type="text" required v-model="newCertForm.name" placeholder="e.g. Internal-WebAdmin-SSL" class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none" />
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Common Name (CN) / FQDN *</label>
-                <input type="text" required v-model="newCertForm.commonName" placeholder="gateway.internal.local" class="w-full p-2 border border-slate-300 rounded font-mono" />
-              </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Algorithm &amp; Key Size</label>
-                <select v-model="newCertForm.algorithm" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
-                  <option value="RSA 2048-bit">RSA 2048-bit (Standard)</option>
-                  <option value="RSA 4096-bit">RSA 4096-bit (High Security)</option>
-                  <option value="ECDSA P-256">ECDSA P-256 (Fast/Modern)</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Subject Alternative Names (SANs)</label>
-              <input type="text" v-model="newCertForm.sans" placeholder="192.168.1.1, firewall.local, vpn.local" class="w-full p-2 border border-slate-300 rounded font-mono" />
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Validity (Days)</label>
-                <input type="number" v-model.number="newCertForm.days" class="w-full p-2 border border-slate-300 rounded font-mono" />
-              </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Assigned Service</label>
-                <select v-model="newCertForm.usage" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
-                  <option value="WebAdmin HTTPS">WebAdmin HTTPS</option>
-                  <option value="WAF / Reverse Proxy">WAF / Reverse Proxy</option>
-                  <option value="SSL VPN Server">SSL VPN Server</option>
-                  <option value="Custom SSL Service">Custom SSL Service</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="pt-3 border-t border-slate-200 flex justify-between">
-              <button type="button" @click="activeModal = null" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
-              <button type="submit" :disabled="isSubmitting" class="px-4 py-1.5 bg-[#0072ce] text-white font-bold rounded shadow-xs cursor-pointer disabled:opacity-50">
-                {{ isSubmitting ? 'Generating...' : 'Generate Certificate' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </transition>
-
-    <!-- MODAL 6: IMPORT CERTIFICATE (.PEM / .KEY) -->
-    <transition
-      enter-active-class="transition duration-150 ease-out"
-      enter-from-class="opacity-0 scale-95"
-      enter-to-class="opacity-100 scale-100"
-      leave-active-class="transition duration-100 ease-in"
-      leave-from-class="opacity-100 scale-100"
-      leave-to-class="opacity-0 scale-95"
-    >
-      <div v-if="activeModal === 'import'" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden flex flex-col">
-          <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-white">Import X.509 Certificate &amp; Key</h3>
-            <button @click="activeModal = null" class="text-slate-400 hover:text-white font-bold cursor-pointer">&times;</button>
-          </div>
-
-          <form @submit.prevent="handleImportCert" class="p-5 space-y-3.5 text-xs">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Certificate Friendly Name *</label>
-              <input type="text" required v-model="importForm.name" placeholder="e.g. Wildcard-Company-2026" class="w-full p-2 border border-slate-300 rounded" />
-            </div>
-
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Certificate (.crt / .pem) *</label>
-              <textarea required rows="4" v-model="importForm.certPem" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[11px]"></textarea>
-            </div>
-
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Private Key (.key) *</label>
-              <textarea required rows="3" v-model="importForm.keyPem" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[11px]"></textarea>
-            </div>
-
-            <div class="pt-3 border-t border-slate-200 flex justify-between">
-              <button type="button" @click="activeModal = null" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
-              <button type="submit" :disabled="isSubmitting" class="px-4 py-1.5 bg-[#0072ce] text-white font-bold rounded shadow-xs cursor-pointer disabled:opacity-50">
-                {{ isSubmitting ? 'Importing...' : 'Import Certificate' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </transition>
-
-    <!-- MODAL 7: REQUEST LET'S ENCRYPT -->
-    <transition
-      enter-active-class="transition duration-150 ease-out"
-      enter-from-class="opacity-0 scale-95"
-      enter-to-class="opacity-100 scale-100"
-      leave-active-class="transition duration-100 ease-in"
-      leave-from-class="opacity-100 scale-100"
-      leave-to-class="opacity-0 scale-95"
-    >
-      <div v-if="activeModal === 'letsencrypt'" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden flex flex-col">
-          <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-white">Request Automated Let's Encrypt Certificate</h3>
-            <button @click="activeModal = null" class="text-slate-400 hover:text-white font-bold cursor-pointer">&times;</button>
-          </div>
-
-          <form @submit.prevent="handleRequestLetsEncrypt" class="p-5 space-y-3.5 text-xs">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Public Domain Name *</label>
-              <input type="text" required v-model="leForm.domain" placeholder="e.g. gateway.mycompany.com" class="w-full p-2 border border-slate-300 rounded font-mono" />
-            </div>
-
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Admin Email (Expiration Notices) *</label>
-              <input type="email" required v-model="leForm.email" placeholder="admin@mycompany.com" class="w-full p-2 border border-slate-300 rounded" />
-            </div>
-
-            <div class="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-900 text-[11px] space-y-1">
-              <div class="font-bold flex items-center gap-1.5">
-                <span>ACME HTTP-01 Validation</span>
-              </div>
-              <p>Ensure port 80 (HTTP) on WAN interface is open and pointing to this domain so the Let's Encrypt ACME server can verify domain ownership.</p>
-            </div>
-
-            <div class="pt-3 border-t border-slate-200 flex justify-between">
-              <button type="button" @click="activeModal = null" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
-              <button type="submit" :disabled="isSubmitting" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-xs cursor-pointer disabled:opacity-50">
-                {{ isSubmitting ? 'Requesting...' : 'Request &amp; Install' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </transition>
   </div>
 </template>
 
@@ -951,7 +975,9 @@ const props = defineProps({
 })
 
 const activeTab = ref('server_certs') // 'server_certs' | 'csrs' | 'authorities' | 'letsencrypt'
-const activeModal = ref(null)
+const isNewCertModalOpen = ref(false)
+const creationMethod = ref('self_signed') // 'self_signed' | 'csr' | 'import' | 'letsencrypt'
+
 const viewingCert = ref(null)
 const viewingCsr = ref(null)
 const completingCsr = ref(null)
@@ -1059,8 +1085,13 @@ const csrForm = reactive({
 
 const importForm = reactive({
   name: '',
+  format: 'pem', // 'pem' | 'cer' | 'pfx' | 'p7b'
   certPem: '',
-  keyPem: ''
+  keyPem: '',
+  pfxData: '',
+  p7bData: '',
+  passphrase: '',
+  usage: 'WebAdmin HTTPS / WAF'
 })
 
 const leForm = reactive({
@@ -1110,8 +1141,9 @@ const showToast = (msg, type = 'success') => {
   }, 4000)
 }
 
-const openModal = (mode) => {
-  activeModal.value = mode
+const openNewCertModal = (method = 'self_signed') => {
+  creationMethod.value = method
+  isNewCertModalOpen.value = true
 }
 
 const viewCertDetails = (cert) => {
@@ -1223,27 +1255,10 @@ const handleGenerateCsr = async () => {
       if (res && res.data && res.data.csr) {
         csrsList.value.unshift(res.data.csr)
       }
-    } else {
-      csrsList.value.unshift({
-        id: 'csr_' + Date.now(),
-        name: csrForm.name,
-        commonName: csrForm.commonName,
-        organization: csrForm.organization,
-        organizationalUnit: csrForm.organizationalUnit,
-        country: csrForm.country,
-        state: csrForm.state,
-        city: csrForm.city,
-        email: csrForm.email,
-        algorithm: csrForm.algorithm,
-        sans: csrForm.sans ? csrForm.sans.split(',').map(s => s.trim()) : [],
-        status: 'Pending CA Signature',
-        createdAt: new Date().toISOString().split('T')[0],
-        csrPem: `-----BEGIN CERTIFICATE REQUEST-----\nMIICvDCCAaQCAQAwdzELMAkGA1UEBhMC${csrForm.country}\nCN=${csrForm.commonName}\n-----END CERTIFICATE REQUEST-----`
-      })
     }
     showToast(`CSR '${csrForm.name}' generated successfully.`)
     activeTab.value = 'csrs'
-    activeModal.value = null
+    isNewCertModalOpen.value = false
   } catch (e) {
     showToast('Failed to generate CSR: ' + (e.response?.data?.detail || e.message), 'error')
   } finally {
@@ -1291,28 +1306,19 @@ const handleGenerateCert = async () => {
   try {
     const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
     if (axiosLib) {
-      await axiosLib.post('/api/certificates/generate', {
+      const res = await axiosLib.post('/api/certificates/generate', {
         name: newCertForm.name,
         common_name: newCertForm.commonName,
         days: newCertForm.days,
         sans: newCertForm.sans ? newCertForm.sans.split(',').map(s => s.trim()) : []
       })
+      if (res && res.data && res.data.certificate) {
+        serverCertificates.value.push(res.data.certificate)
+      }
     }
-    serverCertificates.value.push({
-      id: 'cert_' + Date.now(),
-      name: newCertForm.name,
-      commonName: newCertForm.commonName,
-      sans: newCertForm.sans ? newCertForm.sans.split(',').map(s => s.trim()) : [],
-      issuer: 'Astaro-Next Self-Signed',
-      algorithm: newCertForm.algorithm,
-      validTo: new Date(Date.now() + newCertForm.days * 86400000).toISOString().split('T')[0],
-      daysRemaining: newCertForm.days,
-      isValid: true,
-      isDefault: false,
-      usage: newCertForm.usage
-    })
     showToast(`Certificate '${newCertForm.name}' generated successfully.`)
-    activeModal.value = null
+    activeTab.value = 'server_certs'
+    isNewCertModalOpen.value = false
   } catch (e) {
     showToast('Failed to generate certificate: ' + (e.response?.data?.detail || e.message), 'error')
   } finally {
@@ -1325,27 +1331,23 @@ const handleImportCert = async () => {
   try {
     const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
     if (axiosLib) {
-      await axiosLib.post('/api/certificates/import', {
+      const res = await axiosLib.post('/api/certificates/import', {
         name: importForm.name,
+        format: importForm.format,
         cert_pem: importForm.certPem,
-        key_pem: importForm.keyPem
+        key_pem: importForm.keyPem,
+        pfx_data: importForm.pfxData,
+        p7b_data: importForm.p7bData,
+        passphrase: importForm.passphrase,
+        usage: importForm.usage
       })
+      if (res && res.data && res.data.certificate) {
+        serverCertificates.value.push(res.data.certificate)
+      }
     }
-    serverCertificates.value.push({
-      id: 'cert_imported_' + Date.now(),
-      name: importForm.name,
-      commonName: importForm.name + '.domain',
-      sans: [],
-      issuer: 'Imported Authority',
-      algorithm: 'RSA 2048-bit',
-      validTo: '2028-12-31',
-      daysRemaining: 730,
-      isValid: true,
-      isDefault: false,
-      usage: 'Imported Web/VPN SSL'
-    })
-    showToast(`Certificate '${importForm.name}' imported successfully.`)
-    activeModal.value = null
+    showToast(`Certificate '${importForm.name}' (${importForm.format.toUpperCase()}) imported successfully.`)
+    activeTab.value = 'server_certs'
+    isNewCertModalOpen.value = false
   } catch (e) {
     showToast('Failed to import certificate: ' + (e.response?.data?.detail || e.message), 'error')
   } finally {
@@ -1377,7 +1379,8 @@ const handleRequestLetsEncrypt = async () => {
       usage: 'Public WebAdmin / WAF'
     })
     showToast(`Let's Encrypt certificate for '${leForm.domain}' issued successfully.`)
-    activeModal.value = null
+    activeTab.value = 'server_certs'
+    isNewCertModalOpen.value = false
   } catch (e) {
     showToast('ACME Challenge failed: ' + (e.response?.data?.detail || e.message), 'error')
   } finally {
