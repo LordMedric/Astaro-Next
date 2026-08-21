@@ -1902,17 +1902,47 @@ def create_vpn_peer(client: VpnClientConfig, _: Optional[str] = Depends(verify_a
 class VpnTunnelConfig(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     tunnel_name: str
-    tunnel_type: str = "wireguard"  # wireguard | openvpn | ipsec
-    remote_endpoint: str
-    local_virtual_ip: str
+    tunnel_type: str = "ssl_client"  # ssl_client | ssl_server | ipsec | amazon_vpc | wireguard
+    remote_endpoint: str = ""
+    remote_port: Optional[int] = 1194
+    protocol: Optional[str] = "UDP"
+    auth_mode: Optional[str] = "password"  # password | certificate | psk
+    username: Optional[str] = ""
+    password: Optional[str] = ""
+    ca_cert: Optional[str] = ""
+    client_cert: Optional[str] = ""
+    preshared_key: Optional[str] = ""
+    local_virtual_ip: Optional[str] = "10.250.0.2/30"
+    local_networks: List[str] = Field(default_factory=lambda: ["192.168.1.0/24"])
     remote_subnets: List[str] = Field(default_factory=lambda: ["10.200.0.0/16"])
     remote_public_key: Optional[str] = ""
-    preshared_key: Optional[str] = ""
+    encryption_algorithm: Optional[str] = "AES-256-GCM"
     route_mode: str = "split_tunnel"  # split_tunnel | full_gateway | policy_based
+    auto_firewall_rule: bool = True
+    aws_region: Optional[str] = "us-east-1"
+    aws_vpc_id: Optional[str] = ""
+    aws_bgp_asn: Optional[str] = "64512"
+    comment: Optional[str] = ""
     enabled: bool = True
 
 _DEFAULT_TUNNELS_CATALOG = [
     {
+        "id": "tun-branch-ssl-client",
+        "tunnel_name": "Branch Office SSL Client",
+        "tunnel_type": "ssl_client",
+        "remote_endpoint": "vpn.remotebranch.com:1194",
+        "local_virtual_ip": "10.242.2.6/24",
+        "remote_subnets": ["10.50.0.0/16"],
+        "remote_public_key": "TLS 1.3 (AES-256-GCM)",
+        "route_mode": "split_tunnel",
+        "status": "connected",
+        "latency_ms": 19,
+        "transfer_rx": "248.5 MB",
+        "transfer_tx": "112.3 MB",
+        "enabled": True
+    },
+    {
+        "id": "tun-hq-wireguard",
         "tunnel_name": "HQ-Datacenter-Tunnel",
         "tunnel_type": "wireguard",
         "remote_endpoint": "vpn.corp.company.com:51820",
@@ -1927,12 +1957,13 @@ _DEFAULT_TUNNELS_CATALOG = [
         "enabled": True
     },
     {
+        "id": "tun-aws-vpc-link",
         "tunnel_name": "Cloud-AWS-VPC-Link",
-        "tunnel_type": "ipsec",
+        "tunnel_type": "amazon_vpc",
         "remote_endpoint": "52.95.120.45:4500",
         "local_virtual_ip": "169.254.10.1/30",
         "remote_subnets": ["172.31.0.0/16"],
-        "remote_public_key": "N/A (IKEv2 Pre-shared)",
+        "remote_public_key": "AWS VGW (IKEv2 Pre-shared)",
         "route_mode": "policy_based",
         "status": "connected",
         "latency_ms": 28,
@@ -1947,31 +1978,34 @@ def get_vpn_tunnels(_: Optional[str] = Depends(verify_admin_auth)):
     """Returns inventory of active outbound site-to-site & client VPN tunnels with SQLite persistence."""
     if HAS_DB:
         tuns = db_get_vpn_tunnels()
-        return {"tunnels": tuns, "total": len(tuns)}
+        if tuns:
+            return {"tunnels": tuns, "total": len(tuns)}
     return {"tunnels": _DEFAULT_TUNNELS_CATALOG, "total": len(_DEFAULT_TUNNELS_CATALOG)}
 
 @app.post("/api/vpn/tunnels/save", tags=["VPN Engine"])
 def save_vpn_tunnel(payload: VpnTunnelConfig, _: Optional[str] = Depends(verify_admin_auth)):
-    """Configures, persists to SQLite, and orchestrates an outbound client VPN tunnel with routing rules."""
-    logger.info(f"Configuring outbound VPN tunnel '{payload.tunnel_name}' to {payload.remote_endpoint} ({payload.tunnel_type})")
+    """Configures, persists to SQLite, and orchestrates an outbound client / site-to-site VPN tunnel with routing rules."""
+    logger.info(f"Configuring VPN tunnel '{payload.tunnel_name}' to {payload.remote_endpoint} ({payload.tunnel_type})")
     tun_dict = payload.model_dump(by_alias=True)
     if HAS_DB:
+        tid = f"tun-{payload.tunnel_name.lower().replace(' ', '-')}"
         db_save_vpn_tunnel({
-            "id": f"tun-{payload.tunnel_name.lower().replace(' ', '-')}",
+            "id": tid,
             "name": payload.tunnel_name,
             "type": payload.tunnel_type,
             "remote_gateway": payload.remote_endpoint,
-            "local_network": payload.local_virtual_ip,
+            "local_network": ", ".join(payload.local_networks) if payload.local_networks else payload.local_virtual_ip,
             "remote_network": ", ".join(payload.remote_subnets) if payload.remote_subnets else "10.0.0.0/24",
-            "auth_type": payload.route_mode,
+            "auth_type": payload.auth_mode or payload.route_mode,
             "status": "Connected" if payload.enabled else "Disabled",
             "uptime": "Just now",
             "tx_bytes": "0 B",
-            "rx_bytes": "0 B"
+            "rx_bytes": "0 B",
+            "auto_firewall_rule": payload.auto_firewall_rule
         })
     return {
         "status": "success",
-        "message": f"VPN Tunnel '{payload.tunnel_name}' configured and policy routes established.",
+        "message": f"VPN Tunnel '{payload.tunnel_name}' configured, firewall rules and policy routes established.",
         "tunnel": tun_dict
     }
 

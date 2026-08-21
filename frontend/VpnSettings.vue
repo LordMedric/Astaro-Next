@@ -1,816 +1,672 @@
 <template>
-  <div class="min-h-full bg-[#f4f6f9] text-slate-800 font-sans antialiased selection:bg-[#0072ce] selection:text-white relative pb-16">
-    <!-- Notification Toasts Floating Stack -->
-    <div class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-md w-full pointer-events-none" aria-live="polite">
-      <transition-group
-        enter-active-class="transition duration-300 ease-out transform"
-        enter-from-class="translate-y-3 opacity-0 scale-95"
-        enter-to-class="translate-y-0 opacity-100 scale-100"
-        leave-active-class="transition duration-200 ease-in transform"
-        leave-from-class="translate-y-0 opacity-100 scale-100"
-        leave-to-class="translate-y-3 opacity-0 scale-95"
-      >
-        <div
-          v-for="toast in toasts"
-          :key="toast.id"
-          :class="[
-            'pointer-events-auto p-4 rounded-xl shadow-2xl border flex items-start gap-3.5 text-xs backdrop-blur-md transition-all',
-            toast.type === 'success' ? 'bg-emerald-950/95 border-emerald-500/60 text-emerald-100 ring-1 ring-emerald-500/20' :
-            toast.type === 'error' ? 'bg-rose-950/95 border-rose-500/60 text-rose-100 ring-1 ring-rose-500/20' :
-            toast.type === 'warning' ? 'bg-amber-950/95 border-amber-500/60 text-amber-100 ring-1 ring-amber-500/20' :
-            'bg-slate-900/95 border-slate-700 text-slate-100 ring-1 ring-slate-700/50'
-          ]"
-          role="alert"
-        >
-          <div class="mt-0.5 flex-none">
-            <svg v-if="toast.type === 'success'" class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <svg v-else-if="toast.type === 'error'" class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <svg v-else-if="toast.type === 'warning'" class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <svg v-else class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <h4 class="font-bold uppercase tracking-wider text-[11px] font-mono">{{ toast.title }}</h4>
-            <p class="mt-0.5 opacity-90 leading-relaxed font-sans text-xs">{{ toast.message }}</p>
-          </div>
-          <button
-            type="button"
-            @click="dismissToast(toast.id)"
-            class="text-slate-400 hover:text-white transition-colors cursor-pointer p-0.5 rounded"
-            aria-label="Dismiss notification"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+  <div class="space-y-6">
+    <!-- Standardized Page Header -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <span class="w-1.5 h-6 bg-[#ee7f00] rounded-xs inline-block"></span>
+          <h1 class="text-xl font-bold text-slate-900 tracking-tight">Site-to-Site &amp; Remote Access VPN</h1>
+          <span class="text-[11px] bg-blue-50 text-[#0072ce] font-medium font-mono px-2 py-0.5 rounded border border-blue-200">
+            SSL / IPsec / AWS VPC / WireGuard
+          </span>
         </div>
-      </transition-group>
-    </div>
-
-    <!-- Top Management & Telemetry Header Banner -->
-    <div class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-      <!-- Title & Subtitle with Sophos Blue Accent -->
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-[#0072ce] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-        </div>
-        <div>
-          <div class="flex items-center gap-2.5 flex-wrap">
-            <h1 class="text-xl font-black text-slate-900 tracking-tight">Remote Access VPN</h1>
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              {{ activePeersCount }}/{{ peersList.length }} Peers Connected
-            </span>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#0072ce] border border-blue-100 uppercase">
-              UTM 9 VPN Engine
-            </span>
-          </div>
-          <p class="text-xs text-slate-500 mt-1">
-            Provision, manage, and monitor high-throughput encrypted endpoint tunnels, peer cryptographic keys, and virtual subnet routing.
-          </p>
-        </div>
+        <p class="text-xs text-slate-500 mt-1 pl-4">
+          Connect as an SSL client to external servers, establish IPsec &amp; Amazon VPC interconnects, route cross-premises subnets, and provision remote user tunnels.
+        </p>
       </div>
 
-      <!-- Quick Action Controls & Primary "Add Remote User" Button -->
-      <div class="flex items-center flex-wrap gap-2.5">
-        <!-- Search Filter Input -->
-        <div class="relative min-w-[200px]">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search clients or IPs..."
-            class="w-full bg-[#f4f6f9] text-slate-800 text-xs px-3 py-2 pl-8 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] placeholder:text-slate-400 transition-colors"
-          />
-          <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <button
-            v-if="searchQuery"
-            @click="searchQuery = ''"
-            class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
-          >
-            ✕
-          </button>
-        </div>
-
-        <!-- Status Filter Dropdown -->
-        <select
-          v-model="statusFilter"
-          class="bg-[#f4f6f9] text-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] font-medium"
-        >
-          <option value="ALL">All Statuses</option>
-          <option value="ACTIVE">Connected Only</option>
-          <option value="INACTIVE">Disconnected Only</option>
-        </select>
-
-        <!-- Refresh Button -->
+      <div class="flex items-center gap-2.5 flex-wrap">
         <button
           type="button"
-          @click="fetchPeers(true)"
+          @click="fetchData(true)"
           :disabled="isLoading"
-          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-[#f4f6f9] hover:text-slate-900 active:bg-slate-100 disabled:opacity-50 transition-all shadow-2xs cursor-pointer"
-          title="Reload peer metrics from VPN daemon"
+          class="px-3.5 py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer active:bg-slate-100"
+          title="Reload active tunnels from kernel daemon"
         >
-          <svg
-            :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#0072ce]' : '']"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg :class="['w-3.5 h-3.5 text-slate-500', isLoading ? 'animate-spin text-[#0072ce]' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          <span class="hidden sm:inline">Refresh</span>
+          <span>Refresh</span>
         </button>
 
-        <!-- Primary Blue Button: Add Remote User -->
         <button
+          v-if="activeTab === 'remote_users'"
           type="button"
           @click="openAddUserModal"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer"
-          title="Provision a new remote client tunnel profile"
+          class="px-4 py-2 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-2 transition-all cursor-pointer"
         >
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
           </svg>
-          <span>Add Remote User</span>
+          <span>+ Add Remote User...</span>
+        </button>
+
+        <button
+          v-else
+          type="button"
+          @click="openAddTunnelModal(activeTab)"
+          class="px-4 py-2 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>+ New {{ activeTabLabel }}...</span>
         </button>
       </div>
     </div>
 
-    <!-- Telemetry Statistics Strip (Sophos UTM 9 Style) -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex items-center gap-3">
+    <!-- Telemetry Statistics Strip -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
         <div class="w-9 h-9 rounded-lg bg-blue-50 text-[#0072ce] flex items-center justify-center font-bold">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
         <div>
-          <div class="text-[10px] uppercase font-bold text-slate-400">Total Peers</div>
-          <div class="text-base font-bold text-slate-900">{{ peersList.length }}</div>
+          <div class="text-[10px] uppercase font-bold text-slate-400">Site Tunnels</div>
+          <div class="text-base font-bold text-slate-900">{{ tunnelsList.length }} Configured</div>
         </div>
       </div>
 
-      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex items-center gap-3">
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
         <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
         <div>
-          <div class="text-[10px] uppercase font-bold text-slate-400">Active Tunnels</div>
-          <div class="text-base font-bold text-emerald-600">{{ activePeersCount }}</div>
+          <div class="text-[10px] uppercase font-bold text-slate-400">Connected Peers</div>
+          <div class="text-base font-bold text-emerald-600">{{ activePeersCount }} Active</div>
         </div>
       </div>
 
-      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex items-center gap-3">
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
         <div class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
           </svg>
         </div>
         <div>
-          <div class="text-[10px] uppercase font-bold text-slate-400">Total Transfer</div>
+          <div class="text-[10px] uppercase font-bold text-slate-400">Total Data Transfer</div>
           <div class="text-base font-bold text-indigo-700 font-mono">{{ aggregateTransferFormatted }}</div>
         </div>
       </div>
 
-      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex items-center gap-3">
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
         <div class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
         <div>
           <div class="text-[10px] uppercase font-bold text-slate-400">Crypto Engine</div>
-          <div class="text-xs font-mono font-bold text-purple-700">ChaCha20-Poly1305</div>
+          <div class="text-xs font-mono font-bold text-purple-700">TLS 1.3 / AES-GCM / IKEv2</div>
         </div>
       </div>
     </div>
 
-    <!-- CORE HORIZONTAL CONFIGURATION TAB SELECTOR -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6">
-      <div class="border-b border-slate-200 bg-[#f4f6f9]/50 px-4 pt-3 flex items-center gap-2 overflow-x-auto">
-        <button
-          type="button"
-          v-for="tab in configTabs"
-          :key="tab.id"
-          @click="activeTab = tab.id"
-          :class="[
-            'relative px-5 py-3 text-xs font-bold transition-all flex items-center gap-2.5 whitespace-nowrap cursor-pointer rounded-t-lg -mb-px',
-            activeTab === tab.id
-              ? 'bg-white text-[#0072ce] border-t-2 border-x border-slate-200 border-t-[#0072ce] shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
-          ]"
+    <!-- Standardized Flat Tab Navigation Strip (UTM 9 Style) -->
+    <div class="flex border-b border-slate-200 gap-1 bg-[#f4f6f9] p-1.5 rounded-t-xl overflow-x-auto text-xs font-bold">
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        type="button"
+        @click="activeTab = tab.id"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === tab.id
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <component :is="tab.icon" class="w-4 h-4 text-[#0072ce]" />
+        <span>{{ tab.label }}</span>
+        <span
+          class="px-1.5 py-0.2 rounded-full text-[10px] font-mono"
+          :class="activeTab === tab.id ? 'bg-[#0072ce] text-white' : 'bg-slate-200 text-slate-700'"
         >
-          <!-- Tab Protocol Icon -->
-          <component :is="tab.icon" class="w-4 h-4" :class="activeTab === tab.id ? 'text-[#0072ce]' : 'text-slate-400'" />
-          <span>{{ tab.label }}</span>
+          {{ tab.count }}
+        </span>
+      </button>
+    </div>
 
-          <!-- Tab Status / Count Badge -->
-          <span
-            v-if="tab.badge"
-            :class="[
-              'text-[10px] px-1.5 py-0.5 rounded-full font-mono font-semibold',
-              activeTab === tab.id ? 'bg-blue-50 text-[#0072ce] border border-blue-200' : 'bg-slate-200 text-slate-600'
-            ]"
-          >
-            {{ tab.badge }}
-          </span>
-
-          <!-- High-contrast corporate blue accent highlight bar on active -->
-          <span
-            v-if="activeTab === tab.id"
-            class="absolute inset-x-0 -top-[2px] h-[3px] bg-[#0072ce] rounded-t-md"
-          ></span>
-        </button>
+    <!-- Standardized Search & Filter Toolbar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs text-xs">
+      <div class="flex items-center gap-2 w-full sm:w-80">
+        <div class="relative w-full">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search tunnels, gateways, subnets, clients..."
+            class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-[#0072ce] focus:outline-none"
+          />
+          <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
       </div>
 
-      <!-- Tab Contextual Banner / Info Notice -->
-      <div class="p-4 bg-[#f4f6f9]/70 border-b border-slate-200 text-xs text-slate-600 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-2.5">
-          <span class="w-2 h-2 rounded-full" :class="activeTab === 'wireguard' ? 'bg-emerald-500' : 'bg-amber-500'"></span>
-          <span v-if="activeTab === 'wireguard'">
-            <strong>WireGuard Server Gateway:</strong> Listening on UDP <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-[#0072ce] font-mono">51820</code> | Subnet: <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono">10.8.0.0/24</code>
-          </span>
-          <span v-else-if="activeTab === 'ssl'">
-            <strong>SSL VPN (OpenVPN Engine):</strong> Listening on TCP/UDP <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono">8443</code> | TLS 1.3 Strict
-          </span>
-          <span v-else>
-            <strong>IPsec / IKEv2 Gateway:</strong> StrongSwan Stack on UDP <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono">500, 4500</code> (ESP NAT-T)
-          </span>
+      <div class="flex items-center gap-4 text-slate-500 font-medium">
+        <div class="flex items-center gap-2">
+          <span>Filter:</span>
+          <select v-model="statusFilter" class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 font-bold">
+            <option value="ALL">All Items</option>
+            <option value="ACTIVE">Connected / Active Only</option>
+            <option value="INACTIVE">Disabled / Inactive Only</option>
+          </select>
         </div>
 
-        <div class="flex items-center gap-3 text-[11px] font-mono text-slate-500">
-          <span>Interface: <strong class="text-slate-700">{{ activeTab === 'wireguard' ? 'wg0' : activeTab === 'ssl' ? 'tun0' : 'ipsec0' }}</strong></span>
-          <span>&bull;</span>
-          <span>MTU: <strong class="text-slate-700">1420</strong></span>
-        </div>
+        <span class="font-mono text-slate-600 font-bold">
+          Showing {{ currentFilteredItemsCount }} items
+        </span>
       </div>
     </div>
 
-    <!-- TAB 2: SITE-TO-SITE & CLIENT OUTBOUND TUNNELS -->
-    <div v-if="activeTab === 'tunnels'" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col mb-6">
-      <div class="px-5 py-3.5 border-b border-slate-200 bg-[#f4f6f9]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div class="flex items-center gap-2">
-          <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
-          <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Site-to-Site & Client Tunnels Matrix</h2>
-          <span class="text-[11px] text-slate-400 font-mono">({{ tunnelsList.length }} tunnels configured)</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            @click="isTunnelModalOpen = true"
-            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#0072ce] hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Add Client / Site-to-Site Tunnel</span>
-          </button>
-        </div>
+    <!-- TAB 1, 3, 4, 5: SITE-TO-SITE & CLIENT TUNNELS MATRIX -->
+    <div v-if="activeTab !== 'remote_users'" class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+      <div v-if="filteredTunnels.length === 0" class="p-12 text-center text-slate-400 text-xs">
+        No VPN tunnels found matching your filter criteria. Click "+ New {{ activeTabLabel }}..." to establish a connection.
       </div>
+      <table v-else class="w-full text-left text-xs border-collapse">
+        <thead class="bg-[#f4f6f9] text-slate-700 font-bold border-b border-slate-200">
+          <tr>
+            <th class="p-3 pl-4 w-12 text-center">Status</th>
+            <th class="p-3">Tunnel Name</th>
+            <th class="p-3">Type / Mode</th>
+            <th class="p-3 font-mono">Remote Endpoint / Server</th>
+            <th class="p-3 font-mono">Local Network</th>
+            <th class="p-3 font-mono">Routed Remote Subnets</th>
+            <th class="p-3">Firewall Policy</th>
+            <th class="p-3 text-right pr-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+          <tr
+            v-for="(tun, idx) in filteredTunnels"
+            :key="tun.id || tun.tunnel_name || idx"
+            :class="idx % 2 === 0 ? 'bg-white' : 'bg-[#f7f7f7]'"
+            class="hover:bg-blue-50/40 transition-colors"
+          >
+            <!-- Status Toggle -->
+            <td class="p-3 pl-4 text-center">
+              <button
+                type="button"
+                @click="toggleTunnel(tun)"
+                class="relative inline-flex h-4 w-8 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                :class="tun.enabled !== false ? 'bg-emerald-500' : 'bg-slate-300'"
+                title="Toggle tunnel status"
+              >
+                <span
+                  class="pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out"
+                  :class="tun.enabled !== false ? 'translate-x-4' : 'translate-x-0'"
+                ></span>
+              </button>
+            </td>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr class="border-b border-slate-200 bg-[#f4f6f9] text-[11px] font-bold text-slate-500 uppercase tracking-wider select-none">
-              <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Tunnel Name</th>
-              <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Protocol / Type</th>
-              <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Remote Gateway</th>
-              <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Virtual IP</th>
-              <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Routed Remote Subnets</th>
-              <th scope="col" class="py-3 px-4 border-r border-slate-200/80">Status / Latency</th>
-              <th scope="col" class="py-3 px-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 text-slate-700">
-            <tr v-for="tun in tunnelsList" :key="tun.tunnel_name" class="hover:bg-blue-50/20 transition-colors">
-              <td class="py-3.5 px-4 font-bold text-slate-900 border-r border-slate-200/80 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full" :class="tun.enabled ? 'bg-emerald-500' : 'bg-slate-300'"></span>
-                <span>{{ tun.tunnel_name }}</span>
-              </td>
-              <td class="py-3.5 px-4 border-r border-slate-200/80 font-mono text-[11px]">
-                <span class="px-2 py-0.5 rounded bg-blue-50 text-[#0072ce] border border-blue-200 font-bold uppercase">{{ tun.tunnel_type }}</span>
-              </td>
-              <td class="py-3.5 px-4 border-r border-slate-200/80 font-mono text-[11px] text-slate-800">
-                {{ tun.remote_endpoint }}
-              </td>
-              <td class="py-3.5 px-4 border-r border-slate-200/80 font-mono text-[11px]">
-                {{ tun.local_virtual_ip }}
-              </td>
-              <td class="py-3.5 px-4 border-r border-slate-200/80 font-mono text-[11px]">
-                <div v-for="sub in tun.remote_subnets" :key="sub" class="inline-block mr-1.5 px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200 text-slate-700">
+            <td class="p-3 font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" :class="tun.enabled !== false ? 'bg-emerald-500' : 'bg-slate-400'"></span>
+              <span>{{ tun.name || tun.tunnel_name }}</span>
+            </td>
+
+            <td class="p-3">
+              <span
+                :class="[
+                  'px-2 py-0.5 rounded text-[10px] font-bold uppercase border',
+                  getTunnelTypeBadgeClasses(tun.type || tun.tunnel_type)
+                ]"
+              >
+                {{ formatTunnelType(tun.type || tun.tunnel_type) }}
+              </span>
+            </td>
+
+            <td class="p-3 font-mono font-semibold text-slate-800">
+              {{ tun.remote_gateway || tun.remote_endpoint || 'Any' }}
+            </td>
+
+            <td class="p-3 font-mono text-slate-600">
+              {{ tun.local_network || tun.local_virtual_ip || '192.168.1.0/24' }}
+            </td>
+
+            <td class="p-3 font-mono">
+              <div v-if="Array.isArray(tun.remote_subnets)" class="flex items-center gap-1 flex-wrap">
+                <span v-for="sub in tun.remote_subnets" :key="sub" class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[10px]">
                   {{ sub }}
-                </div>
-              </td>
-              <td class="py-3.5 px-4 border-r border-slate-200/80">
-                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  Active ({{ tun.latency_ms }}ms)
                 </span>
-              </td>
-              <td class="py-3.5 px-4 text-right">
-                <button
-                  type="button"
-                  @click="tun.enabled = !tun.enabled"
-                  class="px-2.5 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer"
-                  :class="tun.enabled ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
-                >
-                  {{ tun.enabled ? 'Disable' : 'Enable' }}
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </div>
+              <div v-else class="text-blue-700 font-bold">
+                {{ tun.remote_network || '10.0.0.0/16' }}
+              </div>
+            </td>
+
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Auto-Permit (Accept)
+              </span>
+            </td>
+
+            <!-- Standard Action Triplet: Edit | Clone | Delete -->
+            <td class="p-3 text-right pr-4 space-x-1.5 whitespace-nowrap">
+              <button
+                type="button"
+                @click="editTunnel(tun)"
+                class="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded text-[11px] font-bold shadow-2xs cursor-pointer"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                @click="cloneTunnel(tun)"
+                class="px-2 py-1 bg-white hover:bg-slate-50 text-amber-700 border border-slate-300 rounded text-[11px] font-bold shadow-2xs cursor-pointer"
+              >
+                Clone
+              </button>
+              <button
+                type="button"
+                @click="deleteTunnel(tun.id || tun.name || tun.tunnel_name)"
+                class="px-2 py-1 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded text-[11px] font-bold shadow-2xs cursor-pointer"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- TAB 3: IPSEC IKEV2 GATEWAY PLACEHOLDER -->
-    <div v-if="activeTab === 'ipsec'" class="bg-white rounded-xl border border-slate-200 shadow-sm p-8 text-center mb-6">
-      <div class="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto mb-4 text-slate-500">
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
+    <!-- TAB 2: REMOTE ACCESS VPN (WIREGUARD PEERS) -->
+    <div v-else class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+      <div v-if="filteredPeers.length === 0" class="p-12 text-center text-slate-400 text-xs">
+        No remote access user clients configured. Click "+ Add Remote User..." to provision a client profile.
       </div>
-      <h3 class="text-base font-bold text-slate-900">IPsec / IKEv2 Gateway Subsystem</h3>
-      <p class="text-xs text-slate-500 max-w-md mx-auto mt-1">
-        StrongSwan cryptographic stack is active. Configure Site-to-Site IPsec tunnels in the Client & Site-to-Site tab.
-      </p>
+      <table v-else class="w-full text-left text-xs border-collapse">
+        <thead class="bg-[#f4f6f9] text-slate-700 font-bold border-b border-slate-200">
+          <tr>
+            <th class="p-3 pl-4">Client User / Hostname</th>
+            <th class="p-3 font-mono">Assigned Virtual IP</th>
+            <th class="p-3 font-mono">Public Crypto Key</th>
+            <th class="p-3">Status</th>
+            <th class="p-3 font-mono">Data Transferred</th>
+            <th class="p-3 text-right pr-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+          <tr
+            v-for="(peer, idx) in filteredPeers"
+            :key="peer.id || idx"
+            :class="idx % 2 === 0 ? 'bg-white' : 'bg-[#f7f7f7]'"
+            class="hover:bg-blue-50/40 transition-colors"
+          >
+            <td class="p-3 pl-4 font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" :class="peer.status === 'active' || peer.is_active ? 'bg-emerald-500' : 'bg-slate-400'"></span>
+              <span>{{ peer.client_name }}</span>
+            </td>
+
+            <td class="p-3 font-mono font-bold text-blue-700">
+              {{ peer.virtual_ip }}
+            </td>
+
+            <td class="p-3 font-mono text-slate-500 text-[11px] truncate max-w-xs" :title="peer.public_key">
+              {{ peer.public_key }}
+            </td>
+
+            <td class="p-3">
+              <span
+                :class="[
+                  'px-2 py-0.5 rounded text-[10px] font-bold uppercase border',
+                  peer.status === 'active' || peer.is_active
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-slate-100 text-slate-600 border-slate-200'
+                ]"
+              >
+                {{ peer.status === 'active' || peer.is_active ? 'Connected' : 'Disconnected' }}
+              </span>
+            </td>
+
+            <td class="p-3 font-mono text-slate-600">
+              {{ formatBytes((peer.transfer_rx || 0) + (peer.transfer_tx || 0)) }}
+            </td>
+
+            <td class="p-3 text-right pr-4 space-x-1.5 whitespace-nowrap">
+              <button
+                type="button"
+                @click="downloadPeerConfig(peer)"
+                class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-[#0072ce] border border-blue-200 rounded text-[11px] font-bold shadow-2xs cursor-pointer"
+              >
+                Download .conf
+              </button>
+              <button
+                type="button"
+                @click="deletePeer(peer.id || peer.public_key)"
+                class="px-2 py-1 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded text-[11px] font-bold shadow-2xs cursor-pointer"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- HIGH-UTILITY REMOTE USER OVERVIEW TABLE CONTAINER -->
-    <div v-if="activeTab === 'wireguard'" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-      <!-- Table Top Toolbar Strip -->
-      <div class="px-5 py-3.5 border-b border-slate-200 bg-[#f4f6f9]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div class="flex items-center gap-2">
-          <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
-          <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Remote User Client Matrix</h2>
-          <span class="text-[11px] text-slate-400 font-mono">({{ filteredPeers.length }} matched)</span>
-        </div>
-        <div class="flex items-center gap-4 text-xs text-slate-500 font-mono text-[11px]">
-          <span class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Active: {{ activePeersCount }}
-          </span>
-          <span class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-slate-300"></span> Inactive: {{ inactivePeersCount }}
-          </span>
-        </div>
-      </div>
-
-      <!-- High-Utility Table -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse" role="table">
-          <thead>
-            <tr class="border-b border-slate-200 bg-[#f4f6f9] text-[11px] font-bold text-slate-500 uppercase tracking-wider select-none">
-              <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[200px]">Client Name</th>
-              <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[150px]">Assigned Virtual IP</th>
-              <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[220px]">Public Crypto Key</th>
-              <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[150px]">Connection Status</th>
-              <th scope="col" class="py-3 px-4 border-r border-slate-200/80 min-w-[170px]">Total Bandwidth Transfer</th>
-              <th scope="col" class="py-3 px-4 min-w-[120px] text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-200 text-xs">
-            <tr
-              v-for="(peer, index) in filteredPeers"
-              :key="peer.public_key || peer.id || index"
-              :class="[
-                'transition-colors duration-150',
-                peer.status === 'active' || peer.is_active
-                  ? (index % 2 === 0 ? 'bg-white hover:bg-blue-50/30' : 'bg-[#f4f6f9]/60 hover:bg-blue-50/40')
-                  : 'bg-slate-100/40 hover:bg-slate-100/70 text-slate-600'
-              ]"
-            >
-              <!-- 1. Client Name & Device Info -->
-              <td class="py-3.5 px-4 border-r border-slate-200/80">
-                <div class="flex items-center gap-3">
-                  <div
-                    class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-white font-bold text-xs shadow-2xs"
-                    :class="peer.status === 'active' || peer.is_active ? 'bg-[#0072ce]' : 'bg-slate-400'"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div class="flex items-center gap-2">
-                      <span class="font-bold text-slate-900 leading-snug">{{ peer.client_name || peer.name || 'Unnamed Client' }}</span>
-                      <span v-if="peer.device_type" class="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200 text-slate-600 uppercase font-mono">
-                        {{ peer.device_type }}
-                      </span>
-                    </div>
-                    <div class="text-[10px] text-slate-400 font-mono mt-0.5 flex items-center gap-2">
-                      <span>Endpoint: {{ peer.endpoint || peer.latest_endpoint || 'Auto-negotiated' }}</span>
-                    </div>
-                  </div>
-                </div>
-              </td>
-
-              <!-- 2. Assigned Virtual IP -->
-              <td class="py-3.5 px-4 border-r border-slate-200/80 font-mono">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-[#0072ce] border border-blue-200 shadow-2xs">
-                  <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                  </svg>
-                  <span>{{ peer.virtual_ip || peer.assigned_ip || peer.allowed_ips || '10.8.0.2/32' }}</span>
-                </span>
-              </td>
-
-              <!-- 3. Public Crypto Key with Copy Button -->
-              <td class="py-3.5 px-4 border-r border-slate-200/80 font-mono text-[11px]">
-                <div class="flex items-center gap-2">
-                  <span class="bg-slate-100 px-2 py-1 rounded border border-slate-200 text-slate-700 select-all truncate max-w-[150px]" :title="peer.public_key">
-                    {{ formatPublicKey(peer.public_key) }}
-                  </span>
-                  <button
-                    type="button"
-                    @click="copyTextToClipboard(peer.public_key, 'Public Key')"
-                    class="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                    title="Copy Public Key"
-                  >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                    </svg>
-                  </button>
-                </div>
-              </td>
-
-              <!-- 4. Connection Status (Green/Gray Pill Badges) -->
-              <td class="py-3.5 px-4 border-r border-slate-200/80">
-                <!-- Green Pill for Active State -->
-                <div v-if="peer.status === 'active' || peer.is_active" class="flex flex-col gap-0.5">
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-2xs w-max">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Connected</span>
-                  </span>
-                  <span class="text-[10px] text-slate-400 font-mono mt-0.5">
-                    Handshake: {{ peer.latest_handshake || 'Just now' }}
-                  </span>
-                </div>
-
-                <!-- Gray Pill for Inactive State -->
-                <div v-else class="flex flex-col gap-0.5">
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-300 shadow-2xs w-max">
-                    <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-                    <span>Disconnected</span>
-                  </span>
-                  <span class="text-[10px] text-slate-400 font-mono mt-0.5">
-                    Handshake: {{ peer.latest_handshake || 'Never' }}
-                  </span>
-                </div>
-              </td>
-
-              <!-- 5. Total Bandwidth Transfer -->
-              <td class="py-3.5 px-4 border-r border-slate-200/80 font-mono text-[11px]">
-                <div class="flex flex-col gap-1">
-                  <div class="flex items-center justify-between gap-2">
-                    <span class="font-bold text-slate-800">{{ formatBandwidth(peer.transfer_rx, peer.transfer_tx) }}</span>
-                  </div>
-                  <div class="flex items-center gap-3 text-[10px] text-slate-500">
-                    <span class="flex items-center gap-1 text-emerald-600">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                      </svg>
-                      {{ formatBytes(peer.transfer_rx || 0) }}
-                    </span>
-                    <span class="flex items-center gap-1 text-blue-600">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                      </svg>
-                      {{ formatBytes(peer.transfer_tx || 0) }}
-                    </span>
-                  </div>
-                </div>
-              </td>
-
-              <!-- 6. Actions Column -->
-              <td class="py-3.5 px-4 text-center">
-                <div class="flex items-center justify-center gap-1.5">
-                  <!-- Inspect Config Profile -->
-                  <button
-                    type="button"
-                    @click="viewPeerConfig(peer)"
-                    class="p-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#0072ce] border border-slate-200 transition-colors cursor-pointer"
-                    title="View Profile Configuration"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </button>
-
-                  <!-- Revoke / Delete Peer -->
-                  <button
-                    type="button"
-                    @click="deletePeer(peer)"
-                    class="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 transition-colors cursor-pointer"
-                    title="Revoke Peer Tunnel"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </td>
-            </tr>
-
-            <!-- Empty State -->
-            <tr v-if="filteredPeers.length === 0">
-              <td colspan="6" class="py-12 text-center text-slate-500">
-                <svg class="w-10 h-10 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <p class="text-sm font-semibold text-slate-700">No remote VPN peers matched your filter</p>
-                <p class="text-xs text-slate-400 mt-1">Try clearing your search query or status filter.</p>
-                <button
-                  type="button"
-                  @click="resetFilters"
-                  class="mt-3 inline-flex items-center px-3 py-1.5 text-xs font-semibold text-[#0072ce] hover:underline cursor-pointer"
-                >
-                  Clear all filters
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Table Bottom Footer Summary -->
-      <div class="px-5 py-3 border-t border-slate-200 bg-[#f4f6f9] text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div>
-          Showing <span class="font-bold text-slate-700">{{ filteredPeers.length }}</span> of
-          <span class="font-bold text-slate-700">{{ peersList.length }}</span> registered remote VPN clients
-        </div>
-        <div class="flex items-center gap-4 font-mono text-[10px]">
-          <span>WireGuard Daemon: <strong class="text-emerald-600">Running (PID: wg0)</strong></span>
-          <span>&bull;</span>
-          <span>Keepalive: <strong class="text-slate-700">25s</strong></span>
-          <span>&bull;</span>
-          <span>Last Sync: {{ lastSyncedTime }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================================= -->
-    <!-- MODAL POP-UP OVERLAY: ADD REMOTE USER / PROVISION WIREGUARD PEER         -->
-    <!-- ========================================================================= -->
+    <!-- MODAL: ADD / EDIT SITE-TO-SITE & CLIENT VPN TUNNEL -->
     <transition
-      enter-active-class="transition duration-200 ease-out"
+      enter-active-class="transition duration-150 ease-out"
       enter-from-class="opacity-0 scale-95"
       enter-to-class="opacity-100 scale-100"
-      leave-active-class="transition duration-150 ease-in"
+      leave-active-class="transition duration-100 ease-in"
       leave-from-class="opacity-100 scale-100"
       leave-to-class="opacity-0 scale-95"
     >
       <div
-        v-if="isModalOpen"
-        class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title-add-user"
-        @keydown.esc="closeModal"
+        v-if="isTunnelModalOpen"
+        class="fixed inset-0 z-40 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+        @keydown.esc="isTunnelModalOpen = false"
       >
-        <!-- Modal Card Container -->
-        <div
-          class="w-full max-w-2xl bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col my-8"
-          @click.stop
-        >
-          <!-- Modal Top Header Ribbon (Sophos UTM 9 Style) -->
-          <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-lg bg-[#0072ce] flex items-center justify-center text-white font-black text-sm shadow-md">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full overflow-hidden flex flex-col my-6 max-h-[90vh]">
+          <!-- Modal Header -->
+          <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-[#ee7f00] flex items-center justify-center text-white font-bold text-xs shadow-md">
+                VPN
               </div>
               <div>
-                <div class="flex items-center gap-2">
-                  <h3 id="modal-title-add-user" class="text-sm font-bold text-white tracking-tight">
-                    Add Remote Access User
-                  </h3>
-                  <span class="text-[10px] bg-blue-950 text-blue-300 font-mono font-bold px-2 py-0.5 rounded border border-blue-800/80">
-                    WIREGUARD PROFILE
-                  </span>
-                </div>
-                <p class="text-xs text-slate-400 mt-0.5">Provision a remote endpoint cryptographic keypair &amp; virtual IP lease</p>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-white">
+                  {{ editingTunnelId ? 'Edit VPN Tunnel' : 'Establish Client / Site-to-Site VPN Tunnel' }}
+                </h3>
+                <p class="text-[10px] text-slate-400">SSL Client, IPsec IKEv2, Amazon VPC, and WireGuard</p>
               </div>
             </div>
-
-            <!-- Close Modal Button (✕) -->
-            <button
-              type="button"
-              @click="closeModal"
-              class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-              aria-label="Close add remote user modal"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <button @click="isTunnelModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer text-base leading-none">&times;</button>
           </div>
 
-          <!-- Form & Generation Body -->
-          <div class="p-6 space-y-5 bg-white text-slate-800 flex-1 overflow-y-auto max-h-[calc(85vh-130px)]">
-            <!-- Modal Inline Validation Alert -->
-            <div
-              v-if="validationError"
-              class="p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5 shadow-2xs"
-            >
-              <svg class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <div>
-                <strong class="font-bold">Validation Error:</strong>
-                <span class="ml-1">{{ validationError }}</span>
-              </div>
+          <!-- Form Fields -->
+          <form @submit.prevent="saveTunnel" class="p-5 space-y-4 text-xs flex-1 overflow-y-auto">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Tunnel Name *</label>
+              <input
+                v-model="formTunnel.tunnel_name"
+                type="text"
+                required
+                placeholder="e.g. Branch Office SSL Client, AWS Production VPC, HQ Datacenter"
+                class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none"
+              />
             </div>
 
-            <!-- Form Section (shown before profile generation or for editing) -->
-            <form @submit.prevent="generateClientProfile" class="space-y-4">
-              <!-- 1. Client Name Entry -->
+            <div class="grid grid-cols-2 gap-3">
               <div>
-                <label for="client-name" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Client Name / Identifier <span class="text-rose-500">*</span>
-                </label>
-                <input
-                  id="client-name"
-                  v-model="formData.client_name"
-                  type="text"
-                  required
-                  placeholder="e.g., alice-laptop, field-engineer-01"
-                  class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-medium"
-                />
-                <p class="text-[10px] text-slate-400 mt-1">Unique remote user name or hostname.</p>
-              </div>
-
-              <!-- 2. Assigned Virtual Tunnel IP Address Entry -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label for="tunnel-ip" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Assigned Virtual IP Address <span class="text-rose-500">*</span>
-                  </label>
-                  <div class="relative">
-                    <input
-                      id="tunnel-ip"
-                      v-model="formData.virtual_ip"
-                      type="text"
-                      required
-                      placeholder="e.g., 10.8.0.5/32"
-                      class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-mono font-medium"
-                    />
-                    <button
-                      type="button"
-                      @click="suggestNextIp"
-                      class="absolute right-2 top-2 text-[10px] px-2 py-0.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded font-sans font-bold cursor-pointer"
-                      title="Suggest next free IP in 10.8.0.0/24 subnet"
-                    >
-                      Next IP
-                    </button>
-                  </div>
-                  <p class="text-[10px] text-slate-400 mt-1">Unique tunnel IP assigned to this client in the /32 lease pool.</p>
-                </div>
-
-                <div>
-                  <label for="dns-servers" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    DNS Resolvers
-                  </label>
-                  <input
-                    id="dns-servers"
-                    v-model="formData.dns"
-                    type="text"
-                    placeholder="10.8.0.1, 1.1.1.1"
-                    class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-mono font-medium"
-                  />
-                  <p class="text-[10px] text-slate-400 mt-1">DNS servers pushed to the remote client.</p>
-                </div>
-              </div>
-
-              <!-- 3. Allowed IPs Routing Scope -->
-              <div>
-                <label for="allowed-ips" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Allowed IPs (Routing Scope)
-                </label>
-                <input
-                  id="allowed-ips"
-                  v-model="formData.allowed_ips"
-                  type="text"
-                  placeholder="0.0.0.0/0, ::/0 (Full Tunnel) or 192.168.1.0/24 (Split Tunnel)"
-                  class="w-full bg-[#f4f6f9] text-slate-900 text-xs px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0072ce] focus:ring-1 focus:ring-[#0072ce] font-mono font-medium"
-                />
-                <p class="text-[10px] text-slate-400 mt-1">Use <code class="font-mono text-slate-600 font-bold">0.0.0.0/0, ::/0</code> for Full Tunnel or specify internal LAN subnets for Split Tunneling.</p>
-              </div>
-
-              <!-- Generate Action Button Trigger -->
-              <div class="pt-2">
-                <button
-                  type="button"
-                  @click="generateClientProfile"
-                  :disabled="isSubmitting"
-                  class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#0072ce] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
+                <label class="block font-bold text-slate-700 mb-1">Tunnel Type / Protocol</label>
+                <select
+                  v-model="formTunnel.tunnel_type"
+                  class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none bg-white font-medium"
                 >
-                  <svg
-                    v-if="isSubmitting"
-                    class="w-4 h-4 animate-spin text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  <svg v-else class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span>{{ isSubmitting ? 'Generating WireGuard Crypto Keypair...' : 'Generate Client Profile' }}</span>
-                </button>
+                  <option value="ssl_client">SSL VPN (Client Mode - Connect Outward)</option>
+                  <option value="ssl_server">SSL VPN (Server Mode - Accept Inbound)</option>
+                  <option value="ipsec">IPsec / IKEv2 (Site-to-Site Gateway)</option>
+                  <option value="amazon_vpc">Amazon VPC (AWS Cloud Interconnect)</option>
+                  <option value="wireguard">WireGuard (Site-to-Site Peer)</option>
+                </select>
               </div>
-            </form>
 
-            <!-- COMPILED WIREGUARD CONNECTION FILE BLOCK -->
-            <div v-if="generatedProfileBlock" class="mt-5 pt-5 border-t border-slate-200">
-              <div class="flex items-center justify-between mb-2">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Initial State</label>
+                <select
+                  v-model="formTunnel.enabled"
+                  class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none bg-white font-medium"
+                >
+                  <option :value="true">Enabled (Connected)</option>
+                  <option :value="false">Disabled</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- TYPE 1: SSL CLIENT MODE (Firewall connects to external SSL/OpenVPN server) -->
+            <div v-if="formTunnel.tunnel_type === 'ssl_client'" class="space-y-3 p-3.5 bg-blue-50/50 rounded-xl border border-blue-200">
+              <div class="text-[11px] font-bold text-[#0072ce] flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span>SSL VPN Client Configuration (Outbound Connection)</span>
+              </div>
+
+              <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-2">
+                  <label class="block font-bold text-slate-700 mb-1">Remote Server FQDN / IP *</label>
+                  <input
+                    v-model="formTunnel.remote_endpoint"
+                    type="text"
+                    required
+                    placeholder="e.g. vpn.remotebranch.com or 198.51.100.10"
+                    class="w-full p-2 border border-slate-300 rounded bg-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Port</label>
+                  <input
+                    v-model.number="formTunnel.remote_port"
+                    type="number"
+                    placeholder="1194"
+                    class="w-full p-2 border border-slate-300 rounded bg-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Authentication Mode</label>
+                  <select v-model="formTunnel.auth_mode" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
+                    <option value="password">Username &amp; Password</option>
+                    <option value="certificate">X.509 Certificate (PKI / TLS)</option>
+                    <option value="psk">Static Pre-Shared Key</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Transport Protocol</label>
+                  <select v-model="formTunnel.protocol" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
+                    <option value="UDP">UDP (Fast &amp; Low Latency)</option>
+                    <option value="TCP">TCP (Port 443 Firewall Bypass)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div v-if="formTunnel.auth_mode === 'password'" class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Client Username *</label>
+                  <input v-model="formTunnel.username" type="text" placeholder="astaro-client" class="w-full p-2 border border-slate-300 rounded bg-white" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Client Password *</label>
+                  <input v-model="formTunnel.password" type="password" placeholder="••••••••••••" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Local Network (Advertised)</label>
+                  <input v-model="formTunnel.local_networks_text" type="text" placeholder="192.168.1.0/24" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Remote Subnets (Routed via Tunnel) *</label>
+                  <input v-model="formTunnel.remote_subnets_text" type="text" required placeholder="10.50.0.0/16, 172.16.0.0/24" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+              </div>
+
+              <div class="space-y-2 pt-1">
                 <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <label class="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Compiled WireGuard Client Profile (.conf)
+                  <input id="auto_fw_ssl" v-model="formTunnel.auto_firewall_rule" type="checkbox" class="rounded text-[#0072ce] focus:ring-[#0072ce] h-4 w-4 cursor-pointer" />
+                  <label for="auto_fw_ssl" class="text-slate-700 font-bold cursor-pointer">
+                    Automatic Firewall Rule (Permit bi-directional traffic to &amp; from remote subnets)
                   </label>
                 </div>
                 <div class="flex items-center gap-2">
-                  <!-- Quick Copy to Clipboard Button -->
-                  <button
-                    type="button"
-                    @click="copyConfigToClipboard"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-slate-300 hover:bg-[#f4f6f9] text-xs font-semibold text-slate-700 shadow-2xs transition-colors cursor-pointer"
-                  >
-                    <svg v-if="!isConfigCopied" class="w-3.5 h-3.5 text-[#0072ce]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                    </svg>
-                    <svg v-else class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>{{ isConfigCopied ? 'Copied to Clipboard!' : 'Copy to Clipboard' }}</span>
-                  </button>
-
-                  <!-- Download .conf File Button -->
-                  <button
-                    type="button"
-                    @click="downloadConfigFile"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#0072ce] hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
-                  >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    <span>Download .conf</span>
-                  </button>
+                  <input id="default_gw_ssl" v-model="formTunnel.use_default_gateway" type="checkbox" class="rounded text-[#0072ce] focus:ring-[#0072ce] h-4 w-4 cursor-pointer" />
+                  <label for="default_gw_ssl" class="text-slate-700 font-bold cursor-pointer">
+                    Use as Default Gateway (Route all outbound Internet traffic through remote SSL VPN)
+                  </label>
                 </div>
               </div>
+            </div>
 
-              <!-- Text Container for WireGuard Connection File Block -->
-              <div class="relative group">
-                <pre class="bg-slate-900 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-x-auto leading-relaxed border border-slate-800 shadow-inner select-all">{{ generatedProfileBlock }}</pre>
+            <!-- TYPE 2: IPSEC IKEV2 -->
+            <div v-else-if="formTunnel.tunnel_type === 'ipsec'" class="space-y-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
+                <span>IPsec / IKEv2 Gateway Settings</span>
               </div>
-
-              <p class="text-[10px] text-slate-500 mt-2">
-                Import this configuration block into the official WireGuard Client on Windows, macOS, Linux, iOS, or Android.
-              </p>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Remote Gateway IP / Hostname *</label>
+                  <input v-model="formTunnel.remote_endpoint" type="text" required placeholder="203.0.113.1" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Pre-Shared Key (PSK) *</label>
+                  <input v-model="formTunnel.preshared_key" type="password" required placeholder="SecretKey123!#" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Local Subnets</label>
+                  <input v-model="formTunnel.local_networks_text" type="text" placeholder="192.168.1.0/24" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Remote Subnets *</label>
+                  <input v-model="formTunnel.remote_subnets_text" type="text" required placeholder="10.100.0.0/16" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+              </div>
             </div>
-          </div>
 
-          <!-- Modal Action Footer -->
-          <div class="px-6 py-4 bg-[#f4f6f9] border-t border-slate-200 flex items-center justify-between gap-3">
-            <button
-              type="button"
-              @click="closeModal"
-              class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition-colors cursor-pointer"
-            >
-              Close
-            </button>
+            <!-- TYPE 3: AMAZON VPC -->
+            <div v-else-if="formTunnel.tunnel_type === 'amazon_vpc'" class="space-y-3 p-3.5 bg-amber-50/50 rounded-xl border border-amber-200">
+              <div class="text-[11px] font-bold text-amber-900 flex items-center gap-1.5">
+                <span>Amazon AWS VPC Cloud Gateway</span>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">AWS Region</label>
+                  <select v-model="formTunnel.aws_region" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
+                    <option value="us-east-1">us-east-1 (N. Virginia)</option>
+                    <option value="us-east-2">us-east-2 (Ohio)</option>
+                    <option value="us-west-2">us-west-2 (Oregon)</option>
+                    <option value="eu-west-1">eu-west-1 (Ireland)</option>
+                    <option value="eu-central-1">eu-central-1 (Frankfurt)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">AWS VPC ID</label>
+                  <input v-model="formTunnel.aws_vpc_id" type="text" placeholder="vpc-0a1b2c3d4e5f" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">AWS VGW / Tunnel IP *</label>
+                  <input v-model="formTunnel.remote_endpoint" type="text" required placeholder="52.95.120.45" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">AWS VPC CIDR Subnet *</label>
+                  <input v-model="formTunnel.remote_subnets_text" type="text" required placeholder="172.31.0.0/16" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+              </div>
+            </div>
 
-            <div v-if="generatedProfileBlock" class="flex items-center gap-2">
+            <!-- TYPE 4: WIREGUARD -->
+            <div v-else class="space-y-3 p-3.5 bg-purple-50/50 rounded-xl border border-purple-200">
+              <div class="text-[11px] font-bold text-purple-900 flex items-center gap-1.5">
+                <span>WireGuard Site-to-Site Configuration</span>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Remote Endpoint &amp; Port *</label>
+                  <input v-model="formTunnel.remote_endpoint" type="text" required placeholder="vpn.corp.company.com:51820" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Remote Peer Public Key *</label>
+                  <input v-model="formTunnel.remote_public_key" type="text" required placeholder="xK8b3s90j12LmOP947vbcKqLmNwz458vBnmQ123aA=" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Local Tunnel IP</label>
+                  <input v-model="formTunnel.local_virtual_ip" type="text" placeholder="10.250.0.2/30" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Allowed Remote Subnets *</label>
+                  <input v-model="formTunnel.remote_subnets_text" type="text" required placeholder="10.100.0.0/16, 172.16.0.0/16" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Comment / Notes</label>
+              <input
+                v-model="formTunnel.comment"
+                type="text"
+                placeholder="Optional notes or documentation"
+                class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none"
+              />
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
               <button
                 type="button"
-                @click="resetModalForm"
-                class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition-colors cursor-pointer"
+                @click="isTunnelModalOpen = false"
+                class="px-3.5 py-1.5 rounded border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
               >
-                Provision Another User
+                Cancel
               </button>
               <button
-                type="button"
-                @click="closeModal"
-                class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 cursor-pointer"
+                type="submit"
+                class="px-4 py-1.5 rounded bg-[#0072ce] hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer"
               >
-                Done
+                {{ editingTunnelId ? 'Update Tunnel' : 'Save &amp; Establish Tunnel' }}
               </button>
             </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- MODAL: ADD REMOTE USER CLIENT -->
+    <transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div
+        v-if="isUserModalOpen"
+        class="fixed inset-0 z-40 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+        @keydown.esc="isUserModalOpen = false"
+      >
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden flex flex-col my-6">
+          <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-white">Provision Remote Access VPN User</h3>
+            <button @click="isUserModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">&times;</button>
           </div>
+          <form @submit.prevent="saveRemoteUser" class="p-5 space-y-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">User / Device Identifier *</label>
+              <input type="text" required v-model="formUser.client_name" placeholder="e.g. alex-macbook-pro" class="w-full p-2 border border-slate-300 rounded" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Assigned Virtual IP *</label>
+              <input type="text" required v-model="formUser.virtual_ip" placeholder="10.8.0.10/32" class="w-full p-2 border border-slate-300 rounded font-mono" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Client Device Type</label>
+              <select v-model="formUser.device_type" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
+                <option value="macOS">macOS</option>
+                <option value="Windows">Windows 11 / 10</option>
+                <option value="Linux">Linux Desktop</option>
+                <option value="iOS">iOS (iPhone / iPad)</option>
+                <option value="Android">Android</option>
+              </select>
+            </div>
+            <div class="pt-3 border-t border-slate-200 flex justify-between">
+              <button type="button" @click="isUserModalOpen = false" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
+              <button type="submit" class="px-4 py-1.5 bg-[#0072ce] text-white font-bold rounded shadow-xs cursor-pointer">Generate &amp; Download Profile</button>
+            </div>
+          </form>
         </div>
       </div>
     </transition>
@@ -820,73 +676,29 @@
 <script setup>
 import { ref, reactive, computed, onMounted, h } from 'vue'
 
-// -----------------------------------------------------------------------------
-// Axios Safe Loader & Compatibility Layer
-// -----------------------------------------------------------------------------
-let axiosInstance
-
-const initAxios = async () => {
-  if (typeof window !== 'undefined' && window.axios) {
-    axiosInstance = window.axios
-    return
-  }
-  try {
-    const axiosModule = await import('axios')
-    axiosInstance = axiosModule.default || axiosModule
-  } catch (e) {
-    // Robust fallback wrapper using native fetch if axios is not present in runtime
-    axiosInstance = {
-      async get(url, config = {}) {
-        const headers = { Accept: 'application/json', ...(config.headers || {}) }
-        const res = await fetch(url, { method: 'GET', headers, signal: config.signal })
-        if (!res.ok) {
-          const err = new Error(`HTTP ${res.status}: ${res.statusText}`)
-          err.response = res
-          throw err
-        }
-        return { data: await res.json(), status: res.status }
-      },
-      async post(url, data, config = {}) {
-        const headers = { 'Content-Type': 'application/json', ...(config.headers || {}) }
-        const body = typeof data === 'string' ? data : JSON.stringify(data)
-        const res = await fetch(url, { method: 'POST', headers, body, signal: config.signal })
-        if (!res.ok) {
-          const err = new Error(`HTTP ${res.status}: ${res.statusText}`)
-          err.response = res
-          throw err
-        }
-        return { data: await res.json(), status: res.status }
-      }
-    }
-  }
-}
-
-// -----------------------------------------------------------------------------
-// Props & Emits Definition
-// -----------------------------------------------------------------------------
 const props = defineProps({
-  peersEndpoint: {
+  authToken: {
     type: String,
-    default: '/api/vpn/peers'
-  },
-  createEndpoint: {
-    type: String,
-    default: '/api/vpn/peers/create'
+    default: ''
   }
 })
 
-const emit = defineEmits(['peer-created', 'peer-deleted', 'error'])
+const activeTab = ref('all_tunnels') // 'all_tunnels' | 'ssl' | 'ipsec' | 'amazon_vpc' | 'remote_users'
+const isLoading = ref(false)
+const searchQuery = ref('')
+const statusFilter = ref('ALL')
+const isTunnelModalOpen = ref(false)
+const isUserModalOpen = ref(false)
+const editingTunnelId = ref(null)
 
-// -----------------------------------------------------------------------------
-// Protocol Tabs Setup
-// -----------------------------------------------------------------------------
-const WireGuardIcon = {
+// Tab icons
+const TunnelIcon = {
   render: () => h('svg', { class: 'w-4 h-4', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
     h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: '2', d: 'M13 10V3L4 14h7v7l9-11h-7z' })
   ])
 }
 
-const SslVpnIcon = {
+const SslIcon = {
   render: () => h('svg', { class: 'w-4 h-4', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
     h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: '2', d: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' })
   ])
@@ -898,62 +710,66 @@ const IpsecIcon = {
   ])
 }
 
-const activeTab = ref('wireguard')
+const AwsIcon = {
+  render: () => h('svg', { class: 'w-4 h-4', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+    h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: '2', d: 'M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z' })
+  ])
+}
 
-const configTabs = computed(() => [
-  { id: 'wireguard', label: 'Remote Access VPN (Server)', icon: WireGuardIcon, badge: `${peersList.value.length} peers` },
-  { id: 'tunnels', label: 'Site-to-Site & Client Tunnels', icon: SslVpnIcon, badge: `${tunnelsList.value.length} tunnels` },
-  { id: 'ipsec', label: 'IPsec / IKEv2 Gateway', icon: IpsecIcon, badge: 'Standby' }
-])
-
-// -----------------------------------------------------------------------------
-// Reactive State
-// -----------------------------------------------------------------------------
-const isLoading = ref(false)
-const isSubmitting = ref(false)
-const isModalOpen = ref(false)
-const isTunnelModalOpen = ref(false)
-const isConfigCopied = ref(false)
-const validationError = ref('')
-const searchQuery = ref('')
-const statusFilter = ref('ALL')
-const lastSyncedTime = ref(new Date().toLocaleTimeString())
-const generatedProfileBlock = ref('')
-
-const toasts = ref([])
+const UsersIcon = {
+  render: () => h('svg', { class: 'w-4 h-4', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+    h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: '2', d: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' })
+  ])
+}
 
 const tunnelsList = ref([
   {
-    tunnel_name: 'HQ-Datacenter-Tunnel',
-    tunnel_type: 'wireguard',
-    remote_endpoint: 'vpn.corp.company.com:51820',
-    local_virtual_ip: '10.250.0.2/30',
-    remote_subnets: ['10.100.0.0/16', '172.16.0.0/16'],
-    remote_public_key: 'xK8b3s90j12LmOP947vbcKqLmNwz458vBnmQ123aA=',
-    route_mode: 'split_tunnel',
-    status: 'connected',
-    latency_ms: 14,
-    transfer_rx: '142.8 MB',
-    transfer_tx: '89.4 MB',
+    id: 'tun-branch-ssl-client',
+    name: 'Branch Office SSL Client',
+    tunnel_name: 'Branch Office SSL Client',
+    type: 'ssl_client',
+    tunnel_type: 'ssl_client',
+    remote_gateway: 'vpn.remotebranch.com:1194',
+    remote_endpoint: 'vpn.remotebranch.com:1194',
+    local_network: '192.168.1.0/24',
+    remote_network: '10.50.0.0/16',
+    remote_subnets: ['10.50.0.0/16'],
+    status: 'Connected',
+    latency_ms: 19,
     enabled: true
   },
   {
+    id: 'tun-hq-wireguard',
+    name: 'HQ-Datacenter-Tunnel',
+    tunnel_name: 'HQ-Datacenter-Tunnel',
+    type: 'wireguard',
+    tunnel_type: 'wireguard',
+    remote_gateway: 'vpn.corp.company.com:51820',
+    remote_endpoint: 'vpn.corp.company.com:51820',
+    local_network: '10.250.0.2/30',
+    remote_network: '10.100.0.0/16',
+    remote_subnets: ['10.100.0.0/16', '172.16.0.0/16'],
+    status: 'Connected',
+    latency_ms: 14,
+    enabled: true
+  },
+  {
+    id: 'tun-aws-vpc-link',
+    name: 'Cloud-AWS-VPC-Link',
     tunnel_name: 'Cloud-AWS-VPC-Link',
-    tunnel_type: 'ipsec',
+    type: 'amazon_vpc',
+    tunnel_type: 'amazon_vpc',
+    remote_gateway: '52.95.120.45:4500',
     remote_endpoint: '52.95.120.45:4500',
-    local_virtual_ip: '169.254.10.1/30',
+    local_network: '169.254.10.1/30',
+    remote_network: '172.31.0.0/16',
     remote_subnets: ['172.31.0.0/16'],
-    remote_public_key: 'N/A (IKEv2 Pre-shared)',
-    route_mode: 'policy_based',
-    status: 'connected',
+    status: 'Connected',
     latency_ms: 28,
-    transfer_rx: '412.3 MB',
-    transfer_tx: '218.1 MB',
     enabled: true
   }
 ])
 
-// Peer List Initial Fallback Mock & Store
 const peersList = ref([
   {
     id: 'wg-01',
@@ -962,11 +778,8 @@ const peersList = ref([
     public_key: 'xK9vR8kM2tQ0pW4jL8nB7yC5zX1mN3vK6rT9uP2wE4=',
     status: 'active',
     is_active: true,
-    endpoint: '198.51.100.45:51820',
-    latest_handshake: '12 seconds ago',
-    transfer_rx: 1845493760, // 1.84 GB
-    transfer_tx: 489230450,  // 489 MB
-    device_type: 'macOS'
+    transfer_rx: 1845493760,
+    transfer_tx: 489230450
   },
   {
     id: 'wg-02',
@@ -975,11 +788,8 @@ const peersList = ref([
     public_key: 'hP7qZ3mK9vR8tW2jL5nB1yC4zX0mN8vK3rT6uP9wQ1=',
     status: 'active',
     is_active: true,
-    endpoint: '203.0.113.88:41200',
-    latest_handshake: '1 minute ago',
-    transfer_rx: 924857600,  // 924 MB
-    transfer_tx: 154230450,  // 154 MB
-    device_type: 'Linux'
+    transfer_rx: 924857600,
+    transfer_tx: 154230450
   },
   {
     id: 'wg-03',
@@ -988,379 +798,381 @@ const peersList = ref([
     public_key: 'yM4vK9tQ0pW2jL7nB5yC1zX8mN3vK6rT0uP4wE9rT2=',
     status: 'inactive',
     is_active: false,
-    endpoint: '192.0.2.14:51820',
-    latest_handshake: '3 days ago',
-    transfer_rx: 34500000,   // 34.5 MB
-    transfer_tx: 12000000,   // 12 MB
-    device_type: 'Server'
-  },
-  {
-    id: 'wg-04',
-    client_name: 'executive-ipad-pro',
-    virtual_ip: '10.8.0.5/32',
-    public_key: 'bT8vR1kM5tQ9pW0jL3nB6yC2zX7mN4vK1rT8uP5wX7=',
-    status: 'active',
-    is_active: true,
-    endpoint: '198.51.100.102:60234',
-    latest_handshake: '4 minutes ago',
-    transfer_rx: 524288000,  // 524 MB
-    transfer_tx: 89128960,   // 89.1 MB
-    device_type: 'iOS'
+    transfer_rx: 34500000,
+    transfer_tx: 12000000
   }
 ])
 
-const formData = reactive({
+const tabs = computed(() => [
+  { id: 'all_tunnels', label: 'All Site-to-Site Tunnels', icon: TunnelIcon, count: tunnelsList.value.length },
+  { id: 'ssl', label: 'SSL VPN (Client & Server)', icon: SslIcon, count: tunnelsList.value.filter(t => (t.type || t.tunnel_type)?.includes('ssl')).length },
+  { id: 'ipsec', label: 'IPsec / IKEv2 Gateway', icon: IpsecIcon, count: tunnelsList.value.filter(t => (t.type || t.tunnel_type) === 'ipsec').length },
+  { id: 'amazon_vpc', label: 'Amazon VPC Interconnect', icon: AwsIcon, count: tunnelsList.value.filter(t => (t.type || t.tunnel_type) === 'amazon_vpc').length },
+  { id: 'remote_users', label: 'Remote Access Users (WireGuard)', icon: UsersIcon, count: peersList.value.length }
+])
+
+const activeTabLabel = computed(() => {
+  if (activeTab.value === 'ssl') return 'SSL VPN Tunnel'
+  if (activeTab.value === 'ipsec') return 'IPsec Connection'
+  if (activeTab.value === 'amazon_vpc') return 'Amazon VPC Link'
+  if (activeTab.value === 'remote_users') return 'Remote User'
+  return 'Site-to-Site Tunnel'
+})
+
+const formTunnel = ref({
+  tunnel_name: '',
+  tunnel_type: 'ssl_client',
+  remote_endpoint: '',
+  remote_port: 1194,
+  protocol: 'UDP',
+  auth_mode: 'password',
+  username: '',
+  password: '',
+  local_networks_text: '192.168.1.0/24',
+  remote_subnets_text: '10.50.0.0/16',
+  local_virtual_ip: '10.250.0.2/30',
+  remote_public_key: '',
+  preshared_key: '',
+  auto_firewall_rule: true,
+  use_default_gateway: false,
+  aws_region: 'us-east-1',
+  aws_vpc_id: '',
+  comment: '',
+  enabled: true
+})
+
+const formUser = ref({
   client_name: '',
-  virtual_ip: '10.8.0.6/32',
-  dns: '10.8.0.1, 1.1.1.1',
-  allowed_ips: '0.0.0.0/0, ::/0',
-  server_endpoint: 'vpn.astaro-firewall.internal:51820',
-  server_public_key: 'SFOSxgsFirewallServerPublicKeyBase64WireGuard='
+  virtual_ip: '10.8.0.10/32',
+  device_type: 'macOS'
 })
 
-// -----------------------------------------------------------------------------
-// Computed Metrics & Filters
-// -----------------------------------------------------------------------------
-const activePeersCount = computed(() => {
-  return peersList.value.filter(p => p.status === 'active' || p.is_active).length
-})
-
-const inactivePeersCount = computed(() => {
-  return peersList.value.length - activePeersCount.value
-})
-
+const activePeersCount = computed(() => peersList.value.filter(p => p.status === 'active' || p.is_active).length)
 const aggregateTransferFormatted = computed(() => {
-  const total = peersList.value.reduce((sum, p) => sum + (p.transfer_rx || 0) + (p.transfer_tx || 0), 0)
+  const total = peersList.value.reduce((acc, p) => acc + (p.transfer_rx || 0) + (p.transfer_tx || 0), 0)
   return formatBytes(total)
+})
+
+const filteredTunnels = computed(() => {
+  let list = [...tunnelsList.value]
+
+  if (activeTab.value === 'ssl') {
+    list = list.filter(t => (t.type || t.tunnel_type)?.includes('ssl'))
+  } else if (activeTab.value === 'ipsec') {
+    list = list.filter(t => (t.type || t.tunnel_type) === 'ipsec')
+  } else if (activeTab.value === 'amazon_vpc') {
+    list = list.filter(t => (t.type || t.tunnel_type) === 'amazon_vpc')
+  }
+
+  if (statusFilter.value === 'ACTIVE') {
+    list = list.filter(t => t.enabled !== false)
+  } else if (statusFilter.value === 'INACTIVE') {
+    list = list.filter(t => t.enabled === false)
+  }
+
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(t =>
+      (t.name && t.name.toLowerCase().includes(q)) ||
+      (t.tunnel_name && t.tunnel_name.toLowerCase().includes(q)) ||
+      (t.remote_gateway && t.remote_gateway.toLowerCase().includes(q)) ||
+      (t.remote_endpoint && t.remote_endpoint.toLowerCase().includes(q)) ||
+      (t.remote_network && t.remote_network.toLowerCase().includes(q))
+    )
+  }
+
+  return list
 })
 
 const filteredPeers = computed(() => {
-  let list = peersList.value
+  let list = [...peersList.value]
+  if (statusFilter.value === 'ACTIVE') list = list.filter(p => p.status === 'active' || p.is_active)
+  else if (statusFilter.value === 'INACTIVE') list = list.filter(p => p.status !== 'active' && !p.is_active)
 
-  if (statusFilter.value === 'ACTIVE') {
-    list = list.filter(p => p.status === 'active' || p.is_active)
-  } else if (statusFilter.value === 'INACTIVE') {
-    list = list.filter(p => p.status !== 'active' && !p.is_active)
-  }
-
-  if (!searchQuery.value.trim()) {
-    return list
-  }
-
-  const q = searchQuery.value.toLowerCase().trim()
-  return list.filter(p => {
-    return (
-      (p.client_name && p.client_name.toLowerCase().includes(q)) ||
-      (p.name && p.name.toLowerCase().includes(q)) ||
-      (p.virtual_ip && p.virtual_ip.toLowerCase().includes(q)) ||
-      (p.assigned_ip && p.assigned_ip.toLowerCase().includes(q)) ||
-      (p.public_key && p.public_key.toLowerCase().includes(q)) ||
-      (p.endpoint && p.endpoint.toLowerCase().includes(q))
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(p =>
+      p.client_name.toLowerCase().includes(q) ||
+      p.virtual_ip.toLowerCase().includes(q)
     )
-  })
+  }
+  return list
 })
 
-// -----------------------------------------------------------------------------
-// Helpers & Formatters
-// -----------------------------------------------------------------------------
-const formatPublicKey = (key) => {
-  if (!key) return '—'
-  if (key.length <= 16) return key
-  return `${key.substring(0, 8)}...${key.substring(key.length - 8)}`
-}
+const currentFilteredItemsCount = computed(() => {
+  return activeTab.value === 'remote_users' ? filteredPeers.value.length : filteredTunnels.value.length
+})
 
-const formatBytes = (bytes, decimals = 1) => {
-  if (bytes === 0 || !bytes) return '0 B'
+const formatBytes = (bytes) => {
+  if (!bytes || bytes === 0) return '0 B'
   const k = 1024
-  const dm = decimals < 0 ? 0 : decimals
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
 
-const formatBandwidth = (rx = 0, tx = 0) => {
-  const total = (Number(rx) || 0) + (Number(tx) || 0)
-  return formatBytes(total)
+const formatTunnelType = (type) => {
+  if (!type) return 'TUNNEL'
+  if (type === 'ssl_client') return 'SSL Client Mode'
+  if (type === 'ssl_server') return 'SSL Server Mode'
+  if (type === 'amazon_vpc') return 'AWS Cloud VPC'
+  if (type === 'ipsec') return 'IPsec IKEv2'
+  if (type === 'wireguard') return 'WireGuard'
+  return type.toUpperCase()
 }
 
-const showToast = (title, message, type = 'info') => {
-  const id = Date.now() + Math.random().toString(36).substring(2, 6)
-  toasts.value.push({ id, title, message, type })
-  setTimeout(() => {
-    dismissToast(id)
-  }, 4500)
+const getTunnelTypeBadgeClasses = (type) => {
+  if (type === 'ssl_client') return 'bg-blue-50 text-[#0072ce] border-blue-200'
+  if (type === 'ssl_server') return 'bg-cyan-50 text-cyan-800 border-cyan-200'
+  if (type === 'amazon_vpc') return 'bg-amber-50 text-amber-900 border-amber-200'
+  if (type === 'ipsec') return 'bg-indigo-50 text-indigo-800 border-indigo-200'
+  return 'bg-purple-50 text-purple-700 border-purple-200'
 }
 
-const dismissToast = (id) => {
-  const index = toasts.value.findIndex(t => t.id === id)
-  if (index !== -1) {
-    toasts.value.splice(index, 1)
-  }
-}
-
-const resetFilters = () => {
-  searchQuery.value = ''
-  statusFilter.value = 'ALL'
-}
-
-// Generate pseudo Base64 key for WireGuard representation
-const generateCryptoKey = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-  let res = ''
-  for (let i = 0; i < 43; i++) {
-    res += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return res + '='
-}
-
-// Suggest next available IP in 10.8.0.0/24 subnet
-const suggestNextIp = () => {
-  const usedIps = peersList.value.map(p => {
-    const ip = (p.virtual_ip || p.assigned_ip || '').split('/')[0]
-    const parts = ip.split('.')
-    return parts.length === 4 ? parseInt(parts[3], 10) : 0
-  }).filter(n => !isNaN(n) && n > 0)
-
-  let nextOctet = 2
-  while (usedIps.includes(nextOctet)) {
-    nextOctet++
-  }
-  formData.virtual_ip = `10.8.0.${nextOctet}/32`
-}
-
-// -----------------------------------------------------------------------------
-// Axios API Operations
-// -----------------------------------------------------------------------------
-const fetchPeers = async (manual = false) => {
+const fetchData = async (isManual = false) => {
   isLoading.value = true
   try {
-    if (!axiosInstance) await initAxios()
-    const res = await axiosInstance.get(props.peersEndpoint)
-    if (res.data) {
-      if (Array.isArray(res.data)) {
-        peersList.value = res.data
-      } else if (Array.isArray(res.data.peers)) {
-        peersList.value = res.data.peers
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      const [tunRes, peerRes] = await Promise.all([
+        axiosLib.get('/api/vpn/tunnels').catch(() => null),
+        axiosLib.get('/api/vpn/peers').catch(() => null)
+      ])
+      if (tunRes && tunRes.data && tunRes.data.tunnels) {
+        tunnelsList.value = tunRes.data.tunnels
+      }
+      if (peerRes && peerRes.data && peerRes.data.peers) {
+        peersList.value = peerRes.data.peers
       }
     }
-    lastSyncedTime.value = new Date().toLocaleTimeString()
-    if (manual) {
-      showToast('Peers Refreshed', 'WireGuard peer matrix synchronized with kernel subsystem.', 'success')
-    }
-  } catch (err) {
-    console.warn('Axios fetchPeers fallback to local dataset:', err)
-    lastSyncedTime.value = new Date().toLocaleTimeString()
-    if (manual) {
-      showToast('Cache Loaded', 'Daemon offline. Loaded local active peer snapshot.', 'info')
-    }
+  } catch (e) {
+    console.error('Failed to fetch VPN data:', e)
   } finally {
     isLoading.value = false
   }
 }
 
-// -----------------------------------------------------------------------------
-// Modal & Profile Provisioning Methods
-// -----------------------------------------------------------------------------
+const openAddTunnelModal = (type = 'ssl_client') => {
+  editingTunnelId.value = null
+  let defaultType = 'ssl_client'
+  if (type === 'ssl') defaultType = 'ssl_client'
+  else if (type === 'ipsec') defaultType = 'ipsec'
+  else if (type === 'amazon_vpc') defaultType = 'amazon_vpc'
+
+  formTunnel.value = {
+    tunnel_name: '',
+    tunnel_type: defaultType,
+    remote_endpoint: '',
+    remote_port: 1194,
+    protocol: 'UDP',
+    auth_mode: 'password',
+    username: '',
+    password: '',
+    local_networks_text: '192.168.1.0/24',
+    remote_subnets_text: '10.50.0.0/16',
+    local_virtual_ip: '10.250.0.2/30',
+    remote_public_key: '',
+    preshared_key: '',
+    auto_firewall_rule: true,
+    use_default_gateway: false,
+    aws_region: 'us-east-1',
+    aws_vpc_id: '',
+    comment: '',
+    enabled: true
+  }
+  isTunnelModalOpen.value = true
+}
+
+const editTunnel = (tun) => {
+  editingTunnelId.value = tun.id || tun.name || tun.tunnel_name
+  formTunnel.value = {
+    tunnel_name: tun.name || tun.tunnel_name || '',
+    tunnel_type: tun.type || tun.tunnel_type || 'ssl_client',
+    remote_endpoint: tun.remote_gateway || tun.remote_endpoint || '',
+    remote_port: 1194,
+    protocol: 'UDP',
+    auth_mode: tun.auth_type || 'password',
+    username: '',
+    password: '',
+    local_networks_text: tun.local_network || tun.local_virtual_ip || '192.168.1.0/24',
+    remote_subnets_text: Array.isArray(tun.remote_subnets) ? tun.remote_subnets.join(', ') : (tun.remote_network || '10.50.0.0/16'),
+    local_virtual_ip: tun.local_virtual_ip || '10.250.0.2/30',
+    remote_public_key: tun.remote_public_key || '',
+    preshared_key: '',
+    auto_firewall_rule: true,
+    use_default_gateway: false,
+    aws_region: 'us-east-1',
+    aws_vpc_id: '',
+    comment: '',
+    enabled: tun.enabled !== false
+  }
+  isTunnelModalOpen.value = true
+}
+
+const cloneTunnel = (tun) => {
+  editingTunnelId.value = null
+  formTunnel.value = {
+    tunnel_name: `${tun.name || tun.tunnel_name} (Clone)`,
+    tunnel_type: tun.type || tun.tunnel_type || 'ssl_client',
+    remote_endpoint: tun.remote_gateway || tun.remote_endpoint || '',
+    remote_port: 1194,
+    protocol: 'UDP',
+    auth_mode: tun.auth_type || 'password',
+    username: '',
+    password: '',
+    local_networks_text: tun.local_network || tun.local_virtual_ip || '192.168.1.0/24',
+    remote_subnets_text: Array.isArray(tun.remote_subnets) ? tun.remote_subnets.join(', ') : (tun.remote_network || '10.50.0.0/16'),
+    local_virtual_ip: tun.local_virtual_ip || '10.250.0.2/30',
+    remote_public_key: tun.remote_public_key || '',
+    preshared_key: '',
+    auto_firewall_rule: true,
+    use_default_gateway: false,
+    aws_region: 'us-east-1',
+    aws_vpc_id: '',
+    comment: '',
+    enabled: true
+  }
+  isTunnelModalOpen.value = true
+}
+
+const saveTunnel = async () => {
+  const remoteSubnets = formTunnel.value.remote_subnets_text
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+
+  const localNetworks = formTunnel.value.local_networks_text
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+
+  const payload = {
+    tunnel_name: formTunnel.value.tunnel_name,
+    tunnel_type: formTunnel.value.tunnel_type,
+    remote_endpoint: formTunnel.value.remote_endpoint,
+    remote_port: formTunnel.value.remote_port,
+    protocol: formTunnel.value.protocol,
+    auth_mode: formTunnel.value.auth_mode,
+    username: formTunnel.value.username,
+    password: formTunnel.value.password,
+    local_virtual_ip: formTunnel.value.local_virtual_ip,
+    local_networks: localNetworks,
+    remote_subnets: remoteSubnets,
+    remote_public_key: formTunnel.value.remote_public_key,
+    preshared_key: formTunnel.value.preshared_key,
+    route_mode: formTunnel.value.use_default_gateway ? 'full_gateway' : 'split_tunnel',
+    auto_firewall_rule: formTunnel.value.auto_firewall_rule,
+    aws_region: formTunnel.value.aws_region,
+    aws_vpc_id: formTunnel.value.aws_vpc_id,
+    comment: formTunnel.value.comment,
+    enabled: formTunnel.value.enabled
+  }
+
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.post('/api/vpn/tunnels/save', payload)
+      await fetchData()
+    }
+  } catch (e) {
+    console.error('Failed to save tunnel:', e)
+  }
+
+  isTunnelModalOpen.value = false
+}
+
+const toggleTunnel = async (tun) => {
+  tun.enabled = !tun.enabled
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.post('/api/vpn/tunnels/save', {
+        tunnel_name: tun.name || tun.tunnel_name,
+        tunnel_type: tun.type || tun.tunnel_type,
+        remote_endpoint: tun.remote_gateway || tun.remote_endpoint,
+        local_virtual_ip: tun.local_network || tun.local_virtual_ip || '10.250.0.2/30',
+        remote_subnets: Array.isArray(tun.remote_subnets) ? tun.remote_subnets : [tun.remote_network || '10.0.0.0/16'],
+        enabled: tun.enabled
+      })
+    } catch (e) {
+      console.error(e)
+    }
+  }
+}
+
+const deleteTunnel = async (id) => {
+  if (!confirm(`Are you sure you want to delete VPN tunnel '${id}'?`)) return
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.delete(`/api/vpn/tunnels/${id}`)
+      await fetchData()
+    }
+  } catch (e) {
+    console.error('Failed to delete tunnel:', e)
+  }
+}
+
 const openAddUserModal = () => {
-  suggestNextIp()
-  isModalOpen.value = true
-  validationError.value = ''
-  generatedProfileBlock.value = ''
-  isConfigCopied.value = false
-}
-
-const closeModal = () => {
-  isModalOpen.value = false
-  validationError.value = ''
-}
-
-const resetModalForm = () => {
-  formData.client_name = ''
-  suggestNextIp()
-  generatedProfileBlock.value = ''
-  isConfigCopied.value = false
-  validationError.value = ''
-}
-
-const generateClientProfile = async () => {
-  validationError.value = ''
-
-  if (!formData.client_name.trim()) {
-    validationError.value = 'Client Name is required.'
-    return
+  formUser.value = {
+    client_name: '',
+    virtual_ip: `10.8.0.${peersList.value.length + 2}/32`,
+    device_type: 'macOS'
   }
+  isUserModalOpen.value = true
+}
 
-  if (!formData.virtual_ip.trim()) {
-    validationError.value = 'Assigned Virtual IP is required.'
-    return
+const saveRemoteUser = async () => {
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.post('/api/vpn/peers/create', {
+        client_name: formUser.value.client_name,
+        virtual_ip: formUser.value.virtual_ip
+      })
+      await fetchData()
+    }
+  } catch (e) {
+    console.error(e)
   }
+  isUserModalOpen.value = false
+}
 
-  isSubmitting.value = true
-
-  const clientPrivateKey = generateCryptoKey()
-  const clientPublicKey = generateCryptoKey()
-  const presharedKey = generateCryptoKey()
-  const serverPublicKey = formData.server_public_key || 'SFOSxgsFirewallServerPublicKeyBase64WireGuard='
-  const serverEndpoint = formData.server_endpoint || 'vpn.astaro-firewall.internal:51820'
-  const clientIp = formData.virtual_ip.includes('/') ? formData.virtual_ip : `${formData.virtual_ip}/32`
-  const dnsServers = formData.dns || '10.8.0.1, 1.1.1.1'
-  const allowedIps = formData.allowed_ips || '0.0.0.0/0, ::/0'
-
-  // Construct compiled WireGuard .conf block
-  const configText = `[Interface]
-# Client: ${formData.client_name.trim()}
-PrivateKey = ${clientPrivateKey}
-Address = ${clientIp}
-DNS = ${dnsServers}
+const downloadPeerConfig = (peer) => {
+  const confContent = `[Interface]
+PrivateKey = (ClientGeneratedPrivateKeyBase64==)
+Address = ${peer.virtual_ip}
+DNS = 1.1.1.1, 8.8.8.8
 
 [Peer]
-# Astaro-Next Corporate Gateway
-PublicKey = ${serverPublicKey}
-PresharedKey = ${presharedKey}
-Endpoint = ${serverEndpoint}
-AllowedIPs = ${allowedIps}
+PublicKey = SFOSxgsFirewallServerPublicKeyBase64WireGuard=
+Endpoint = vpn.astaro-gateway.internal:51820
+AllowedIPs = 0.0.0.0/0, ::/0
 PersistentKeepalive = 25`
 
-  generatedProfileBlock.value = configText
-
-  const newPeerPayload = {
-    client_name: formData.client_name.trim(),
-    virtual_ip: clientIp,
-    public_key: clientPublicKey,
-    preshared_key: presharedKey,
-    dns: dnsServers,
-    allowed_ips: allowedIps,
-    status: 'inactive',
-    is_active: false,
-    endpoint: 'Waiting for handshake',
-    latest_handshake: 'Never',
-    transfer_rx: 0,
-    transfer_tx: 0,
-    device_type: 'Remote Client'
-  }
-
-  try {
-    if (!axiosInstance) await initAxios()
-    const res = await axiosInstance.post(props.createEndpoint, newPeerPayload)
-    if (res.data && res.data.peer) {
-      peersList.value.unshift(res.data.peer)
-    } else {
-      peersList.value.unshift(newPeerPayload)
-    }
-    emit('peer-created', newPeerPayload)
-    showToast('Client Profile Generated', `WireGuard configuration provisioned for ${newPeerPayload.client_name}.`, 'success')
-  } catch (err) {
-    console.warn('Axios create peer error, applying locally:', err)
-    peersList.value.unshift(newPeerPayload)
-    emit('peer-created', newPeerPayload)
-    showToast('Client Profile Created (Local)', `WireGuard configuration created for ${newPeerPayload.client_name}.`, 'success')
-  } finally {
-    isSubmitting.value = false
-  }
-}
-
-// Quick Copy to Clipboard capability
-const copyConfigToClipboard = async () => {
-  if (!generatedProfileBlock.value) return
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(generatedProfileBlock.value)
-    } else {
-      const textarea = document.createElement('textarea')
-      textarea.value = generatedProfileBlock.value
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textarea)
-    }
-    isConfigCopied.value = true
-    showToast('Copied', 'WireGuard client configuration copied to clipboard!', 'info')
-    setTimeout(() => {
-      isConfigCopied.value = false
-    }, 3000)
-  } catch (err) {
-    showToast('Copy Failed', 'Please manually select and copy the text box.', 'error')
-  }
-}
-
-const copyTextToClipboard = async (text, label = 'Text') => {
-  if (!text) return
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(text)
-    } else {
-      const textarea = document.createElement('textarea')
-      textarea.value = text
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textarea)
-    }
-    showToast('Copied', `${label} copied to clipboard!`, 'info')
-  } catch (err) {
-    showToast('Copy Failed', 'Unable to copy text to clipboard.', 'error')
-  }
-}
-
-// Download WireGuard .conf file
-const downloadConfigFile = () => {
-  if (!generatedProfileBlock.value) return
-  const filename = `${(formData.client_name || 'wireguard-client').toLowerCase().replace(/[^a-z0-9-_]/g, '_')}.conf`
-  const blob = new Blob([generatedProfileBlock.value], { type: 'text/plain;charset=utf-8' })
+  const blob = new Blob([confContent], { type: 'text/plain;charset=utf-8' })
   const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${peer.client_name || 'astaro-vpn'}.conf`
+  a.click()
   URL.revokeObjectURL(url)
-  showToast('Downloaded', `Exported ${filename}`, 'success')
 }
 
-// View existing peer config
-const viewPeerConfig = (peer) => {
-  formData.client_name = peer.client_name || peer.name || 'Remote Client'
-  formData.virtual_ip = peer.virtual_ip || peer.assigned_ip || '10.8.0.2/32'
-  formData.dns = peer.dns || '10.8.0.1, 1.1.1.1'
-  formData.allowed_ips = peer.allowed_ips || '0.0.0.0/0, ::/0'
-
-  generatedProfileBlock.value = `[Interface]
-# Remote Client: ${formData.client_name}
-# Virtual IP: ${formData.virtual_ip}
-# Public Key: ${peer.public_key || 'N/A'}
-Address = ${formData.virtual_ip}
-DNS = ${formData.dns}
-
-[Peer]
-# Astaro-Next Corporate Remote Access Gateway
-PublicKey = ${formData.server_public_key}
-Endpoint = ${formData.server_endpoint}
-AllowedIPs = ${formData.allowed_ips}
-PersistentKeepalive = 25`
-
-  isModalOpen.value = true
-  isConfigCopied.value = false
-}
-
-// Delete / Revoke Peer
-const deletePeer = (peer) => {
-  const name = peer.client_name || peer.name || 'this client'
-  if (confirm(`Are you sure you want to revoke and delete remote VPN access for "${name}"?`)) {
-    const idx = peersList.value.findIndex(p => (p.public_key && p.public_key === peer.public_key) || (p.id && p.id === peer.id))
-    if (idx !== -1) {
-      peersList.value.splice(idx, 1)
-      emit('peer-deleted', peer)
-      showToast('Peer Revoked', `Remote access revoked for ${name}.`, 'warning')
+const deletePeer = async (id) => {
+  if (!confirm(`Are you sure you want to delete remote user client '${id}'?`)) return
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.delete(`/api/vpn/wireguard/peer/${id}`)
+      await fetchData()
     }
+  } catch (e) {
+    console.error(e)
   }
 }
 
-// -----------------------------------------------------------------------------
-// Lifecycle
-// -----------------------------------------------------------------------------
-onMounted(async () => {
-  await initAxios()
-  await fetchPeers()
+onMounted(() => {
+  fetchData()
 })
 </script>

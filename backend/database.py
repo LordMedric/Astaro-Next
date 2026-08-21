@@ -603,6 +603,47 @@ def db_save_vpn_tunnel(tun_dict: Dict[str, Any]) -> Dict[str, Any]:
             tun_dict.get("tx_bytes", "0 B"),
             tun_dict.get("rx_bytes", "0 B")
         ))
+        
+        # If auto_firewall_rule is requested, automatically provision bi-directional firewall rule
+        if tun_dict.get("auto_firewall_rule", True):
+            fw_id = f"fw-vpn-{tid}"
+            tun_name = tun_dict.get("name", "VPN Tunnel")
+            conn.execute("""
+                INSERT OR REPLACE INTO firewall_rules (id, name, src_zone, source_type, source_value, dest_zone, dest_type, dest_value, services, action, enabled, comment)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                fw_id,
+                f"VPN: {tun_name} (Auto-Permit)",
+                "VPN",
+                "Network",
+                tun_dict.get("remote_network", "Any"),
+                "LAN",
+                "Network",
+                tun_dict.get("local_network", "192.168.1.0/24"),
+                "Any",
+                "accept",
+                1,
+                f"Automatically generated rule for Site-to-Site VPN '{tun_name}'"
+            ))
+
+        # If remote_network is provided, also register policy route in routes table
+        rem_net = tun_dict.get("remote_network", "")
+        if rem_net and rem_net != "Any":
+            route_id = f"route-vpn-{tid}"
+            conn.execute("""
+                INSERT OR REPLACE INTO routes (id, destination, gateway, interface, metric, route_type, comment, enabled)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                route_id,
+                rem_net,
+                tun_dict.get("remote_gateway") or "VPN Gateway",
+                f"vpn-{tun_dict.get('type', 'tun').lower()}",
+                10,
+                "VPN Tunnel Route",
+                f"Dynamic route via {tun_dict.get('name', 'VPN')}",
+                1
+            ))
+
         conn.commit()
         return tun_dict
 
