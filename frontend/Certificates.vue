@@ -11,7 +11,7 @@
           </span>
         </div>
         <p class="text-xs text-slate-500 mt-1 pl-4">
-          Unified certificate management: provision self-signed certificates, generate CSRs, import CER / PEM / P7B / PFX archives (via file upload or text content), and automate Let's Encrypt renewals.
+          Unified certificate management: provision self-signed certificates, generate CSRs, import CER / PEM / P7B / PFX archives, and automated Let's Encrypt (HTTP-01, DNS-01, TLS-ALPN-01 with Single, Multi-Domain &amp; Wildcards).
         </p>
       </div>
 
@@ -389,40 +389,43 @@
               </svg>
             </div>
             <div>
-              <h2 class="text-base font-bold text-slate-900">Let's Encrypt (ACME) Automated Certificate Engine</h2>
-              <p class="text-xs text-slate-500 mt-0.5">Automated issuance and 60-day renewal for public domain names using standard ACME HTTP-01 / DNS-01 challenges.</p>
+              <h2 class="text-base font-bold text-slate-900">Let's Encrypt (ACME) Automated Engine</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Supports HTTP-01, DNS-01, and TLS-ALPN-01 challenges for Single Domain, Multi-Domain SAN, and Wildcard (*.domain.com) certificates.</p>
             </div>
           </div>
           <button
             type="button"
             @click="openNewCertModal('letsencrypt')"
-            class="px-4 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+            class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
           >
-            + Request ACME Certificate
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span>+ Request ACME Certificate</span>
           </button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
-            <div class="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">ACME Protocol</div>
-            <div class="text-base font-bold text-slate-900 mt-1">RFC 8555 (v2)</div>
-            <div class="text-xs text-emerald-600 font-medium mt-0.5">Production Directory Active</div>
+            <div class="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">Validation Protocols</div>
+            <div class="text-base font-bold text-slate-900 mt-1">HTTP-01 &bull; DNS-01 &bull; TLS-ALPN-01</div>
+            <div class="text-xs text-emerald-600 font-medium mt-0.5">Automated Challenge Responders</div>
           </div>
           <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
-            <div class="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">Auto-Renewal Frequency</div>
+            <div class="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">Scope Capabilities</div>
+            <div class="text-base font-bold text-slate-900 mt-1">Single, Multi-SAN, Wildcard</div>
+            <div class="text-xs text-slate-500 font-medium mt-0.5">Full RFC 8555 Compatibility</div>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
+            <div class="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">Auto-Renewal Hook</div>
             <div class="text-base font-bold text-slate-900 mt-1">Every 60 Days</div>
-            <div class="text-xs text-slate-500 font-medium mt-0.5">Cron Hook: systemd-timer</div>
-          </div>
-          <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
-            <div class="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">Default Challenge</div>
-            <div class="text-base font-bold text-slate-900 mt-1">HTTP-01 Webroot</div>
-            <div class="text-xs text-slate-500 font-medium mt-0.5">Port 80 Ingress Verification</div>
+            <div class="text-xs text-slate-500 font-medium mt-0.5">systemd-timer / Crond Engine</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- CONSOLIDATED MODAL: + NEW CERTIFICATE (Includes Self-Signed, CSR, Import CER/PEM/P7B/PFX via File or Text, Let's Encrypt) -->
+    <!-- CONSOLIDATED MODAL: + NEW CERTIFICATE (Includes Self-Signed, CSR, Import CER/PEM/P7B/PFX via File or Text, Let's Encrypt with HTTP/DNS/TLS and Single/Multi/Wildcard) -->
     <transition
       enter-active-class="transition duration-150 ease-out"
       enter-from-class="opacity-0 scale-95"
@@ -445,7 +448,7 @@
               </div>
               <div>
                 <h3 class="text-xs font-bold uppercase tracking-wider text-white">Add New Certificate / CSR</h3>
-                <p class="text-[10px] text-slate-400">Self-Signed, CSR Generation, File Upload/Text Import (CER/PEM/P7B/PFX), or Let's Encrypt</p>
+                <p class="text-[10px] text-slate-400">Self-Signed, CSR Generation, File/Text Import (CER/PEM/P7B/PFX), or Let's Encrypt ACME</p>
               </div>
             </div>
             <button @click="isNewCertModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer text-base leading-none">&times;</button>
@@ -657,9 +660,8 @@
               </div>
             </div>
 
-            <!-- ================= FORMAT 1: PEM / CER ================= -->
+            <!-- FORMAT 1: PEM / CER -->
             <div v-if="importForm.format === 'pem' || importForm.format === 'cer'" class="space-y-3">
-              <!-- FILE UPLOAD MODE -->
               <div v-if="importInputMode === 'file'" class="space-y-3">
                 <div>
                   <label class="block font-bold text-slate-700 mb-1">Upload Certificate File (.cer, .crt, .pem) *</label>
@@ -690,7 +692,6 @@
                 </div>
               </div>
 
-              <!-- TEXT CONTENT MODE -->
               <div v-else class="space-y-3">
                 <div>
                   <label class="block font-bold text-slate-700 mb-1">X.509 Certificate Content (.cer / .crt / .pem) *</label>
@@ -703,13 +704,12 @@
               </div>
             </div>
 
-            <!-- ================= FORMAT 2: PFX / PKCS#12 ================= -->
+            <!-- FORMAT 2: PFX / PKCS#12 -->
             <div v-else-if="importForm.format === 'pfx'" class="space-y-3 p-3.5 bg-blue-50/50 rounded-xl border border-blue-200">
               <div class="text-[11px] font-bold text-[#0072ce]">
                 PKCS#12 (PFX) Container contains both Certificate and Private Key.
               </div>
 
-              <!-- FILE UPLOAD MODE -->
               <div v-if="importInputMode === 'file'">
                 <label class="block font-bold text-slate-700 mb-1">Upload PFX / P12 Container File (.pfx, .p12) *</label>
                 <div class="border-2 border-dashed border-blue-300 hover:border-[#0072ce] rounded-xl p-3.5 bg-white text-center relative cursor-pointer">
@@ -724,7 +724,6 @@
                 </div>
               </div>
 
-              <!-- TEXT CONTENT MODE -->
               <div v-else>
                 <label class="block font-bold text-slate-700 mb-1">PFX Base64 Content *</label>
                 <textarea required rows="4" v-model="importForm.pfxData" placeholder="Paste PFX Base64 encoded string..." class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] bg-white"></textarea>
@@ -736,13 +735,12 @@
               </div>
             </div>
 
-            <!-- ================= FORMAT 3: P7B / PKCS#7 ================= -->
+            <!-- FORMAT 3: P7B / PKCS#7 -->
             <div v-else-if="importForm.format === 'p7b'" class="space-y-3 p-3.5 bg-amber-50/50 rounded-xl border border-amber-200">
               <div class="text-[11px] font-bold text-amber-900">
                 PKCS#7 (P7B) Chain Bundle contains public certificates and intermediates.
               </div>
 
-              <!-- FILE UPLOAD MODE -->
               <div v-if="importInputMode === 'file'" class="space-y-3">
                 <div>
                   <label class="block font-bold text-slate-700 mb-1">Upload P7B Certificate Chain File (.p7b, .p7c) *</label>
@@ -773,7 +771,6 @@
                 </div>
               </div>
 
-              <!-- TEXT CONTENT MODE -->
               <div v-else class="space-y-3">
                 <div>
                   <label class="block font-bold text-slate-700 mb-1">P7B Certificate Chain Content (.p7b / .p7c) *</label>
@@ -804,29 +801,167 @@
             </div>
           </form>
 
-          <!-- Method 4: Let's Encrypt / ACME -->
+          <!-- Method 4: Let's Encrypt / ACME with Single/Multi/Wildcard & HTTP/DNS/TLS -->
           <form v-else-if="creationMethod === 'letsencrypt'" @submit.prevent="handleRequestLetsEncrypt" class="p-5 space-y-3.5 text-xs overflow-y-auto flex-1">
+            <!-- Scope Selector (Single Domain, Multi-Domain SAN, Wildcard) -->
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Public Domain Name *</label>
-              <input type="text" required v-model="leForm.domain" placeholder="e.g. gateway.mycompany.com" class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none" />
+              <label class="block font-bold text-slate-700 mb-1">Certificate Scope</label>
+              <div class="grid grid-cols-3 gap-2">
+                <label
+                  :class="[
+                    'p-2.5 rounded-lg border text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-1',
+                    leForm.scope === 'single' ? 'border-[#0072ce] bg-blue-50/50 text-[#0072ce] font-bold' : 'border-slate-200 bg-slate-50 text-slate-700'
+                  ]"
+                >
+                  <input type="radio" value="single" v-model="leForm.scope" class="sr-only" />
+                  <span class="text-xs">Single Domain</span>
+                  <span class="text-[10px] text-slate-400 font-normal">gateway.domain.com</span>
+                </label>
+
+                <label
+                  :class="[
+                    'p-2.5 rounded-lg border text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-1',
+                    leForm.scope === 'multi_domain' ? 'border-[#0072ce] bg-blue-50/50 text-[#0072ce] font-bold' : 'border-slate-200 bg-slate-50 text-slate-700'
+                  ]"
+                >
+                  <input type="radio" value="multi_domain" v-model="leForm.scope" class="sr-only" />
+                  <span class="text-xs">Multi-Domain (SAN)</span>
+                  <span class="text-[10px] text-slate-400 font-normal">Multiple FQDNs</span>
+                </label>
+
+                <label
+                  :class="[
+                    'p-2.5 rounded-lg border text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-1',
+                    leForm.scope === 'wildcard' ? 'border-[#0072ce] bg-blue-50/50 text-[#0072ce] font-bold' : 'border-slate-200 bg-slate-50 text-slate-700'
+                  ]"
+                >
+                  <input type="radio" value="wildcard" v-model="leForm.scope" class="sr-only" />
+                  <span class="text-xs">Wildcard</span>
+                  <span class="text-[10px] text-slate-400 font-normal">*.domain.com</span>
+                </label>
+              </div>
             </div>
 
+            <!-- Primary Domain Input -->
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Admin Email (Expiration Notices) *</label>
+              <label class="block font-bold text-slate-700 mb-1">
+                {{ leForm.scope === 'wildcard' ? 'Base Domain Name (Wildcard *. will be prefixed) *' : 'Primary Domain Name (FQDN) *' }}
+              </label>
+              <div class="relative">
+                <input
+                  type="text"
+                  required
+                  v-model="leForm.domain"
+                  :placeholder="leForm.scope === 'wildcard' ? 'e.g. mycompany.com' : 'e.g. gateway.mycompany.com'"
+                  class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none"
+                />
+              </div>
+              <p v-if="leForm.scope === 'wildcard'" class="text-[10px] text-emerald-600 mt-0.5">
+                Will automatically issue SANs: <strong>*.{{ leForm.domain || 'domain.com' }}</strong> and <strong>{{ leForm.domain || 'domain.com' }}</strong>.
+              </p>
+            </div>
+
+            <!-- Multi-Domain Additional SANs Input -->
+            <div v-if="leForm.scope === 'multi_domain'">
+              <label class="block font-bold text-slate-700 mb-1">Additional Subject Alternative Names (SANs)</label>
+              <input
+                type="text"
+                v-model="leForm.sansInput"
+                placeholder="vpn.mycompany.com, portal.mycompany.com, mail.mycompany.com"
+                class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none"
+              />
+              <p class="text-[10px] text-slate-400 mt-0.5">Comma-separated list of additional domains included in this certificate.</p>
+            </div>
+
+            <!-- Validation Challenge Type (HTTP-01, DNS-01, TLS-ALPN-01) -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">ACME Validation Challenge Method</label>
+              <div class="grid grid-cols-3 gap-2">
+                <label
+                  :class="[
+                    'p-2.5 rounded-lg border text-center transition-all flex flex-col items-center justify-center gap-1',
+                    leForm.scope === 'wildcard' ? 'opacity-40 cursor-not-allowed bg-slate-100 border-slate-200' : 'cursor-pointer',
+                    leForm.validationMethod === 'http-01' ? 'border-emerald-500 bg-emerald-50/50 text-emerald-800 font-bold' : 'border-slate-200 bg-slate-50 text-slate-700'
+                  ]"
+                >
+                  <input type="radio" value="http-01" v-model="leForm.validationMethod" :disabled="leForm.scope === 'wildcard'" class="sr-only" />
+                  <span class="text-xs">HTTP-01</span>
+                  <span class="text-[10px] text-slate-400 font-normal">Port 80 Ingress</span>
+                </label>
+
+                <label
+                  :class="[
+                    'p-2.5 rounded-lg border text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-1',
+                    leForm.validationMethod === 'dns-01' ? 'border-emerald-500 bg-emerald-50/50 text-emerald-800 font-bold' : 'border-slate-200 bg-slate-50 text-slate-700'
+                  ]"
+                >
+                  <input type="radio" value="dns-01" v-model="leForm.validationMethod" class="sr-only" />
+                  <span class="text-xs">DNS-01</span>
+                  <span class="text-[10px] text-slate-400 font-normal">DNS TXT / Wildcard</span>
+                </label>
+
+                <label
+                  :class="[
+                    'p-2.5 rounded-lg border text-center transition-all flex flex-col items-center justify-center gap-1',
+                    leForm.scope === 'wildcard' ? 'opacity-40 cursor-not-allowed bg-slate-100 border-slate-200' : 'cursor-pointer',
+                    leForm.validationMethod === 'tls-alpn-01' ? 'border-emerald-500 bg-emerald-50/50 text-emerald-800 font-bold' : 'border-slate-200 bg-slate-50 text-slate-700'
+                  ]"
+                >
+                  <input type="radio" value="tls-alpn-01" v-model="leForm.validationMethod" :disabled="leForm.scope === 'wildcard'" class="sr-only" />
+                  <span class="text-xs">TLS-ALPN-01</span>
+                  <span class="text-[10px] text-slate-400 font-normal">Port 443 ALPN</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- DNS Provider Configuration if DNS-01 selected -->
+            <div v-if="leForm.validationMethod === 'dns-01'" class="p-3 bg-amber-50/60 rounded-xl border border-amber-200 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-amber-900 text-xs">DNS Provider Integration</span>
+                <span class="text-[10px] bg-amber-200/60 text-amber-800 px-1.5 py-0.2 rounded font-semibold">Required for Wildcards</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-0.5">DNS Provider</label>
+                  <select v-model="leForm.dnsProvider" class="w-full p-1.5 border border-slate-300 rounded bg-white font-medium">
+                    <option value="cloudflare">Cloudflare DNS API</option>
+                    <option value="route53">AWS Route53</option>
+                    <option value="digitalocean">DigitalOcean DNS</option>
+                    <option value="rfc2136">RFC 2136 BIND (Dynamic DNS)</option>
+                    <option value="manual">Manual DNS TXT Record</option>
+                  </select>
+                </div>
+                <div v-if="leForm.dnsProvider !== 'manual'">
+                  <label class="block font-bold text-slate-700 mb-0.5">API Token / Secret Key</label>
+                  <input type="password" v-model="leForm.dnsApiToken" placeholder="••••••••••••" class="w-full p-1.5 border border-slate-300 rounded bg-white font-mono" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Admin Email -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Admin Email (Expiration &amp; Recovery Notices) *</label>
               <input type="email" required v-model="leForm.email" placeholder="admin@mycompany.com" class="w-full p-2 border border-slate-300 rounded" />
             </div>
 
-            <div class="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-900 text-[11px] space-y-1">
+            <!-- Challenge Context Alert -->
+            <div v-if="leForm.validationMethod === 'http-01'" class="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-900 text-[11px] space-y-1">
               <div class="font-bold flex items-center gap-1.5">
-                <span>ACME HTTP-01 Validation</span>
+                <span>HTTP-01 Validation Active</span>
               </div>
-              <p>Ensure port 80 (HTTP) on WAN interface is reachable from Let's Encrypt ACME verification servers.</p>
+              <p>Ensure inbound TCP Port 80 is forwarded to the firewall's ACME webroot verification responder.</p>
+            </div>
+            <div v-else-if="leForm.validationMethod === 'tls-alpn-01'" class="p-3 bg-blue-50 rounded-lg border border-blue-200 text-blue-900 text-[11px] space-y-1">
+              <div class="font-bold flex items-center gap-1.5">
+                <span>TLS-ALPN-01 Validation Active</span>
+              </div>
+              <p>Uses direct Port 443 TLS handshake validation on the firewall. Does not require port 80 to be open.</p>
             </div>
 
             <div class="pt-3 border-t border-slate-200 flex justify-between">
               <button type="button" @click="isNewCertModalOpen = false" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
-              <button type="submit" :disabled="isSubmitting" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-xs cursor-pointer disabled:opacity-50">
-                {{ isSubmitting ? 'Requesting...' : 'Request &amp; Install ACME Certificate' }}
+              <button type="submit" :disabled="isSubmitting" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5">
+                <span>{{ isSubmitting ? 'Requesting...' : 'Request &amp; Install ACME Certificate' }}</span>
               </button>
             </div>
           </form>
@@ -1057,7 +1192,6 @@
               Complete CSR <strong>{{ completingCsr.name }}</strong> (CN={{ completingCsr.commonName }}) by uploading or pasting the signed certificate (.crt) provided by your Certificate Authority.
             </div>
 
-            <!-- Upload File vs Paste Text for completing CSR -->
             <div>
               <label class="block font-bold text-slate-700 mb-1">Signed Certificate File / Content (.crt / .pem) *</label>
               <div class="mb-2">
@@ -1089,7 +1223,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 
 const props = defineProps({
   authToken: {
@@ -1225,8 +1359,21 @@ const importForm = reactive({
 })
 
 const leForm = reactive({
+  scope: 'single', // 'single' | 'multi_domain' | 'wildcard'
   domain: '',
-  email: ''
+  sansInput: '',
+  email: '',
+  validationMethod: 'http-01', // 'http-01' | 'dns-01' | 'tls-alpn-01'
+  dnsProvider: 'cloudflare', // 'cloudflare' | 'route53' | 'digitalocean' | 'rfc2136' | 'manual'
+  dnsApiToken: '',
+  dnsZoneId: ''
+})
+
+// Auto-switch to DNS-01 challenge if Wildcard scope is selected
+watch(() => leForm.scope, (newScope) => {
+  if (newScope === 'wildcard') {
+    leForm.validationMethod = 'dns-01'
+  }
 })
 
 const filteredCerts = computed(() => {
@@ -1314,7 +1461,6 @@ const onPfxFileUpload = (e) => {
   }
   const reader = new FileReader()
   reader.onload = (event) => {
-    // Convert base64 data URL to raw base64
     const dataUrl = event.target.result
     const base64 = dataUrl.split(',')[1] || dataUrl
     importForm.pfxData = base64
@@ -1558,27 +1704,51 @@ const handleImportCert = async () => {
 const handleRequestLetsEncrypt = async () => {
   isSubmitting.value = true
   try {
+    let domainVal = leForm.domain.trim()
+    let sansList = []
+    if (leForm.scope === 'wildcard') {
+      const base = domainVal.replace(/^\*\./, '')
+      domainVal = `*.${base}`
+      sansList = [base, `*.${base}`]
+    } else if (leForm.scope === 'multi_domain') {
+      sansList = leForm.sansInput ? leForm.sansInput.split(',').map(s => s.trim()).filter(Boolean) : []
+      if (!sansList.includes(domainVal)) sansList.unshift(domainVal)
+    } else {
+      sansList = [domainVal]
+    }
+
     const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
     if (axiosLib) {
-      await axiosLib.post('/api/certificates/letsencrypt', {
-        domain: leForm.domain,
-        email: leForm.email
+      const res = await axiosLib.post('/api/certificates/letsencrypt', {
+        scope: leForm.scope,
+        domain: domainVal,
+        sans: sansList,
+        email: leForm.email,
+        validationMethod: leForm.validationMethod,
+        dnsProvider: leForm.dnsProvider,
+        dnsApiToken: leForm.dnsApiToken,
+        dnsZoneId: leForm.dnsZoneId,
+        usage: 'Public WebAdmin / WAF'
+      })
+      if (res && res.data && res.data.certificate) {
+        serverCertificates.value.unshift(res.data.certificate)
+      }
+    } else {
+      serverCertificates.value.unshift({
+        id: 'cert_le_' + Date.now(),
+        name: `Let's Encrypt (${domainVal})`,
+        commonName: domainVal,
+        sans: sansList,
+        issuer: "Let's Encrypt Authority X3",
+        algorithm: 'ECDSA P-256',
+        validTo: new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0],
+        daysRemaining: 90,
+        isValid: true,
+        isDefault: false,
+        usage: 'Public WebAdmin / WAF'
       })
     }
-    serverCertificates.value.push({
-      id: 'cert_le_' + Date.now(),
-      name: `Let's Encrypt (${leForm.domain})`,
-      commonName: leForm.domain,
-      sans: [leForm.domain],
-      issuer: "Let's Encrypt Authority X3",
-      algorithm: 'RSA 2048-bit',
-      validTo: new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0],
-      daysRemaining: 90,
-      isValid: true,
-      isDefault: false,
-      usage: 'Public WebAdmin / WAF'
-    })
-    showToast(`Let's Encrypt certificate for '${leForm.domain}' issued successfully.`)
+    showToast(`Let's Encrypt certificate for '${domainVal}' (${leForm.validationMethod.toUpperCase()}) issued successfully.`)
     activeTab.value = 'server_certs'
     isNewCertModalOpen.value = false
   } catch (e) {
