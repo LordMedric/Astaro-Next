@@ -581,6 +581,9 @@ class WafRuleConfig(BaseModel):
     real_server_ip: str = Field(..., description="Internal backend upstream target IP address, e.g. '10.0.0.45'")
     real_server_port: int = Field(default=80, ge=1, le=65535, description="Internal backend service port, e.g. 8080")
     enable_ssl: bool = Field(default=True, description="Enable HTTPS listener on Port 443 with TLS termination")
+    certificate_id: Optional[str] = Field(default="cert_webadmin_default", description="Installed certificate ID to bind to this virtual server")
+    certificate_name: Optional[str] = Field(default="Appliance Default SSL", description="Friendly certificate name")
+    enable_sni: bool = Field(default=True, description="Enable Server Name Indication (SNI) for multi-tenant SSL")
     enable_naxsi_waf: bool = Field(default=True, description="Toggle the NAXSI WAF core inspection engine")
 
 
@@ -2662,12 +2665,13 @@ def get_waf_rules(_: Optional[str] = Depends(verify_admin_auth)):
 @app.post("/api/waf/rules/save", tags=["Web Application Firewall (WAF)"])
 def save_waf_rule(config: WafRuleConfig, _: Optional[str] = Depends(verify_admin_auth)):
     """
-    Generates standard Nginx reverse-proxy virtual host blocks with embedded NAXSI protection flags,
-    validates syntax using 'nginx -t', persists to SQLite, and reloads the Nginx service.
+    Generates standard Nginx reverse-proxy virtual host blocks with SNI per-virtual-server certificate binding,
+    embedded NAXSI protection flags, validates syntax using 'nginx -t', persists to SQLite, and reloads Nginx.
     """
     try:
         # Clean hosted domain formatting
         domain = config.hosted_domain.replace("http://", "").replace("https://", "").strip("/")
+        cert_clean_id = (config.certificate_id or "cert_webadmin_default").replace("cert_", "")
 
         # Persist to SQLite
         if HAS_DB:
@@ -2677,17 +2681,32 @@ def save_waf_rule(config: WafRuleConfig, _: Optional[str] = Depends(verify_admin
                 "domain": domain,
                 "upstream": f"http://{config.real_server_ip}:{config.real_server_port}",
                 "ssl_enabled": 1 if config.enable_ssl else 0,
+                "certificate_id": config.certificate_id or "cert_webadmin_default",
+                "certificate_name": config.certificate_name or "Appliance Default SSL",
+                "enable_sni": 1 if config.enable_sni else 0,
                 "waf_mode": "blocking" if config.enable_naxsi_waf else "disabled",
                 "rule_packs": "SQLi, XSS, RCE, Protocol Violations"
             })
 
-        # Construct the enterprise proxy profile text
-        ssl_block = "    listen 443 ssl;\n" if config.enable_ssl else "    listen 80;\n"
+        # Construct the enterprise proxy profile text with SNI SSL Certificate binding
+        if config.enable_ssl:
+            ssl_block = (
+                f"    listen 443 ssl;\n"
+                f"    # SNI TLS Certificate Mapping\n"
+                f"    ssl_certificate /etc/astaro/ssl/{cert_clean_id}.crt;\n"
+                f"    ssl_certificate_key /etc/astaro/ssl/{cert_clean_id}.key;\n"
+                f"    ssl_protocols TLSv1.2 TLSv1.3;\n"
+                f"    ssl_ciphers HIGH:!aNULL:!MD5;\n"
+            )
+        else:
+            ssl_block = "    listen 80;\n"
+
         waf_block = "        # NAXSI WAF Rules Enabled\n        LearningMode;\n        SecRulesEnabled;\n" if config.enable_naxsi_waf else "        # WAF Core Engine Disabled;\n"
         
         nginx_config = (
             f"# =============================================================================\n"
             f"# Astaro-Next Web Application Firewall Profile: {config.rule_name}\n"
+            f"# Bound Certificate: {config.certificate_name} (SNI Enabled: {config.enable_sni})\n"
             f"# Generated automatically by astaro-middleware daemon\n"
             f"# =============================================================================\n\n"
             f"server {{\n"
@@ -2713,10 +2732,10 @@ def save_waf_rule(config: WafRuleConfig, _: Optional[str] = Depends(verify_admin
             if shutil.which("systemctl"):
                 run_system_command(["systemctl", "reload", "nginx"], check=False)
         
-        logger.info(f"Deployed WAF rule '{config.rule_name}' for domain '{domain}' -> {config.real_server_ip}:{config.real_server_port}")
+        logger.info(f"Deployed WAF rule '{config.rule_name}' for domain '{domain}' with SNI Certificate '{config.certificate_name}' -> {config.real_server_ip}:{config.real_server_port}")
         return {
             "status": "success",
-            "message": f"Web Application Rule '{config.rule_name}' successfully deployed.",
+            "message": f"Web Application Rule '{config.rule_name}' (SNI: {config.certificate_name}) successfully deployed.",
             "rule": config.model_dump(by_alias=True)
         }
     except SystemCommandError as err:

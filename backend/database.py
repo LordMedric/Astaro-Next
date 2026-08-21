@@ -148,11 +148,24 @@ def init_database():
                 domain TEXT NOT NULL,
                 upstream TEXT NOT NULL,
                 ssl_enabled INTEGER DEFAULT 1,
+                certificate_id TEXT DEFAULT 'cert_webadmin_default',
+                certificate_name TEXT DEFAULT 'Appliance Default SSL',
+                enable_sni INTEGER DEFAULT 1,
                 waf_mode TEXT DEFAULT 'blocking',
                 rule_packs TEXT DEFAULT 'SQLi, XSS, RCE, Protocol Violations',
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # Safe column migrations for existing databases
+        for col_def in [
+            "ALTER TABLE waf_rules ADD COLUMN certificate_id TEXT DEFAULT 'cert_webadmin_default'",
+            "ALTER TABLE waf_rules ADD COLUMN certificate_name TEXT DEFAULT 'Appliance Default SSL'",
+            "ALTER TABLE waf_rules ADD COLUMN enable_sni INTEGER DEFAULT 1"
+        ]:
+            try:
+                cursor.execute(col_def)
+            except sqlite3.OperationalError:
+                pass
 
         # 8. VPN Tunnels (Site-to-Site)
         cursor.execute("""
@@ -558,14 +571,17 @@ def db_save_waf_rule(rule_dict: Dict[str, Any]) -> Dict[str, Any]:
     with get_db_connection() as conn:
         rid = str(rule_dict.get("id") or f"waf-{rule_dict.get('name', 'unnamed')}")
         conn.execute("""
-            INSERT OR REPLACE INTO waf_rules (id, name, domain, upstream, ssl_enabled, waf_mode, rule_packs)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO waf_rules (id, name, domain, upstream, ssl_enabled, certificate_id, certificate_name, enable_sni, waf_mode, rule_packs)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             rid,
             rule_dict.get("name", "Unnamed App"),
             rule_dict.get("domain", "app.local"),
             rule_dict.get("upstream", "http://127.0.0.1:8080"),
             1 if rule_dict.get("ssl_enabled", True) else 0,
+            rule_dict.get("certificate_id", "cert_webadmin_default"),
+            rule_dict.get("certificate_name", "Appliance Default SSL"),
+            1 if rule_dict.get("enable_sni", True) else 0,
             rule_dict.get("waf_mode", "blocking"),
             rule_dict.get("rule_packs", "SQLi, XSS, RCE")
         ))

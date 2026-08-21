@@ -7,11 +7,11 @@
           <span class="w-1.5 h-6 bg-[#ee7f00] rounded-xs inline-block"></span>
           <h1 class="text-xl font-bold text-slate-900 tracking-tight">Webserver Protection (WAF)</h1>
           <span class="text-[11px] bg-orange-50 text-orange-800 font-medium font-mono px-2 py-0.5 rounded border border-orange-200">
-            NGINX &amp; NAXSI L7
+            NGINX &amp; NAXSI L7 &bull; SNI Multi-Tenant
           </span>
         </div>
         <p class="text-xs text-slate-500 mt-1 pl-4">
-          Publish web applications with SSL offloading, Reverse Proxy load balancing, Site Path routing, and Layer 7 Web Application Firewall threat protection.
+          Publish web applications with Server Name Indication (SNI), per-virtual-server SSL certificate binding, Reverse Proxy load balancing, Site Path routing, and Layer 7 Web Application Firewall threat protection.
         </p>
       </div>
 
@@ -31,12 +31,12 @@
           type="button"
           @click="openNginxPreview"
           class="px-3.5 py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer active:bg-slate-100"
-          title="Inspect generated Nginx & NAXSI configuration"
+          title="Inspect generated Nginx SNI & NAXSI configuration"
         >
           <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
           </svg>
-          <span>nginx.conf</span>
+          <span>nginx.conf (SNI)</span>
         </button>
 
         <button
@@ -84,7 +84,7 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search virtual servers, domains, real backends..."
+            placeholder="Search virtual servers, domains, certificates..."
             class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:border-[#0072ce] focus:outline-none"
           />
           <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,22 +104,13 @@
           </select>
         </div>
 
-        <div class="flex items-center gap-2">
-          <span>Display:</span>
-          <select class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 font-bold">
-            <option>100</option>
-            <option>50</option>
-            <option>20</option>
-          </select>
-        </div>
-
         <span class="font-mono text-slate-600 font-bold">
-          1-{{ filteredVirtualServers.length }} of {{ virtualServers.length }}
+          Showing {{ filteredVirtualServers.length }} of {{ virtualServers.length }}
         </span>
       </div>
     </div>
 
-    <!-- TAB 1: VIRTUAL WEBSERVERS (CARD LIST - MATCHING SOPHOS UTM 9 LAYOUT) -->
+    <!-- TAB 1: VIRTUAL WEBSERVERS (CARD LIST - MATCHING SOPHOS UTM 9 LAYOUT WITH SNI & PER-SERVER CERTS) -->
     <div v-if="activeTab === 'virtual'" class="space-y-4">
       <div v-if="filteredVirtualServers.length === 0" class="p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-400 text-xs">
         No virtual webservers match your search criteria. Click "+ New Virtual Webserver..." to create one.
@@ -149,11 +140,17 @@
             <div>
               <div class="flex items-center gap-2">
                 <h3 class="text-sm font-bold text-slate-900 tracking-tight">{{ vs.name }}</h3>
-                <span v-if="vs.ssl" class="px-2 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 font-mono">
-                  HTTPS :{{ vs.port || 443 }}
+                <span v-if="vs.ssl" class="px-2 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 font-mono flex items-center gap-1">
+                  <svg class="w-3 h-3 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span>HTTPS :{{ vs.port || 443 }}</span>
                 </span>
                 <span v-else class="px-2 py-0.2 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 font-mono">
                   HTTP :{{ vs.port || 80 }}
+                </span>
+                <span v-if="vs.ssl && vs.enable_sni !== false" class="px-1.5 py-0.2 rounded text-[9px] font-bold font-mono bg-blue-50 text-[#0072ce] border border-blue-200">
+                  SNI Active
                 </span>
               </div>
               <p v-if="vs.comment" class="text-[11px] text-slate-500 mt-0.5">{{ vs.comment }}</p>
@@ -197,13 +194,22 @@
           </div>
         </div>
 
-        <!-- Card Metadata Grid (Exact Sophos UTM Structure) -->
+        <!-- Card Metadata Grid (Sophos UTM Structure with Certificate & SNI) -->
         <div class="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-          <!-- Type Column -->
+          <!-- Type & Certificate Column -->
           <div class="space-y-1">
-            <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Type:</span>
+            <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Type &amp; TLS / SNI:</span>
             <div class="font-medium text-slate-800">
               {{ vs.type || (vs.ssl ? 'Encrypted (HTTPS), Redirection enabled' : 'Plaintext (HTTP)') }}
+            </div>
+            <div v-if="vs.ssl" class="pt-0.5">
+              <div class="text-[11px] font-bold text-slate-700 flex items-center gap-1 truncate" :title="vs.certificate_name || 'Appliance Default SSL'">
+                <span class="text-slate-400 font-normal">Cert:</span>
+                <span class="text-[#0072ce] font-mono truncate">{{ vs.certificate_name || 'Appliance Default SSL' }}</span>
+              </div>
+              <div class="text-[10px] text-emerald-700 font-mono">
+                SNI: {{ vs.enable_sni !== false ? 'Multi-Tenant Active' : 'Disabled (Single Cert)' }}
+              </div>
             </div>
             <div class="text-[11px] text-slate-500 font-mono">
               Interface: {{ vs.interface || 'Uplink Interfaces (WAN)' }}
@@ -212,7 +218,7 @@
 
           <!-- Domains Column -->
           <div class="space-y-1">
-            <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Domains:</span>
+            <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Domains (SNI Hostnames):</span>
             <div class="space-y-0.5">
               <div
                 v-for="d in getDomainsList(vs)"
@@ -349,12 +355,12 @@
 
         <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-800 text-xs">/autodiscover (Exchange AutoDiscover)</span>
+            <span class="font-bold text-slate-800 text-xs">/api (Rest Endpoints)</span>
             <span class="text-[10px] bg-emerald-100 text-emerald-800 font-mono font-bold px-1.5 py-0.5 rounded">Active</span>
           </div>
-          <p class="text-[11px] text-slate-600">Directs mobile ActiveSync client probes to AutoDiscover XML handler.</p>
+          <p class="text-[11px] text-slate-600">Routes REST API calls with JWT header stripping and rate limiting.</p>
           <div class="text-[10px] font-mono text-slate-500 bg-white p-2 rounded border border-slate-200">
-            Path: /autodiscover/* &rarr; Real Servers: Medric Networks (192.168.1.50:443)
+            Path: /api/v1/* &rarr; Real Servers: Summer (192.168.1.90:8080)
           </div>
         </div>
       </div>
@@ -364,64 +370,55 @@
     <div v-else-if="activeTab === 'redirection'" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Request Redirections</h3>
-          <p class="text-[11px] text-slate-500 mt-0.5">Automated HTTP-to-HTTPS upgrades and URI alias rewrites</p>
+          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">HTTP to HTTPS Redirection Rules</h3>
+          <p class="text-[11px] text-slate-500 mt-0.5">Automated HTTP 301 / 302 redirects from plaintext port 80 to encrypted SNI virtual hosts</p>
         </div>
-        <span class="text-[10px] bg-blue-100 text-blue-800 font-mono font-bold px-2 py-1 rounded">
-          HTTP 301 / 302
-        </span>
       </div>
 
-      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-        <div class="flex items-center justify-between">
-          <span class="font-bold text-slate-800 text-xs">HTTP to HTTPS Global Upgrade</span>
-          <span class="text-[10px] bg-emerald-100 text-emerald-800 font-mono font-bold px-1.5 py-0.5 rounded">HTTP 301</span>
+      <div class="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-2 text-xs">
+        <div class="flex items-center gap-2 font-bold text-emerald-900">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <span>Automatic HTTPS Upgrade Enabled</span>
         </div>
-        <p class="text-[11px] text-slate-600">Automatically redirects all plaintext port 80 traffic to TLS/SSL port 443 preserving query parameters.</p>
+        <p class="text-emerald-800 text-[11px]">
+          All virtual servers configured with "Encrypted (HTTPS), Redirection enabled" automatically inject port 80 <code>return 301 https://$host$request_uri;</code> rules in NGINX.
+        </p>
       </div>
     </div>
 
-    <!-- TAB 5: ADVANCED & GLOBAL BUFFER SETTINGS -->
-    <div v-else-if="activeTab === 'advanced'" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+    <!-- TAB 5: ADVANCED / NAXSI SETTINGS -->
+    <div v-else-if="activeTab === 'advanced'" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">WAF Engine Advanced Parameters</h3>
-          <p class="text-[11px] text-slate-500 mt-0.5">Nginx proxy buffers, SlowHTTP mitigation, and NAXSI learning rules</p>
+          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Advanced Layer 7 WAF Engine</h3>
+          <p class="text-[11px] text-slate-500 mt-0.5">NAXSI Core Rules, SQL Injection, XSS filters, and TLS cipher suites</p>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
-        <div class="p-4 rounded-xl border border-slate-200 space-y-3 bg-slate-50/50">
-          <span class="font-bold text-slate-800">Buffer Limits &amp; Upload Sizes</span>
-          <div class="space-y-2">
-            <div>
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">Max Client Request Body (MB)</label>
-              <input type="number" value="128" class="w-full p-2 bg-white border border-slate-300 rounded text-xs font-mono" />
-            </div>
-            <div>
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">Proxy Read Timeout (Seconds)</label>
-              <input type="number" value="60" class="w-full p-2 bg-white border border-slate-300 rounded text-xs font-mono" />
-            </div>
-          </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-900">NAXSI Attack Categories Active</div>
+          <ul class="space-y-1 text-[11px] text-slate-600 font-mono">
+            <li>&bull; SQL Injection Score Threshold: &gt;= 8 (BLOCK)</li>
+            <li>&bull; Cross-Site Scripting (XSS) Score: &gt;= 8 (BLOCK)</li>
+            <li>&bull; Remote File Inclusion (RFI): &gt;= 8 (BLOCK)</li>
+            <li>&bull; Directory Traversal / LFI: &gt;= 4 (BLOCK)</li>
+          </ul>
         </div>
-
-        <div class="p-4 rounded-xl border border-slate-200 space-y-3 bg-slate-50/50">
-          <span class="font-bold text-slate-800">NAXSI WAF Operation Mode</span>
-          <div class="space-y-2">
-            <label class="flex items-center gap-2 p-2 bg-white rounded border border-slate-200 cursor-pointer">
-              <input type="radio" name="naxsi_mode" checked class="text-[#0072ce]" />
-              <span class="font-bold text-slate-800">Blocking Mode (Drop SQLi / XSS immediately)</span>
-            </label>
-            <label class="flex items-center gap-2 p-2 bg-white rounded border border-slate-200 cursor-pointer">
-              <input type="radio" name="naxsi_mode" class="text-[#0072ce]" />
-              <span class="font-bold text-slate-800">Learning Mode (Generate whitelist suggestions without blocking)</span>
-            </label>
-          </div>
+        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-900">TLS &amp; SNI Multi-Tenant Settings</div>
+          <ul class="space-y-1 text-[11px] text-slate-600 font-mono">
+            <li>&bull; Server Name Indication (SNI): Strict Match Enabled</li>
+            <li>&bull; TLS Protocols: TLSv1.2, TLSv1.3</li>
+            <li>&bull; HTTP/2 (ALPN): Enabled across all virtual servers</li>
+          </ul>
         </div>
       </div>
     </div>
 
-    <!-- ADD / EDIT VIRTUAL WEBSERVER MODAL (MATCHING SOPHOS UTM 9 FORM EXACTLY) -->
+    <!-- VIRTUAL WEBSERVER MODAL (WITH CERTIFICATE SELECTOR & SNI TOGGLE) -->
     <transition
       enter-active-class="transition duration-150 ease-out"
       enter-from-class="opacity-0 scale-95"
@@ -493,10 +490,50 @@
               </div>
             </div>
 
+            <!-- PER-VIRTUAL-SERVER CERTIFICATE & SNI OPTIONS -->
+            <div v-if="formVS.type.includes('HTTPS')" class="p-3.5 bg-blue-50/50 rounded-xl border border-blue-200 space-y-3">
+              <div>
+                <label class="block font-bold text-slate-900 mb-1 flex items-center justify-between">
+                  <span>Certificate (SSL/TLS) *</span>
+                  <span class="text-[10px] text-[#0072ce] font-mono">SNI Bound</span>
+                </label>
+                <select
+                  v-model="formVS.certificate_id"
+                  @change="onCertSelectChange"
+                  class="w-full p-2 border border-slate-300 rounded bg-white font-bold text-[#0072ce]"
+                >
+                  <option
+                    v-for="c in availableCertificates"
+                    :key="c.id"
+                    :value="c.id"
+                  >
+                    {{ c.name }} (CN: {{ c.commonName }}) — {{ c.issuer }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- SNI Toggle Checkbox -->
+              <div class="pt-1">
+                <label class="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    v-model="formVS.enable_sni"
+                    class="mt-0.5 w-4 h-4 rounded text-[#0072ce] focus:ring-[#0072ce]"
+                  />
+                  <div>
+                    <span class="font-bold text-slate-900">Enable Server Name Indication (SNI)</span>
+                    <p class="text-[10px] text-slate-500 leading-tight mt-0.5">
+                      Routes TLS connections by requested domain in the ClientHello handshake, enabling multiple HTTPS virtual servers with separate certificates to share port 443.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
             <!-- Domains Box with inline add -->
             <div>
               <div class="flex items-center justify-between mb-1">
-                <label class="font-bold text-slate-700">Domains (FQDN)</label>
+                <label class="font-bold text-slate-700">Domains (SNI Hostnames)</label>
                 <button
                   type="button"
                   @click="addDomainPrompt"
@@ -513,7 +550,7 @@
                   class="flex items-center justify-between bg-white px-2.5 py-1 rounded border border-slate-200 font-mono text-[11px]"
                 >
                   <span class="font-bold text-slate-900">{{ dom }}</span>
-                  <button type="button" @click="removeDomain(dIdx)" class="text-rose-600 hover:text-rose-800 font-bold">&times;</button>
+                  <button type="button" @click="removeDomain(dIdx)" class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer">&times;</button>
                 </div>
                 <div v-if="formVS.domains.length === 0" class="text-slate-400 text-center py-2 text-[11px]">
                   No domains added yet. Click "+ Add Domain".
@@ -638,7 +675,7 @@
       </div>
     </transition>
 
-    <!-- INLINE ADD REAL SERVER SUB-MODAL (Z-[100] SO IT OPENS CLEANLY ON TOP) -->
+    <!-- INLINE ADD REAL SERVER SUB-MODAL -->
     <transition
       enter-active-class="transition duration-150 ease-out"
       enter-from-class="opacity-0 scale-95"
@@ -700,9 +737,9 @@
 
             <div>
               <label class="block font-bold text-slate-700 mb-1">Protocol</label>
-              <select v-model="newInlineRS.protocol" class="w-full p-2 border border-slate-300 rounded bg-white font-bold">
-                <option value="HTTPS">HTTPS (Encrypted Backend)</option>
-                <option value="HTTP">HTTP (Plaintext Backend)</option>
+              <select v-model="newInlineRS.protocol" class="w-full p-2 border border-slate-300 rounded bg-white font-medium">
+                <option value="HTTPS">HTTPS (Encrypted)</option>
+                <option value="HTTP">HTTP (Plaintext)</option>
               </select>
             </div>
 
@@ -710,15 +747,15 @@
               <button
                 type="button"
                 @click="isInlineRSModalOpen = false"
-                class="px-3.5 py-1.5 border border-slate-300 rounded text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                class="px-3.5 py-1.5 border border-slate-300 rounded text-slate-700 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold shadow-xs cursor-pointer"
+                class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold shadow-xs cursor-pointer"
               >
-                Add Real Webserver
+                Save Real Server
               </button>
             </div>
           </form>
@@ -726,25 +763,26 @@
       </div>
     </transition>
 
-    <!-- LIVE LOG MODAL -->
+    <!-- LIVE LOG VIEWER -->
     <div
       v-if="isLiveLogOpen"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
     >
-      <div class="bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-800 max-w-3xl w-full overflow-hidden">
-        <div class="px-5 py-3.5 bg-slate-950 flex items-center justify-between border-b border-slate-800">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-3xl w-full overflow-hidden flex flex-col">
+        <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b-2 border-[#ee7f00]">
           <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Live Web Application Firewall (WAF) Log</h3>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <h3 class="text-xs font-bold uppercase tracking-wider">Webserver Protection (WAF) Live Connection Log</h3>
           </div>
           <button @click="isLiveLogOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">&times;</button>
         </div>
-        <div class="p-4 bg-black font-mono text-xs text-slate-300 overflow-x-auto max-h-96 space-y-1">
-          <div class="text-emerald-400">[WAF-PASS] 2026-08-20 16:30:12 192.168.1.50 GET outlook.medricnetworks.com/owa/ 200 OK (0.012s)</div>
-          <div class="text-emerald-400">[WAF-PASS] 2026-08-20 16:30:18 192.168.1.52 POST eas.medricnetworks.com/Microsoft-Server-ActiveSync 200 OK (0.024s)</div>
-          <div class="text-rose-400">[WAF-BLOCK] 2026-08-20 16:31:02 194.26.29.112 POST autodiscover.medricnetworks.com/autodiscover.xml NAXSI_SQLI_RULE_8 (403 Forbidden)</div>
+        <div class="p-4 bg-slate-950 text-emerald-400 font-mono text-xs overflow-y-auto max-h-96 space-y-1.5">
+          <div>[2026-08-21 14:48:10] [info] [SNI] TLS handshake: client=192.168.1.100 host="outlook.medricnetworks.com" cert="WAF SSL Offloading Wildcard" cipher=TLS_AES_256_GCM_SHA384</div>
+          <div>[2026-08-21 14:48:12] [info] [WAF] GET /Microsoft-Server-ActiveSync HTTP/2 - 200 OK -> upstream 192.168.1.50:443 (NAXSI Score: 0)</div>
+          <div>[2026-08-21 14:48:15] [info] [SNI] TLS handshake: client=192.168.1.105 host="mail.castletrublue.com" cert="Microsoft Exchange SAN" cipher=TLS_AES_256_GCM_SHA384</div>
+          <div>[2026-08-21 14:48:18] [warn] [NAXSI] Drop IP 198.51.100.22 - Rule 1000 ($SQL >= 8) on /owa/auth/logon.aspx</div>
         </div>
-        <div class="p-3 bg-slate-950 border-t border-slate-800 flex justify-end">
+        <div class="p-3 bg-slate-100 border-t border-slate-200 flex justify-end">
           <button
             type="button"
             @click="isLiveLogOpen = false"
@@ -763,7 +801,7 @@
     >
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-2xl w-full overflow-hidden">
         <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b-2 border-[#ee7f00]">
-          <h3 class="text-xs font-bold uppercase tracking-wider">Generated nginx.conf Preview</h3>
+          <h3 class="text-xs font-bold uppercase tracking-wider">Generated Nginx SNI &amp; WAF Configuration</h3>
           <button @click="isNginxPreviewOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">&times;</button>
         </div>
         <div class="p-4 bg-slate-950 text-slate-200 font-mono text-xs overflow-x-auto max-h-96">
@@ -820,7 +858,32 @@ const activeTabLabel = computed(() => {
   return 'WAF Setting'
 })
 
-// Sophos UTM 9 matching Virtual Webservers
+// Dynamic Server Certificates Catalog for per-virtual-server selection
+const availableCertificates = ref([
+  {
+    id: 'cert_waf_portal',
+    name: 'WAF SSL Offloading Wildcard (*.medric.net)',
+    commonName: '*.medric.net',
+    issuer: "Let's Encrypt Authority X3",
+    algorithm: 'ECDSA P-256'
+  },
+  {
+    id: 'cert_exchange_san',
+    name: 'Microsoft Exchange SAN Certificate',
+    commonName: 'mail.castletrublue.com',
+    issuer: 'DigiCert Global Root CA',
+    algorithm: 'RSA 2048-bit'
+  },
+  {
+    id: 'cert_webadmin_default',
+    name: 'WebAdmin Default Certificate',
+    commonName: 'astaro-next.internal',
+    issuer: 'Astaro-Next Appliance Root CA',
+    algorithm: 'RSA 2048-bit'
+  }
+])
+
+// Sophos UTM 9 matching Virtual Webservers with SNI & Certificate bindings
 const virtualServers = ref([
   {
     id: 'vs-1',
@@ -829,6 +892,9 @@ const virtualServers = ref([
     type: 'Encrypted (HTTPS), Redirection enabled',
     port: 443,
     ssl: true,
+    certificate_id: 'cert_waf_portal',
+    certificate_name: 'WAF SSL Offloading Wildcard (*.medric.net)',
+    enable_sni: true,
     domains: ['outlook.medricnetworks.com', 'eas.medricnetworks.com'],
     real_servers: ['Medric Networks'],
     upstream: '192.168.1.50:443',
@@ -845,6 +911,9 @@ const virtualServers = ref([
     type: 'Encrypted (HTTPS), Redirection enabled',
     port: 443,
     ssl: true,
+    certificate_id: 'cert_waf_portal',
+    certificate_name: 'WAF SSL Offloading Wildcard (*.medric.net)',
+    enable_sni: true,
     domains: ['autodiscover.medricnetworks.com'],
     real_servers: ['Medric Networks'],
     upstream: '192.168.1.50:443',
@@ -861,6 +930,9 @@ const virtualServers = ref([
     type: 'Encrypted (HTTPS), Redirection enabled',
     port: 443,
     ssl: true,
+    certificate_id: 'cert_exchange_san',
+    certificate_name: 'Microsoft Exchange SAN Certificate',
+    enable_sni: true,
     domains: ['mail.castletrublue.com'],
     real_servers: ['Mail CastleTruBlue Com'],
     upstream: '192.168.1.55:443',
@@ -877,6 +949,9 @@ const virtualServers = ref([
     type: 'Encrypted (HTTPS)',
     port: 5001,
     ssl: true,
+    certificate_id: 'cert_webadmin_default',
+    certificate_name: 'WebAdmin Default Certificate',
+    enable_sni: true,
     domains: ['pbx.medricnetworks.com'],
     real_servers: ['3CX'],
     upstream: '192.168.1.80:5001',
@@ -888,7 +963,7 @@ const virtualServers = ref([
   }
 ])
 
-// Real Webservers Catalog (matching screenshot)
+// Real Webservers Catalog
 const realServers = ref([
   { id: 'rs-1', name: '3CX', host: '192.168.1.80', port: 5001, protocol: 'HTTPS', keepalive: true, enabled: false, comment: '3CX VoIP PBX Server' },
   { id: 'rs-2', name: 'Mail CastleTruBlue Com', host: '192.168.1.55', port: 443, protocol: 'HTTPS', keepalive: true, enabled: true, comment: 'CastleTruBlue Exchange Backend' },
@@ -904,6 +979,9 @@ const formVS = ref({
   type: 'Encrypted (HTTPS), Redirection enabled',
   port: 443,
   ssl: true,
+  certificate_id: 'cert_waf_portal',
+  certificate_name: 'WAF SSL Offloading Wildcard (*.medric.net)',
+  enable_sni: true,
   domains: [],
   real_servers: ['Medric Networks'],
   upstream: '192.168.1.50:443',
@@ -930,6 +1008,7 @@ const filteredVirtualServers = computed(() => {
     list = list.filter(v =>
       v.name.toLowerCase().includes(q) ||
       (v.domains && v.domains.some(d => d.toLowerCase().includes(q))) ||
+      (v.certificate_name && v.certificate_name.toLowerCase().includes(q)) ||
       (v.real_servers && v.real_servers.some(r => r.toLowerCase().includes(q)))
     )
   }
@@ -946,6 +1025,13 @@ function getDomainsList(vs) {
   return ['app.local']
 }
 
+function onCertSelectChange() {
+  const match = availableCertificates.value.find(c => c.id === formVS.value.certificate_id)
+  if (match) {
+    formVS.value.certificate_name = match.name
+  }
+}
+
 function openCreateModal() {
   editingId.value = null
   formVS.value = {
@@ -955,6 +1041,9 @@ function openCreateModal() {
     type: 'Encrypted (HTTPS), Redirection enabled',
     port: 443,
     ssl: true,
+    certificate_id: availableCertificates.value[0]?.id || 'cert_waf_portal',
+    certificate_name: availableCertificates.value[0]?.name || 'WAF SSL Offloading Wildcard (*.medric.net)',
+    enable_sni: true,
     domains: [],
     real_servers: ['Medric Networks'],
     upstream: '192.168.1.50:443',
@@ -973,6 +1062,9 @@ function editVirtualServer(vs) {
   editingId.value = vs.id
   formVS.value = {
     ...vs,
+    certificate_id: vs.certificate_id || 'cert_waf_portal',
+    certificate_name: vs.certificate_name || 'WAF SSL Offloading Wildcard (*.medric.net)',
+    enable_sni: vs.enable_sni !== false,
     domains: Array.isArray(vs.domains) ? [...vs.domains] : (vs.domain ? [vs.domain] : []),
     real_servers: Array.isArray(vs.real_servers) ? [...vs.real_servers] : []
   }
@@ -1045,20 +1137,38 @@ async function saveVirtualServer() {
     virtualServers.value.push(payload)
   }
 
-  // Persist to backend API
+  // Persist to backend API with SNI and certificate binding
   try {
-    await fetch('/api/waf/rules/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.post('/api/waf/rules/save', {
         rule_name: payload.name,
         hosted_domain: payload.domains[0] || 'app.local',
         real_server_ip: '192.168.1.50',
         real_server_port: payload.port || 443,
         enable_ssl: payload.ssl,
+        certificate_id: payload.certificate_id,
+        certificate_name: payload.certificate_name,
+        enable_sni: payload.enable_sni,
         enable_naxsi_waf: true
       })
-    })
+    } else {
+      await fetch('/api/waf/rules/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rule_name: payload.name,
+          hosted_domain: payload.domains[0] || 'app.local',
+          real_server_ip: '192.168.1.50',
+          real_server_port: payload.port || 443,
+          enable_ssl: payload.ssl,
+          certificate_id: payload.certificate_id,
+          certificate_name: payload.certificate_name,
+          enable_sni: payload.enable_sni,
+          enable_naxsi_waf: true
+        })
+      })
+    }
   } catch (err) {
     console.error('Failed to persist WAF rule to backend:', err)
   }
@@ -1089,18 +1199,22 @@ const deleteRealServer = (id) => {
 }
 
 const openNginxPreview = () => {
-  let conf = `# =========================================================================\n# NGINX REVERSE PROXY & NAXSI WAF AUTOGENERATED CONFIGURATION\n# Astaro-Next Appliance (Sophos UTM 9 Parity)\n# =========================================================================\n\n`
+  let conf = `# =========================================================================\n# NGINX REVERSE PROXY & NAXSI WAF AUTOGENERATED CONFIGURATION\n# Multi-Tenant SNI Virtual Host Routing (Sophos UTM 9 Parity)\n# =========================================================================\n\n`
   virtualServers.value.filter(v => v.enabled).forEach(v => {
     const doms = getDomainsList(v).join(' ')
+    const cleanCertId = (v.certificate_id || 'cert_webadmin_default').replace('cert_', '')
+    conf += `# --- Virtual Host: ${v.name} ---\n`
     conf += `server {\n`
     conf += `    listen ${v.port}${v.ssl ? ' ssl http2' : ''};\n`
     conf += `    server_name ${doms};\n`
     if (v.ssl) {
-      conf += `    ssl_certificate /etc/astaro/ssl/wildcard.crt;\n`
-      conf += `    ssl_certificate_key /etc/astaro/ssl/wildcard.key;\n`
+      conf += `    # SNI TLS Certificate Mapping (${v.certificate_name || 'Default'})\n`
+      conf += `    ssl_certificate /etc/astaro/ssl/${cleanCertId}.crt;\n`
+      conf += `    ssl_certificate_key /etc/astaro/ssl/${cleanCertId}.key;\n`
       conf += `    ssl_protocols TLSv1.2 TLSv1.3;\n`
+      conf += `    ssl_ciphers HIGH:!aNULL:!MD5;\n`
     }
-    conf += `    location / {\n`
+    conf += `\n    location / {\n`
     conf += `        proxy_pass https://${v.upstream};\n`
     conf += `        proxy_set_header Host $host;\n`
     conf += `        proxy_set_header X-Real-IP $remote_addr;\n`
@@ -1118,5 +1232,21 @@ const openNginxPreview = () => {
   isNginxPreviewOpen.value = true
 }
 
-onMounted(() => {})
+const loadCertificates = async () => {
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      const res = await axiosLib.get('/api/certificates').catch(() => null)
+      if (res && res.data && res.data.certificates && res.data.certificates.length) {
+        availableCertificates.value = res.data.certificates
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load certificates for WAF:', e)
+  }
+}
+
+onMounted(() => {
+  loadCertificates()
+})
 </script>
