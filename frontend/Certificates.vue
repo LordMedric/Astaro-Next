@@ -11,7 +11,7 @@
           </span>
         </div>
         <p class="text-xs text-slate-500 mt-1 pl-4">
-          Unified certificate management: provision self-signed certificates, generate CSRs, import CER / PEM / P7B / PFX archives, and automate Let's Encrypt renewals.
+          Unified certificate management: provision self-signed certificates, generate CSRs, import CER / PEM / P7B / PFX archives (via file upload or text content), and automate Let's Encrypt renewals.
         </p>
       </div>
 
@@ -422,7 +422,7 @@
       </div>
     </div>
 
-    <!-- CONSOLIDATED MODAL: + NEW CERTIFICATE (Includes Self-Signed, CSR, Import CER/PEM/P7B/PFX, Let's Encrypt) -->
+    <!-- CONSOLIDATED MODAL: + NEW CERTIFICATE (Includes Self-Signed, CSR, Import CER/PEM/P7B/PFX via File or Text, Let's Encrypt) -->
     <transition
       enter-active-class="transition duration-150 ease-out"
       enter-from-class="opacity-0 scale-95"
@@ -445,7 +445,7 @@
               </div>
               <div>
                 <h3 class="text-xs font-bold uppercase tracking-wider text-white">Add New Certificate / CSR</h3>
-                <p class="text-[10px] text-slate-400">Self-Signed, CSR Generation, File Import (CER/PEM/P7B/PFX), or Let's Encrypt</p>
+                <p class="text-[10px] text-slate-400">Self-Signed, CSR Generation, File Upload/Text Import (CER/PEM/P7B/PFX), or Let's Encrypt</p>
               </div>
             </div>
             <button @click="isNewCertModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer text-base leading-none">&times;</button>
@@ -481,7 +481,7 @@
                 creationMethod === 'import' ? 'bg-white text-[#0072ce] shadow-xs' : 'text-slate-600 hover:text-slate-900'
               ]"
             >
-              Import File
+              Import File/Text
             </button>
             <button
               type="button"
@@ -607,7 +607,7 @@
             </div>
           </form>
 
-          <!-- Method 3: Import File (CER, PEM, P7B, PFX) -->
+          <!-- Method 3: Import File/Text (CER, PEM, P7B, PFX) -->
           <form v-else-if="creationMethod === 'import'" @submit.prevent="handleImportCert" class="p-5 space-y-3.5 text-xs overflow-y-auto flex-1">
             <div class="grid grid-cols-2 gap-3">
               <div>
@@ -615,54 +615,174 @@
                 <input type="text" required v-model="importForm.name" placeholder="e.g. Wildcard-Cert-2026" class="w-full p-2 border border-slate-300 rounded" />
               </div>
               <div>
-                <label class="block font-bold text-slate-700 mb-1">Certificate Format Type</label>
+                <label class="block font-bold text-slate-700 mb-1">Certificate Format</label>
                 <select v-model="importForm.format" class="w-full p-2 border border-slate-300 rounded bg-white font-bold text-[#0072ce]">
-                  <option value="pem">PEM / CER (.pem, .crt, .cer - X.509 Text)</option>
-                  <option value="pfx">PKCS#12 / PFX (.pfx, .p12 - Encrypted Archive with Key)</option>
-                  <option value="p7b">PKCS#7 / P7B (.p7b, .p7c - Certificate Chain Bundle)</option>
+                  <option value="pem">PEM / CER (.pem, .crt, .cer)</option>
+                  <option value="pfx">PKCS#12 / PFX (.pfx, .p12)</option>
+                  <option value="p7b">PKCS#7 / P7B (.p7b, .p7c)</option>
                 </select>
               </div>
             </div>
 
-            <!-- PEM / CER Format Fields -->
-            <div v-if="importForm.format === 'pem' || importForm.format === 'cer'" class="space-y-3">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">X.509 Certificate Content (.cer / .crt / .pem) *</label>
-                <textarea required rows="4" v-model="importForm.certPem" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] focus:outline-none focus:border-[#0072ce]"></textarea>
-              </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Private Key (.key / .pem)</label>
-                <textarea rows="3" v-model="importForm.keyPem" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] focus:outline-none focus:border-[#0072ce]"></textarea>
+            <!-- Input Mode Switcher: Upload File(s) vs Paste Text Content -->
+            <div class="flex items-center justify-between p-1.5 bg-slate-100 rounded-lg border border-slate-200 text-xs">
+              <span class="font-bold text-slate-700 pl-1">Input Method:</span>
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  @click="importInputMode = 'file'"
+                  :class="[
+                    'px-3 py-1 rounded-md font-bold transition-all cursor-pointer flex items-center gap-1.5',
+                    importInputMode === 'file' ? 'bg-white text-[#0072ce] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  ]"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <span>Upload File(s)</span>
+                </button>
+                <button
+                  type="button"
+                  @click="importInputMode = 'text'"
+                  :class="[
+                    'px-3 py-1 rounded-md font-bold transition-all cursor-pointer flex items-center gap-1.5',
+                    importInputMode === 'text' ? 'bg-white text-[#0072ce] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  ]"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>Paste Text / Base64</span>
+                </button>
               </div>
             </div>
 
-            <!-- PFX / PKCS#12 Format Fields -->
+            <!-- ================= FORMAT 1: PEM / CER ================= -->
+            <div v-if="importForm.format === 'pem' || importForm.format === 'cer'" class="space-y-3">
+              <!-- FILE UPLOAD MODE -->
+              <div v-if="importInputMode === 'file'" class="space-y-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Upload Certificate File (.cer, .crt, .pem) *</label>
+                  <div class="border-2 border-dashed border-slate-300 hover:border-[#0072ce] rounded-xl p-3 bg-slate-50/60 text-center relative cursor-pointer">
+                    <input type="file" accept=".crt,.cer,.pem,.txt" @change="onCertFileUpload" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                    <div class="flex flex-col items-center justify-center gap-1">
+                      <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span v-if="uploadedCertFileName" class="font-bold text-[#0072ce] font-mono">{{ uploadedCertFileName }}</span>
+                      <span v-else class="text-slate-500 text-[11px]">Click or drag &amp; drop certificate (.cer / .crt / .pem)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Upload Private Key File (.key, .pem)</label>
+                  <div class="border-2 border-dashed border-slate-300 hover:border-[#0072ce] rounded-xl p-3 bg-slate-50/60 text-center relative cursor-pointer">
+                    <input type="file" accept=".key,.pem,.txt" @change="onKeyFileUpload" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                    <div class="flex flex-col items-center justify-center gap-1">
+                      <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                      </svg>
+                      <span v-if="uploadedKeyFileName" class="font-bold text-[#0072ce] font-mono">{{ uploadedKeyFileName }}</span>
+                      <span v-else class="text-slate-500 text-[11px]">Click or drag &amp; drop private key (.key)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TEXT CONTENT MODE -->
+              <div v-else class="space-y-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">X.509 Certificate Content (.cer / .crt / .pem) *</label>
+                  <textarea required rows="4" v-model="importForm.certPem" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] focus:outline-none focus:border-[#0072ce]"></textarea>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Private Key (.key / .pem)</label>
+                  <textarea rows="3" v-model="importForm.keyPem" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] focus:outline-none focus:border-[#0072ce]"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- ================= FORMAT 2: PFX / PKCS#12 ================= -->
             <div v-else-if="importForm.format === 'pfx'" class="space-y-3 p-3.5 bg-blue-50/50 rounded-xl border border-blue-200">
               <div class="text-[11px] font-bold text-[#0072ce]">
                 PKCS#12 (PFX) Container contains both Certificate and Private Key.
               </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">PFX Base64 / File Content *</label>
-                <textarea required rows="4" v-model="importForm.pfxData" placeholder="Paste PFX Base64 encoded string or upload container file..." class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] bg-white"></textarea>
+
+              <!-- FILE UPLOAD MODE -->
+              <div v-if="importInputMode === 'file'">
+                <label class="block font-bold text-slate-700 mb-1">Upload PFX / P12 Container File (.pfx, .p12) *</label>
+                <div class="border-2 border-dashed border-blue-300 hover:border-[#0072ce] rounded-xl p-3.5 bg-white text-center relative cursor-pointer">
+                  <input type="file" accept=".pfx,.p12" @change="onPfxFileUpload" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                  <div class="flex flex-col items-center justify-center gap-1">
+                    <svg class="w-7 h-7 text-[#0072ce]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span v-if="uploadedPfxFileName" class="font-bold text-slate-900 font-mono">{{ uploadedPfxFileName }}</span>
+                    <span v-else class="text-slate-500 text-[11px]">Click or drag &amp; drop container file (.pfx / .p12)</span>
+                  </div>
+                </div>
               </div>
+
+              <!-- TEXT CONTENT MODE -->
+              <div v-else>
+                <label class="block font-bold text-slate-700 mb-1">PFX Base64 Content *</label>
+                <textarea required rows="4" v-model="importForm.pfxData" placeholder="Paste PFX Base64 encoded string..." class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] bg-white"></textarea>
+              </div>
+
               <div>
                 <label class="block font-bold text-slate-700 mb-1">PFX Container Passphrase / Password *</label>
                 <input type="password" required v-model="importForm.passphrase" placeholder="••••••••••••" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
               </div>
             </div>
 
-            <!-- P7B / PKCS#7 Format Fields -->
+            <!-- ================= FORMAT 3: P7B / PKCS#7 ================= -->
             <div v-else-if="importForm.format === 'p7b'" class="space-y-3 p-3.5 bg-amber-50/50 rounded-xl border border-amber-200">
               <div class="text-[11px] font-bold text-amber-900">
                 PKCS#7 (P7B) Chain Bundle contains public certificates and intermediates.
               </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">P7B Certificate Chain Content (.p7b / .p7c) *</label>
-                <textarea required rows="4" v-model="importForm.p7bData" placeholder="-----BEGIN PKCS7-----&#10;...&#10;-----END PKCS7-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] bg-white"></textarea>
+
+              <!-- FILE UPLOAD MODE -->
+              <div v-if="importInputMode === 'file'" class="space-y-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Upload P7B Certificate Chain File (.p7b, .p7c) *</label>
+                  <div class="border-2 border-dashed border-amber-300 hover:border-amber-500 rounded-xl p-3 bg-white text-center relative cursor-pointer">
+                    <input type="file" accept=".p7b,.p7c,.txt" @change="onP7bFileUpload" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                    <div class="flex flex-col items-center justify-center gap-1">
+                      <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                      <span v-if="uploadedP7bFileName" class="font-bold text-slate-900 font-mono">{{ uploadedP7bFileName }}</span>
+                      <span v-else class="text-slate-500 text-[11px]">Click or drag &amp; drop P7B chain file (.p7b / .p7c)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Upload Matching Private Key (.key) *</label>
+                  <div class="border-2 border-dashed border-amber-300 hover:border-amber-500 rounded-xl p-3 bg-white text-center relative cursor-pointer">
+                    <input type="file" accept=".key,.pem,.txt" @change="onKeyFileUpload" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                    <div class="flex flex-col items-center justify-center gap-1">
+                      <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                      </svg>
+                      <span v-if="uploadedKeyFileName" class="font-bold text-slate-900 font-mono">{{ uploadedKeyFileName }}</span>
+                      <span v-else class="text-slate-500 text-[11px]">Click or drag &amp; drop private key (.key)</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Matching Private Key (.key) *</label>
-                <textarea required rows="3" v-model="importForm.keyPem" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] bg-white"></textarea>
+
+              <!-- TEXT CONTENT MODE -->
+              <div v-else class="space-y-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">P7B Certificate Chain Content (.p7b / .p7c) *</label>
+                  <textarea required rows="4" v-model="importForm.p7bData" placeholder="-----BEGIN PKCS7-----&#10;...&#10;-----END PKCS7-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] bg-white"></textarea>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Matching Private Key (.key) *</label>
+                  <textarea required rows="3" v-model="importForm.keyPem" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[10px] bg-white"></textarea>
+                </div>
               </div>
             </div>
 
@@ -934,12 +1054,16 @@
 
           <form @submit.prevent="handleCompleteCsr" class="p-5 space-y-3.5 text-xs">
             <div class="p-3 bg-blue-50 rounded-lg border border-blue-200 text-[#0072ce] text-[11px]">
-              Complete CSR <strong>{{ completingCsr.name }}</strong> (CN={{ completingCsr.commonName }}) by pasting the signed certificate (.crt) provided by your Certificate Authority.
+              Complete CSR <strong>{{ completingCsr.name }}</strong> (CN={{ completingCsr.commonName }}) by uploading or pasting the signed certificate (.crt) provided by your Certificate Authority.
             </div>
 
+            <!-- Upload File vs Paste Text for completing CSR -->
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Signed Certificate Content (.crt / .pem) *</label>
-              <textarea required rows="6" v-model="completeCertPem" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" class="w-full p-2.5 border border-slate-300 rounded font-mono text-[10px] focus:outline-none focus:border-[#0072ce]"></textarea>
+              <label class="block font-bold text-slate-700 mb-1">Signed Certificate File / Content (.crt / .pem) *</label>
+              <div class="mb-2">
+                <input type="file" accept=".crt,.cer,.pem,.txt" @change="onSignedCertFileUpload" class="text-xs text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border file:border-slate-300 file:text-xs file:font-semibold file:bg-slate-50 hover:file:bg-slate-100 cursor-pointer" />
+              </div>
+              <textarea required rows="5" v-model="completeCertPem" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" class="w-full p-2.5 border border-slate-300 rounded font-mono text-[10px] focus:outline-none focus:border-[#0072ce]"></textarea>
             </div>
 
             <div>
@@ -977,6 +1101,12 @@ const props = defineProps({
 const activeTab = ref('server_certs') // 'server_certs' | 'csrs' | 'authorities' | 'letsencrypt'
 const isNewCertModalOpen = ref(false)
 const creationMethod = ref('self_signed') // 'self_signed' | 'csr' | 'import' | 'letsencrypt'
+const importInputMode = ref('file') // 'file' | 'text'
+
+const uploadedCertFileName = ref('')
+const uploadedKeyFileName = ref('')
+const uploadedPfxFileName = ref('')
+const uploadedP7bFileName = ref('')
 
 const viewingCert = ref(null)
 const viewingCsr = ref(null)
@@ -1143,7 +1273,77 @@ const showToast = (msg, type = 'success') => {
 
 const openNewCertModal = (method = 'self_signed') => {
   creationMethod.value = method
+  uploadedCertFileName.value = ''
+  uploadedKeyFileName.value = ''
+  uploadedPfxFileName.value = ''
+  uploadedP7bFileName.value = ''
   isNewCertModalOpen.value = true
+}
+
+const onCertFileUpload = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  uploadedCertFileName.value = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`
+  if (!importForm.name) {
+    importForm.name = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ')
+  }
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    importForm.certPem = event.target.result
+  }
+  reader.readAsText(file)
+}
+
+const onKeyFileUpload = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  uploadedKeyFileName.value = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    importForm.keyPem = event.target.result
+  }
+  reader.readAsText(file)
+}
+
+const onPfxFileUpload = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  uploadedPfxFileName.value = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`
+  if (!importForm.name) {
+    importForm.name = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ')
+  }
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    // Convert base64 data URL to raw base64
+    const dataUrl = event.target.result
+    const base64 = dataUrl.split(',')[1] || dataUrl
+    importForm.pfxData = base64
+  }
+  reader.readAsDataURL(file)
+}
+
+const onP7bFileUpload = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  uploadedP7bFileName.value = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`
+  if (!importForm.name) {
+    importForm.name = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ')
+  }
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    importForm.p7bData = event.target.result
+  }
+  reader.readAsText(file)
+}
+
+const onSignedCertFileUpload = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    completeCertPem.value = event.target.result
+  }
+  reader.readAsText(file)
 }
 
 const viewCertDetails = (cert) => {
