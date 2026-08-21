@@ -66,6 +66,22 @@
 
       <button
         type="button"
+        @click="activeTab = 'routing'"
+        :class="[
+          'px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'routing'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <svg class="w-4 h-4 text-[#005299]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+        </svg>
+        <span>Routing</span>
+      </button>
+
+      <button
+        type="button"
         @click="activeTab = 'profiles'"
         :class="[
           'px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
@@ -82,18 +98,18 @@
 
       <button
         type="button"
-        @click="activeTab = 'routing'"
+        @click="activeTab = 'relaying'"
         :class="[
           'px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
-          activeTab === 'routing'
+          activeTab === 'relaying'
             ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
             : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
         ]"
       >
         <svg class="w-4 h-4 text-[#005299]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
-        <span>Routing &amp; Relaying</span>
+        <span>Relaying</span>
       </button>
 
       <button
@@ -423,8 +439,263 @@
       </div>
     </div>
 
-    <!-- TAB 3: ROUTING & RELAYING -->
+    <!-- TAB 2: ROUTING (EXACT SOPHOS UTM 9 LAYOUT) -->
     <div v-if="activeTab === 'routing'" class="space-y-6">
+      <!-- 1. Domains and Routing Target Card -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
+        <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+          <span class="w-1.5 h-4 bg-[#ee7f00] rounded-xs inline-block"></span>
+          <h3 class="font-bold text-sm text-slate-900">Domains and Routing Target</h3>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 text-xs">
+          <!-- Left Column (Form Controls) -->
+          <div class="lg:col-span-7 space-y-4">
+            <!-- Domains Box -->
+            <div>
+              <div class="flex items-center justify-between bg-[#f4f6f9] border border-slate-300 border-b-0 px-3 py-1.5 rounded-t-lg">
+                <span class="font-bold text-slate-800">Domains</span>
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    @click="isAddingRoutingDomain = !isAddingRoutingDomain"
+                    class="text-emerald-700 hover:text-emerald-800 font-bold text-sm leading-none cursor-pointer"
+                    title="Add domain"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    class="text-slate-500 hover:text-slate-700 text-xs leading-none cursor-pointer"
+                    title="More actions"
+                  >
+                    ▼
+                  </button>
+                </div>
+              </div>
+
+              <div class="border border-slate-300 rounded-b-lg bg-white p-2 min-h-24 max-h-36 overflow-y-auto space-y-1.5">
+                <div v-if="isAddingRoutingDomain" class="flex items-center gap-2 pb-1.5 border-b border-slate-100">
+                  <input
+                    v-model="newRoutingDomain"
+                    @keyup.enter="addRoutingDomain"
+                    type="text"
+                    placeholder="e.g. medricnetworks.com"
+                    class="flex-1 p-1 text-xs border border-slate-300 rounded font-mono focus:outline-none focus:border-[#005299]"
+                  />
+                  <button
+                    type="button"
+                    @click="addRoutingDomain"
+                    class="px-2.5 py-1 bg-[#005299] text-white rounded text-[11px] font-bold cursor-pointer"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    @click="isAddingRoutingDomain = false"
+                    class="text-slate-400 hover:text-slate-600 font-bold text-xs cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div
+                  v-for="(dom, dIdx) in routingConfig.domains"
+                  :key="dIdx"
+                  class="flex items-center justify-between px-2.5 py-1 rounded bg-[#f8fafc] border border-slate-200 font-mono text-[11px]"
+                >
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      @click="removeRoutingDomain(dIdx)"
+                      class="text-slate-400 hover:text-rose-600 cursor-pointer"
+                      title="Remove domain"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                    <span class="font-bold text-slate-800">{{ dom }}</span>
+                  </div>
+                </div>
+
+                <div v-if="routingConfig.domains.length === 0" class="text-center py-4 text-slate-400 text-[11px]">
+                  No domains configured. Click + to add your internal domains.
+                </div>
+              </div>
+            </div>
+
+            <!-- Route by Dropdown -->
+            <div class="flex items-center gap-4">
+              <label class="font-bold text-slate-700 whitespace-nowrap w-24">Route by:</label>
+              <select
+                v-model="routingConfig.route_by"
+                class="flex-1 p-2 border border-slate-300 rounded-lg bg-white font-medium text-slate-800 focus:outline-none focus:border-[#005299]"
+              >
+                <option value="Static host list">Static host list</option>
+                <option value="MX records">MX records</option>
+                <option value="DNS host list">DNS host list</option>
+              </select>
+            </div>
+
+            <!-- Host List Box (Visible when Route by is Static host list) -->
+            <div v-if="routingConfig.route_by === 'Static host list'">
+              <div class="flex items-center justify-between bg-[#f4f6f9] border border-slate-300 border-b-0 px-3 py-1.5 rounded-t-lg">
+                <span class="font-bold text-slate-800">Host List</span>
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    class="text-amber-700 hover:text-amber-800 text-xs cursor-pointer"
+                    title="Browse Network Definitions"
+                  >
+                    📁
+                  </button>
+                  <button
+                    type="button"
+                    @click="isAddingRoutingHost = !isAddingRoutingHost"
+                    class="text-emerald-700 hover:text-emerald-800 font-bold text-sm leading-none cursor-pointer"
+                    title="Add host"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div class="border border-slate-300 rounded-b-lg bg-white p-2 min-h-24 max-h-36 overflow-y-auto space-y-1.5">
+                <div v-if="isAddingRoutingHost" class="flex items-center gap-2 pb-1.5 border-b border-slate-100">
+                  <input
+                    v-model="newRoutingHost"
+                    @keyup.enter="addRoutingHost"
+                    type="text"
+                    placeholder="e.g. mail.medricnetworks.com or 192.168.1.50"
+                    class="flex-1 p-1 text-xs border border-slate-300 rounded font-mono focus:outline-none focus:border-[#005299]"
+                  />
+                  <button
+                    type="button"
+                    @click="addRoutingHost"
+                    class="px-2.5 py-1 bg-[#005299] text-white rounded text-[11px] font-bold cursor-pointer"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    @click="isAddingRoutingHost = false"
+                    class="text-slate-400 hover:text-slate-600 font-bold text-xs cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div
+                  v-for="(h, hIdx) in routingConfig.host_list"
+                  :key="hIdx"
+                  class="flex items-center justify-between px-2.5 py-1 rounded bg-[#f8fafc] border border-slate-200 font-mono text-[11px]"
+                >
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      @click="removeRoutingHost(hIdx)"
+                      class="text-slate-400 hover:text-rose-600 cursor-pointer"
+                      title="Remove host"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                    <span class="text-blue-600">🖥️</span>
+                    <span class="font-bold text-slate-800">{{ h }}</span>
+                  </div>
+                </div>
+
+                <div v-if="routingConfig.host_list.length === 0" class="text-center py-4 text-slate-400 text-[11px]">
+                  No target hosts added. Click + or drag &amp; drop a host definition.
+                </div>
+              </div>
+            </div>
+
+            <!-- Apply Button -->
+            <div class="flex justify-end pt-2">
+              <button
+                type="button"
+                @click="saveRoutingConfig"
+                :disabled="isSavingRouting"
+                class="px-5 py-2 bg-[#4a9b2f] hover:bg-[#3d8326] text-white rounded-lg font-bold shadow-xs cursor-pointer flex items-center gap-2 transition-all disabled:opacity-50"
+              >
+                <svg v-if="isSavingRouting" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>✔</span>
+                <span>{{ isSavingRouting ? 'Applying...' : 'Apply' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Column (Sophos UTM Explanatory Documentation) -->
+          <div class="lg:col-span-5 p-4 bg-[#f8fafc] rounded-xl border border-slate-200 text-slate-600 leading-relaxed text-xs space-y-3">
+            <p>
+              Please specify your internal domains. The system will accept mail for these domains and route them to the target specified.
+            </p>
+            <p>
+              <strong class="text-slate-900 font-bold">Important:</strong> You must not use <em>Route by: MX records</em> if the system is a public MX for the domain(s).
+            </p>
+            <p>
+              <strong class="text-slate-900 font-bold">Profile Mode:</strong> Domains that only use global settings should be listed here. Other domains that are supposed to use different settings (including routing target) should only be listed in their respective profiles. If you do not want to apply the global settings to any domains, leave the <em>Domains</em> field here empty.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Recipient Verification Card -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
+        <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+          <span class="w-1.5 h-4 bg-[#ee7f00] rounded-xs inline-block"></span>
+          <h3 class="font-bold text-sm text-slate-900">Recipient Verification</h3>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 text-xs">
+          <!-- Left Column -->
+          <div class="lg:col-span-7 space-y-4">
+            <div class="flex items-center gap-4">
+              <label class="font-bold text-slate-700 whitespace-nowrap w-32">Verify recipients:</label>
+              <select
+                v-model="routingConfig.verify_recipients"
+                class="flex-1 p-2 border border-slate-300 rounded-lg bg-white font-medium text-slate-800 focus:outline-none focus:border-[#005299]"
+              >
+                <option value="With callout (recommended)">With callout (recommended)</option>
+                <option value="In Active Directory">In Active Directory</option>
+                <option value="Off">Off</option>
+              </select>
+            </div>
+
+            <!-- Apply Button -->
+            <div class="flex justify-end pt-2">
+              <button
+                type="button"
+                @click="saveRoutingConfig"
+                :disabled="isSavingRouting"
+                class="px-5 py-2 bg-[#4a9b2f] hover:bg-[#3d8326] text-white rounded-lg font-bold shadow-xs cursor-pointer flex items-center gap-2 transition-all disabled:opacity-50"
+              >
+                <svg v-if="isSavingRouting" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>✔</span>
+                <span>{{ isSavingRouting ? 'Applying...' : 'Apply' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Column (Sophos UTM Explanatory Documentation) -->
+          <div class="lg:col-span-5 p-4 bg-[#f8fafc] rounded-xl border border-slate-200 text-slate-600 leading-relaxed text-xs space-y-2">
+            <p>
+              Please specify if and how recipient addresses should be verified. Leaving the option set to <em>With callout</em> is heavily recommended to avoid bouncing messages. To use <em>In Active Directory</em>, you must have an Active Directory Server specified in <a class="text-[#005299] underline cursor-pointer">Definitions &amp; Users &gt; Authentication Services &gt; Servers</a>. The <em>Base DN</em> setting here is optional.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: RELAYING (UPSTREAM SMART HOST & ALLOWED NETWORKS) -->
+    <div v-if="activeTab === 'relaying'" class="space-y-6">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
           <div class="border-b border-slate-100 pb-3">
@@ -2539,9 +2810,86 @@ const fetchQuarantine = (isManual = false) => {
   setTimeout(() => { isLoading.value = false }, 600)
 }
 
+const routingConfig = ref({
+  domains: ['medricnetworks.com'],
+  route_by: 'Static host list',
+  host_list: ['mail.medricnetworks.com'],
+  verify_recipients: 'With callout (recommended)',
+  base_dn: ''
+})
+
+const newRoutingDomain = ref('')
+const newRoutingHost = ref('')
+const isAddingRoutingDomain = ref(false)
+const isAddingRoutingHost = ref(false)
+const isSavingRouting = ref(false)
+
+const addRoutingDomain = () => {
+  if (!newRoutingDomain.value || !newRoutingDomain.value.trim()) return
+  const d = newRoutingDomain.value.trim()
+  if (!routingConfig.value.domains.includes(d)) {
+    routingConfig.value.domains.push(d)
+  }
+  newRoutingDomain.value = ''
+  isAddingRoutingDomain.value = false
+}
+
+const removeRoutingDomain = (idx) => {
+  routingConfig.value.domains.splice(idx, 1)
+}
+
+const addRoutingHost = () => {
+  if (!newRoutingHost.value || !newRoutingHost.value.trim()) return
+  const h = newRoutingHost.value.trim()
+  if (!routingConfig.value.host_list.includes(h)) {
+    routingConfig.value.host_list.push(h)
+  }
+  newRoutingHost.value = ''
+  isAddingRoutingHost.value = false
+}
+
+const removeRoutingHost = (idx) => {
+  routingConfig.value.host_list.splice(idx, 1)
+}
+
+const fetchRoutingConfig = async () => {
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      const res = await axiosLib.get('/api/mail/routing').catch(() => null)
+      if (res && res.data && res.data.routing) {
+        routingConfig.value = { ...routingConfig.value, ...res.data.routing }
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load routing config:', e)
+  }
+}
+
+const saveRoutingConfig = async () => {
+  isSavingRouting.value = true
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.post('/api/mail/routing', routingConfig.value)
+    } else {
+      await fetch('/api/mail/routing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(routingConfig.value)
+      })
+    }
+  } catch (e) {
+    console.error('Failed to save routing config:', e)
+  } finally {
+    setTimeout(() => { isSavingRouting.value = false }, 350)
+  }
+}
+
 onMounted(() => {
   fetchAdvancedSettings()
   fetchCertificates()
   fetchSmtpProfiles()
+  fetchRoutingConfig()
 })
 </script>
