@@ -101,6 +101,7 @@ try:
         db_get_vpn_tunnels, db_save_vpn_tunnel, db_delete_vpn_tunnel,
         db_get_users, db_save_user, db_delete_user,
         db_get_backups, db_create_backup_entry, db_delete_backup,
+        db_get_smtp_profiles, db_save_smtp_profile, db_delete_smtp_profile,
         db_get_section, db_save_section
     )
     HAS_DB = True
@@ -2449,8 +2450,148 @@ def save_smtp_advanced(payload: SmtpAdvancedConfig, _: Optional[str] = Depends(v
 
 
 # -----------------------------------------------------------------------------
-# Section 11.5: DKIM (DomainKeys Identified Mail) Key Subsystem
+# Section 11.4: Multi-Domain SMTP Profiles with TLS SNI Support
 # -----------------------------------------------------------------------------
+class SmtpProfileConfig(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: Optional[str] = None
+    name: str = Field(..., description="Unique profile identifier, e.g. 'CastleTruBlue Corporate'")
+    domains: List[str] = Field(default_factory=list, description="Protected domain FQDNs")
+    target_host: str = Field(default="192.168.1.50", description="Backend Exchange/Mail host")
+    target_port: int = Field(default=25, ge=1, le=65535)
+    certificate_id: Optional[str] = Field(default="cert_webadmin_default", description="Bound TLS Certificate for SNI")
+    certificate_name: Optional[str] = Field(default="Appliance Default SSL", description="Friendly Certificate Name")
+    enable_sni: bool = Field(default=True, description="Enable Postfix TLS SNI mapping for this profile")
+    recipient_verification: str = Field(default="Callout / ActiveSync", description="Recipient verification mode")
+    spam_action: str = Field(default="Quarantine", description="Spam message action")
+    spx_enabled: bool = Field(default=False, description="Enable SPX email encryption")
+    enabled: bool = Field(default=True, description="Enable this SMTP Profile")
+    config: Dict[str, Any] = Field(default_factory=dict, description="17 UTM security option groups")
+
+_DEFAULT_SMTP_PROFILES = [
+    {
+        "id": "prof-medricnetworks",
+        "name": "Medricnetworks.com",
+        "domains": ["medricnetworks.com", "mail.medricnetworks.com"],
+        "target_host": "192.168.1.50",
+        "target_port": 25,
+        "certificate_id": "cert_waf_portal",
+        "certificate_name": "WAF SSL Offloading Wildcard (*.medric.net)",
+        "enable_sni": True,
+        "recipient_verification": "Callout / ActiveSync",
+        "spam_action": "Quarantine",
+        "spx_enabled": True,
+        "enabled": True,
+        "config": {}
+    },
+    {
+        "id": "prof-castletrublue",
+        "name": "CastleTruBlue Corporate",
+        "domains": ["castletrublue.com", "mail.castletrublue.com"],
+        "target_host": "192.168.1.55",
+        "target_port": 25,
+        "certificate_id": "cert_exchange_san",
+        "certificate_name": "Microsoft Exchange SAN Certificate",
+        "enable_sni": True,
+        "recipient_verification": "Active Directory (LDAP)",
+        "spam_action": "Reject",
+        "spx_enabled": False,
+        "enabled": True,
+        "config": {}
+    }
+]
+
+def apply_postfix_sni_maps(profiles: List[Dict[str, Any]]) -> str:
+    """
+    Generates and compiles /etc/postfix/sni_maps mapping each domain to its chosen certificate & key.
+    Enables single-IP multi-tenant Postfix STARTTLS SNI routing per domain.
+    """
+    sni_lines = [
+        "# =============================================================================",
+        "# Postfix TLS SNI Mapping Table (Generated automatically by Astaro-Next)",
+        "# Allows 1 public IP address & port 25/587 to serve distinct TLS certificates per domain",
+        "# ============================================================================="
+    ]
+    for p in profiles:
+        if not p.get("enabled", True) or not p.get("enable_sni", True):
+            continue
+        cert_clean_id = (p.get("certificate_id") or "cert_webadmin_default").replace("cert_", "")
+        key_path = f"/etc/astaro/ssl/{cert_clean_id}.key"
+        crt_path = f"/etc/astaro/ssl/{cert_clean_id}.crt"
+        domains = p.get("domains", [])
+        if isinstance(domains, str):
+            domains = [d.strip() for d in domains.split(",") if d.strip()]
+        for d in domains:
+            if d.strip():
+                clean_d = d.strip().lower()
+                sni_lines.append(f"{clean_d}    {key_path}    {crt_path}")
+
+    sni_content = "\n".join(sni_lines) + "\n"
+    sni_path = "/etc/postfix/sni_maps"
+    try:
+        atomic_write_file(sni_path, sni_content, mode=0o644)
+        if shutil.which("postmap"):
+            run_system_command(["postmap", "-F", f"hash:{sni_path}"], check=False)
+        if shutil.which("postfix"):
+            run_system_command(["postfix", "reload"], check=False)
+    except Exception as err:
+        logger.warning(f"Postfix SNI maps application note: {err}")
+    return sni_content
+
+@app.get("/api/mail/profiles", tags=["Mail Subsystem (Postfix)"])
+def get_smtp_profiles(_: Optional[str] = Depends(verify_admin_auth)):
+    """Fetches all multi-domain SMTP profiles with TLS certificate and SNI configurations."""
+    if HAS_DB:
+        profiles = db_get_smtp_profiles()
+        if profiles:
+            return {"status": "success", "profiles": profiles}
+    return {"status": "success", "profiles": _DEFAULT_SMTP_PROFILES}
+
+@app.post("/api/mail/profiles", tags=["Mail Subsystem (Postfix)"])
+def save_smtp_profile(payload: SmtpProfileConfig, _: Optional[str] = Depends(verify_admin_auth)):
+    """Saves an SMTP profile, generates Postfix /etc/postfix/sni_maps for domain TLS certificates, and updates Postfix."""
+    global _DEFAULT_SMTP_PROFILES
+    profile_dict = payload.model_dump()
+    if not profile_dict.get("id"):
+        profile_dict["id"] = f"prof-{payload.name.lower().replace(' ', '-')}"
+
+    if HAS_DB:
+        db_save_smtp_profile(profile_dict)
+        all_profiles = db_get_smtp_profiles()
+    else:
+        existing = [p for p in _DEFAULT_SMTP_PROFILES if p.get("id") == profile_dict["id"] or p.get("name") == profile_dict["name"]]
+        if existing:
+            _DEFAULT_SMTP_PROFILES = [profile_dict if (p.get("id") == profile_dict["id"] or p.get("name") == profile_dict["name"]) else p for p in _DEFAULT_SMTP_PROFILES]
+        else:
+            _DEFAULT_SMTP_PROFILES.append(profile_dict)
+        all_profiles = _DEFAULT_SMTP_PROFILES
+
+    # Atomically compile and apply Postfix SNI maps
+    apply_postfix_sni_maps(all_profiles)
+    logger.info(f"Saved SMTP Profile '{payload.name}' for domains {payload.domains} with TLS Certificate '{payload.certificate_name}' (SNI: {payload.enable_sni})")
+    return {"status": "success", "message": f"SMTP Profile '{payload.name}' saved and Postfix SNI maps updated.", "profile": profile_dict}
+
+@app.delete("/api/mail/profiles/{profile_id}", tags=["Mail Subsystem (Postfix)"])
+def delete_smtp_profile(profile_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Deletes an SMTP profile and re-syncs Postfix SNI maps."""
+    global _DEFAULT_SMTP_PROFILES
+    if HAS_DB:
+        db_delete_smtp_profile(profile_id)
+        all_profiles = db_get_smtp_profiles()
+    else:
+        _DEFAULT_SMTP_PROFILES = [p for p in _DEFAULT_SMTP_PROFILES if p.get("id") != profile_id and p.get("name") != profile_id]
+        all_profiles = _DEFAULT_SMTP_PROFILES
+
+    apply_postfix_sni_maps(all_profiles)
+    return {"status": "success", "message": f"SMTP Profile '{profile_id}' deleted."}
+
+@app.get("/api/mail/sni-maps", tags=["Mail Subsystem (Postfix)"])
+def get_smtp_sni_maps_preview(_: Optional[str] = Depends(verify_admin_auth)):
+    """Generates preview text of the /etc/postfix/sni_maps TLS multi-domain certificate mapping table."""
+    profiles = db_get_smtp_profiles() if HAS_DB else _DEFAULT_SMTP_PROFILES
+    content = apply_postfix_sni_maps(profiles)
+    return {"status": "success", "sni_maps": content}
 class DkimKeyConfig(BaseModel):
     id: Optional[str] = None
     domain: str

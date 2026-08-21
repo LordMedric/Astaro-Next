@@ -206,6 +206,26 @@ def init_database():
             )
         """)
 
+        # 11. SMTP Profiles (Email Protection Multi-Domain SNI)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS smtp_profiles (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                domains_json TEXT NOT NULL,
+                target_host TEXT NOT NULL,
+                target_port INTEGER DEFAULT 25,
+                certificate_id TEXT DEFAULT 'cert_webadmin_default',
+                certificate_name TEXT DEFAULT 'Appliance Default SSL',
+                enable_sni INTEGER DEFAULT 1,
+                recipient_verification TEXT DEFAULT 'Callout / ActiveSync',
+                spam_action TEXT DEFAULT 'Quarantine',
+                spx_enabled INTEGER DEFAULT 0,
+                enabled INTEGER DEFAULT 1,
+                config_json TEXT DEFAULT '{}',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         conn.commit()
         _seed_initial_defaults(conn)
 
@@ -743,6 +763,59 @@ def db_create_backup_entry(filename: str, size_bytes: int, version: str, notes: 
 def db_delete_backup(backup_id: str) -> bool:
     with get_db_connection() as conn:
         cur = conn.execute("DELETE FROM backups WHERE id = ?", (str(backup_id),))
+        conn.commit()
+        return cur.rowcount > 0
+
+# --- SMTP Profiles (Email Protection Multi-Domain SNI) ---
+def db_get_smtp_profiles() -> List[Dict[str, Any]]:
+    with get_db_connection() as conn:
+        rows = conn.execute("SELECT * FROM smtp_profiles ORDER BY name ASC").fetchall()
+        results = []
+        for r in rows:
+            d = dict(r)
+            try:
+                d["domains"] = json.loads(d.get("domains_json") or "[]")
+            except Exception:
+                d["domains"] = []
+            try:
+                d["config"] = json.loads(d.get("config_json") or "{}")
+            except Exception:
+                d["config"] = {}
+            results.append(d)
+        return results
+
+def db_save_smtp_profile(prof_dict: Dict[str, Any]) -> Dict[str, Any]:
+    with get_db_connection() as conn:
+        pid = str(prof_dict.get("id") or f"prof-{prof_dict.get('name', 'unnamed').lower().replace(' ', '-')}")
+        domains_json = json.dumps(prof_dict.get("domains", []))
+        config_json = json.dumps(prof_dict.get("config", {}))
+        conn.execute("""
+            INSERT OR REPLACE INTO smtp_profiles (
+                id, name, domains_json, target_host, target_port,
+                certificate_id, certificate_name, enable_sni,
+                recipient_verification, spam_action, spx_enabled, enabled, config_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            pid,
+            prof_dict.get("name", "Unnamed Profile"),
+            domains_json,
+            prof_dict.get("target_host", "192.168.1.50"),
+            prof_dict.get("target_port", 25),
+            prof_dict.get("certificate_id", "cert_webadmin_default"),
+            prof_dict.get("certificate_name", "Appliance Default SSL"),
+            1 if prof_dict.get("enable_sni", True) else 0,
+            prof_dict.get("recipient_verification", "Callout / ActiveSync"),
+            prof_dict.get("spam_action", "Quarantine"),
+            1 if prof_dict.get("spx_enabled", False) else 0,
+            1 if prof_dict.get("enabled", True) else 0,
+            config_json
+        ))
+        conn.commit()
+        return prof_dict
+
+def db_delete_smtp_profile(profile_id: str) -> bool:
+    with get_db_connection() as conn:
+        cur = conn.execute("DELETE FROM smtp_profiles WHERE id = ? OR name = ?", (str(profile_id), str(profile_id)))
         conn.commit()
         return cur.rowcount > 0
 

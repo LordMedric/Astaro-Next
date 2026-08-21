@@ -305,10 +305,11 @@
               <th class="p-3 pl-4 w-14 text-center">Status</th>
               <th class="p-3">Profile Name</th>
               <th class="p-3 font-mono">Protected Domains</th>
+              <th class="p-3">TLS Certificate &amp; SNI</th>
               <th class="p-3 font-mono">Target Host</th>
               <th class="p-3">Recipient Verification</th>
               <th class="p-3">Spam Action</th>
-              <th class="p-3 text-center">SPX Encryption</th>
+              <th class="p-3 text-center">SPX</th>
               <th class="p-3 text-right pr-4">Actions</th>
             </tr>
           </thead>
@@ -343,6 +344,25 @@
                   <span v-for="(dom, dIdx) in prof.domains" :key="dIdx" class="px-2 py-0.5 rounded text-[10px] bg-blue-50 text-[#005299] border border-blue-200">
                     {{ dom }}
                   </span>
+                </div>
+              </td>
+
+              <td class="p-3">
+                <div class="space-y-0.5">
+                  <div class="flex items-center gap-1 text-[11px] font-bold text-slate-800 truncate max-w-xs" :title="prof.certificate_name || 'Appliance Default SSL'">
+                    <svg class="w-3 h-3 text-[#005299] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span class="truncate">{{ prof.certificate_name || 'Appliance Default SSL' }}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span
+                      class="px-1.5 py-0.2 rounded text-[9px] font-bold font-mono border"
+                      :class="prof.enable_sni !== false ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'"
+                    >
+                      {{ prof.enable_sni !== false ? 'SNI Active' : 'SNI Disabled' }}
+                    </span>
+                  </div>
                 </div>
               </td>
 
@@ -778,20 +798,30 @@
             </div>
           </div>
 
-          <div class="lg:col-span-5 p-4 bg-[#f8fafc] rounded-xl border border-slate-200 text-slate-600 leading-relaxed text-xs space-y-2">
-            <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
-              <span>ℹ️</span>
-              <span>TLS Security &amp; Policy Enforcement</span>
+          <div class="lg:col-span-5 p-4 bg-[#f8fafc] rounded-xl border border-slate-200 text-slate-600 leading-relaxed text-xs space-y-3">
+            <div class="font-bold text-slate-800 mb-1 flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span>🔒</span>
+                <span>Postfix Multi-Domain TLS SNI Engine</span>
+              </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                Single-IP Multi-Domain Active
+              </span>
             </div>
             <p>
-              The selected <strong>TLS certificate</strong> will be used to identify this system when performing a TLS handshake. By default the system will negotiate TLS encryption with all remote hosts that support it.
+              When multiple SMTP Profiles are configured, Astaro-Next automatically compiles <code>tls_server_sni_maps = hash:/etc/postfix/sni_maps</code>. When remote mail servers initiate a TLS handshake, Postfix matches the requested hostname and serves that domain's assigned certificate.
             </p>
-            <p>
-              You can select the <strong>TLS protocol version</strong>. We recommend disabling older, less secure protocol versions.
-            </p>
-            <p>
-              If a particular remote host should always require TLS encryption, you can add it to the <strong>Require TLS negotiation hosts/nets</strong> list. If mails sent from a particular domain should not be accepted without encryption, add them to <strong>Require TLS sender domains</strong>.
-            </p>
+            <div class="space-y-1.5 pt-1">
+              <div class="font-bold text-slate-800 text-[11px]">Active Postfix SNI Certificate Mappings:</div>
+              <div class="bg-slate-900 text-emerald-400 p-2.5 rounded-lg font-mono text-[10px] space-y-1 overflow-x-auto">
+                <div v-for="prof in smtpProfiles.filter(p => p.enabled && p.enable_sni !== false)" :key="prof.id">
+                  <span class="text-white">{{ (prof.domains || []).join(', ') || prof.name }}</span>
+                  <span class="text-slate-400"> &rarr; </span>
+                  <span class="text-amber-300">/etc/astaro/ssl/{{ (prof.certificate_id || 'default').replace('cert_', '') }}.crt</span>
+                  <span class="text-slate-500"> ({{ prof.certificate_name || 'Default' }})</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1294,7 +1324,56 @@
               </div>
             </div>
 
-            <!-- 2. Recipient Verification -->
+            <!-- 2. TLS Certificate & SNI Mapping -->
+            <div class="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+              <button
+                type="button"
+                @click="toggleAccordion('tls_sni')"
+                class="w-full px-4 py-2.5 bg-[#f8fafc] hover:bg-slate-100 flex items-center justify-between font-bold text-slate-800 cursor-pointer transition-colors"
+              >
+                <div class="flex items-center gap-2.5">
+                  <span class="w-5 h-5 rounded-full bg-[#005299] text-white text-[11px] flex items-center justify-center font-bold">2</span>
+                  <span>TLS Certificate &amp; SNI Mapping</span>
+                </div>
+                <span class="text-slate-400 text-xs">{{ openAccordions.includes('tls_sni') ? '▲ Collapse' : '▼ Expand' }}</span>
+              </button>
+              <div v-if="openAccordions.includes('tls_sni')" class="p-4 bg-white space-y-3 border-t border-slate-200">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Assigned TLS Certificate (STARTTLS / Inbound)</label>
+                  <select
+                    v-model="editProfileData.certificate_id"
+                    @change="onMailCertSelectChange"
+                    class="w-full p-2 border border-slate-300 rounded-lg bg-white font-bold text-[#005299]"
+                  >
+                    <option
+                      v-for="c in availableCertificates"
+                      :key="c.id"
+                      :value="c.id"
+                    >
+                      {{ c.name }} (CN: {{ c.commonName }}) — {{ c.issuer }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="p-3 bg-blue-50/60 rounded-xl border border-blue-200 space-y-2">
+                  <label class="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      v-model="editProfileData.enable_sni"
+                      class="mt-0.5 w-4 h-4 rounded text-[#005299] focus:ring-[#005299]"
+                    />
+                    <div>
+                      <span class="font-bold text-slate-900">Enable Postfix TLS Server Name Indication (SNI)</span>
+                      <p class="text-[10px] text-slate-600 leading-tight mt-0.5">
+                        Compiles domain mapping into <code>/etc/postfix/sni_maps</code>. When remote mail servers negotiate STARTTLS, Postfix automatically presents this specific domain certificate over a single shared IP address.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Recipient Verification -->
             <div class="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
               <button
                 type="button"
@@ -1302,7 +1381,7 @@
                 class="w-full px-4 py-2.5 bg-[#f8fafc] hover:bg-slate-100 flex items-center justify-between font-bold text-slate-800 cursor-pointer transition-colors"
               >
                 <div class="flex items-center gap-2.5">
-                  <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-[11px] flex items-center justify-center font-bold">2</span>
+                  <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-[11px] flex items-center justify-center font-bold">3</span>
                   <span>Recipient Verification</span>
                 </div>
                 <span class="text-slate-400 text-xs">{{ openAccordions.includes('recipient_verification') ? '▲ Collapse' : '▼ Expand' }}</span>
@@ -1875,13 +1954,41 @@ const isDnsViewModalOpen = ref(false)
 const selectedDkim = ref(null)
 const copyStatus = ref('')
 
+// Available X.509 Certificates for Postfix TLS SNI Mapping
+const availableCertificates = ref([
+  {
+    id: 'cert_waf_portal',
+    name: 'WAF SSL Offloading Wildcard (*.medric.net)',
+    commonName: '*.medric.net',
+    issuer: "Let's Encrypt Authority X3",
+    algorithm: 'ECDSA P-256'
+  },
+  {
+    id: 'cert_exchange_san',
+    name: 'Microsoft Exchange SAN Certificate',
+    commonName: 'mail.castletrublue.com',
+    issuer: 'DigiCert Global Root CA',
+    algorithm: 'RSA 2048-bit'
+  },
+  {
+    id: 'cert_webadmin_default',
+    name: 'WebAdmin Default Certificate',
+    commonName: 'astaro-next.internal',
+    issuer: 'Astaro-Next Appliance Root CA',
+    algorithm: 'RSA 2048-bit'
+  }
+])
+
 const smtpProfiles = ref([
   {
-    id: 1,
+    id: 'prof-medricnetworks',
     name: 'Medricnetworks.com',
-    domains: ['Medricnetworks.com'],
+    domains: ['medricnetworks.com', 'mail.medricnetworks.com'],
     target_host: '192.168.1.50',
     target_port: 25,
+    certificate_id: 'cert_waf_portal',
+    certificate_name: 'WAF SSL Offloading Wildcard (*.medric.net)',
+    enable_sni: true,
     recipient_verification: 'Active Directory (LDAP)',
     use_sophos_rbls: true,
     extra_rbls: 'zen.spamhaus.org\nbl.spamcop.net',
@@ -1912,11 +2019,14 @@ const smtpProfiles = ref([
     enabled: true
   },
   {
-    id: 2,
+    id: 'prof-castletrublue',
     name: 'mail.castletrublue.com',
-    domains: ['castletrublue.com'],
+    domains: ['castletrublue.com', 'mail.castletrublue.com'],
     target_host: '192.168.1.60',
     target_port: 25,
+    certificate_id: 'cert_exchange_san',
+    certificate_name: 'Microsoft Exchange SAN Certificate',
+    enable_sni: true,
     recipient_verification: 'SMTP Callout',
     use_sophos_rbls: true,
     extra_rbls: '',
@@ -1947,11 +2057,14 @@ const smtpProfiles = ref([
     enabled: true
   },
   {
-    id: 3,
+    id: 'prof-medric-net',
     name: 'mail.medric.net',
     domains: ['medric.net'],
     target_host: '192.168.1.70',
     target_port: 25,
+    certificate_id: 'cert_waf_portal',
+    certificate_name: 'WAF SSL Offloading Wildcard (*.medric.net)',
+    enable_sni: true,
     recipient_verification: 'None',
     use_sophos_rbls: true,
     extra_rbls: '',
@@ -1988,6 +2101,9 @@ const editProfileData = ref({
   domains_input: '',
   target_host: '192.168.1.50',
   target_port: 25,
+  certificate_id: 'cert_waf_portal',
+  certificate_name: 'WAF SSL Offloading Wildcard (*.medric.net)',
+  enable_sni: true,
   recipient_verification: 'Active Directory (LDAP)',
   use_sophos_rbls: true,
   extra_rbls: '',
@@ -2022,9 +2138,17 @@ const filteredProfiles = computed(() => {
   const q = profileSearch.value.toLowerCase()
   return smtpProfiles.value.filter(p =>
     p.name.toLowerCase().includes(q) ||
-    p.domains.some(d => d.toLowerCase().includes(q))
+    (p.domains && p.domains.some(d => d.toLowerCase().includes(q))) ||
+    (p.certificate_name && p.certificate_name.toLowerCase().includes(q))
   )
 })
+
+const onMailCertSelectChange = () => {
+  const match = availableCertificates.value.find(c => c.id === editProfileData.value.certificate_id)
+  if (match) {
+    editProfileData.value.certificate_name = match.name
+  }
+}
 
 const toggleAccordion = (name) => {
   if (openAccordions.value.includes(name)) {
@@ -2041,6 +2165,9 @@ const openCreateProfileModal = () => {
     domains_input: '',
     target_host: '192.168.1.50',
     target_port: 25,
+    certificate_id: availableCertificates.value[0]?.id || 'cert_waf_portal',
+    certificate_name: availableCertificates.value[0]?.name || 'WAF SSL Offloading Wildcard (*.medric.net)',
+    enable_sni: true,
     recipient_verification: 'Active Directory (LDAP)',
     use_sophos_rbls: true,
     extra_rbls: '',
@@ -2076,7 +2203,10 @@ const openEditProfileModal = (prof) => {
   editingProfileId.value = prof.id
   editProfileData.value = {
     ...JSON.parse(JSON.stringify(prof)),
-    domains_input: Array.isArray(prof.domains) ? prof.domains.join(', ') : prof.domains
+    certificate_id: prof.certificate_id || 'cert_waf_portal',
+    certificate_name: prof.certificate_name || 'WAF SSL Offloading Wildcard (*.medric.net)',
+    enable_sni: prof.enable_sni !== false,
+    domains_input: Array.isArray(prof.domains) ? prof.domains.join(', ') : (prof.domains || '')
   }
   isModalOpen.value = true
 }
@@ -2084,13 +2214,14 @@ const openEditProfileModal = (prof) => {
 const cloneProfile = (prof) => {
   editingProfileId.value = null
   const cloned = JSON.parse(JSON.stringify(prof))
+  cloned.id = null
   cloned.name = `${prof.name} (Clone)`
-  cloned.domains_input = Array.isArray(prof.domains) ? prof.domains.join(', ') : prof.domains
+  cloned.domains_input = Array.isArray(prof.domains) ? prof.domains.join(', ') : (prof.domains || '')
   editProfileData.value = cloned
   isModalOpen.value = true
 }
 
-const saveProfileModal = () => {
+const saveProfileModal = async () => {
   if (!editProfileData.value.name) return
   const doms = editProfileData.value.domains_input
     ? editProfileData.value.domains_input.split(',').map(d => d.trim()).filter(Boolean)
@@ -2098,7 +2229,9 @@ const saveProfileModal = () => {
 
   const payload = {
     ...JSON.parse(JSON.stringify(editProfileData.value)),
-    domains: doms
+    id: editingProfileId.value || `prof-${editProfileData.value.name.toLowerCase().replace(/\s+/g, '-')}`,
+    domains: doms,
+    enable_sni: editProfileData.value.enable_sni !== false
   }
 
   if (editingProfileId.value !== null) {
@@ -2108,16 +2241,71 @@ const saveProfileModal = () => {
     }
   } else {
     smtpProfiles.value.push({
-      id: smtpProfiles.value.length + 1,
       ...payload,
       enabled: true
     })
   }
+
+  // Persist to backend API & sync Postfix SNI maps
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.post('/api/mail/profiles', payload)
+    } else {
+      await fetch('/api/mail/profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+    }
+  } catch (err) {
+    console.error('Failed to save SMTP profile to backend:', err)
+  }
+
   isModalOpen.value = false
 }
 
-const deleteProfile = (id) => {
+const deleteProfile = async (id) => {
+  if (!confirm('Are you sure you want to delete this SMTP Profile?')) return
   smtpProfiles.value = smtpProfiles.value.filter(p => p.id !== id)
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.delete(`/api/mail/profiles/${id}`)
+    } else {
+      await fetch(`/api/mail/profiles/${id}`, { method: 'DELETE' })
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const fetchCertificates = async () => {
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      const res = await axiosLib.get('/api/certificates').catch(() => null)
+      if (res && res.data && res.data.certificates && res.data.certificates.length) {
+        availableCertificates.value = res.data.certificates
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load certificates for mail manager:', e)
+  }
+}
+
+const fetchSmtpProfiles = async () => {
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      const res = await axiosLib.get('/api/mail/profiles').catch(() => null)
+      if (res && res.data && res.data.profiles && res.data.profiles.length) {
+        smtpProfiles.value = res.data.profiles
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load SMTP profiles from backend:', e)
+  }
 }
 
 // DKIM & Advanced state
@@ -2353,5 +2541,7 @@ const fetchQuarantine = (isManual = false) => {
 
 onMounted(() => {
   fetchAdvancedSettings()
+  fetchCertificates()
+  fetchSmtpProfiles()
 })
 </script>
