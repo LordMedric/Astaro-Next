@@ -46,14 +46,28 @@ apt-get install -y --no-install-recommends \
   python3-pip \
   python3-venv \
   nftables \
+  iptables \
+  ipset \
+  conntrack \
   wireguard \
   wireguard-tools \
   nginx \
   postfix \
   rspamd \
+  fetchmail \
+  suricata \
+  clamav \
+  clamav-daemon \
+  squid \
+  dnsmasq \
+  unbound \
+  chrony \
+  fail2ban \
   iproute2 \
   net-tools \
-  ca-certificates
+  ethtool \
+  ca-certificates \
+  sqlite3
 
 # 2. Deploy repository to /opt/astaro
 INSTALL_DIR="/opt/astaro"
