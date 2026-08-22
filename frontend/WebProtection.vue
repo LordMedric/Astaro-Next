@@ -459,7 +459,55 @@
             </label>
           </div>
 
-        </div>
+          <!-- Allowed Networks (Transparent Proxy & Filter Scope - Sophos UTM 9 Parity) -->
+          <div class="pt-4 border-t border-slate-100 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div>
+                <label class="block font-bold text-xs text-slate-900">Allowed Networks (Filtering Scope)</label>
+                <p class="text-[11px] text-slate-500">Internal subnets subjected to transparent web proxying and policy enforcement.</p>
+              </div>
+              <span class="text-[10px] font-mono font-bold bg-blue-50 text-[#0072ce] px-2 py-0.5 rounded border border-blue-100">
+                {{ allowedNetworks.length }} Networks
+              </span>
+            </div>
+
+            <!-- Selected Networks Pills -->
+            <div class="flex flex-wrap gap-1.5 p-2 bg-[#f4f6f9] rounded-lg border border-slate-200 min-h-8">
+              <span
+                v-for="(net, nIdx) in allowedNetworks"
+                :key="nIdx"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-white text-slate-800 border border-slate-300 shadow-2xs font-mono"
+              >
+                <span>🌐</span>
+                <span>{{ net }}</span>
+                <button
+                  type="button"
+                  @click="removeAllowedNetwork(nIdx)"
+                  class="text-slate-400 hover:text-rose-600 font-bold ml-1 cursor-pointer leading-none"
+                  title="Remove network"
+                >
+                  ✕
+                </button>
+              </span>
+              <span v-if="allowedNetworks.length === 0" class="text-slate-400 text-[11px] italic py-0.5">
+                No networks configured. Select from definitions below.
+              </span>
+            </div>
+
+            <!-- Object Picker Dropdown -->
+            <div class="space-y-1">
+              <label class="block text-[11px] font-bold text-slate-600">Add Network Object to Scope:</label>
+              <select
+                @change="onAddAllowedNetworkSelect"
+                class="w-full p-2 border border-slate-300 rounded-lg bg-white text-xs font-mono focus:border-[#0072ce] focus:outline-none"
+              >
+                <option value="">-- Choose from Network Definitions --</option>
+                <option v-for="net in networkDefs" :key="'wp-net-' + net.id" :value="net.name">
+                  🌐 {{ net.name }} ({{ net.address }})
+                </option>
+              </select>
+            </div>
+          </div>
 
         <!-- Security Panel Footer Alert -->
         <div class="p-4 bg-[#f4f6f9] border-t border-slate-100 text-[11px] text-slate-600 flex items-center justify-between">
@@ -948,6 +996,22 @@ const hasUnsavedChanges = ref(false)
 const activeProfile = ref('corporate_default')
 const categorySearch = ref('')
 const toasts = ref([])
+const networkDefs = ref([])
+const allowedNetworks = ref(['Internal (Network)', 'DMZ (Network)'])
+
+const onAddAllowedNetworkSelect = (e) => {
+  const val = e.target.value
+  if (val && !allowedNetworks.value.includes(val)) {
+    allowedNetworks.value.push(val)
+    markDirty()
+  }
+  e.target.value = ''
+}
+
+const removeAllowedNetwork = (idx) => {
+  allowedNetworks.value.splice(idx, 1)
+  markDirty()
+}
 
 // Auxiliary Modals
 const isUrlTesterOpen = ref(false)
@@ -1294,7 +1358,13 @@ const fetchPolicy = async (isManual = false) => {
   }
 
   try {
-    const res = await axiosInstance.get(props.fetchEndpoint, config)
+    const [res, netRes] = await Promise.all([
+      axiosInstance.get(props.fetchEndpoint, config),
+      axiosInstance.get('/api/definitions/networks', config).catch(() => null)
+    ])
+    if (netRes && netRes.data) {
+      networkDefs.value = netRes.data
+    }
     const data = res.data
 
     if (data) {

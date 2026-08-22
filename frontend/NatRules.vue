@@ -314,15 +314,40 @@
               </div>
             </div>
 
-            <!-- DNAT specific -->
-            <div v-else class="space-y-3 p-3 bg-amber-50/50 rounded-lg border border-amber-200">
-              <div class="grid grid-cols-2 gap-3">
+            <!-- DNAT / SNAT / 1:1 NAT specific -->
+            <div v-else class="space-y-3 p-3.5 bg-amber-50/40 rounded-xl border border-amber-200">
+              <!-- Traffic Source -->
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block font-bold text-slate-700">Traffic Source</label>
+                  <button
+                    type="button"
+                    @click="openInlineNetModal('traffic_source')"
+                    class="text-[10px] font-bold text-[#0072ce] hover:underline cursor-pointer"
+                  >
+                    + Add Network Definition
+                  </button>
+                </div>
+                <select
+                  v-model="formRule.traffic_source"
+                  class="w-full p-2 border border-slate-300 rounded-lg bg-white font-mono text-xs"
+                >
+                  <option value="Any">Any (Internet / 0.0.0.0/0)</option>
+                  <option value="Internet IPv4">Internet IPv4</option>
+                  <option v-for="net in networkDefs" :key="'src-' + net.id" :value="net.name">
+                    {{ net.name }} ({{ net.address }})
+                  </option>
+                </select>
+              </div>
+
+              <!-- Service & Original Destination Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div class="flex items-center justify-between mb-1">
-                    <label class="block font-bold text-slate-700">Incoming Service</label>
+                    <label class="block font-bold text-slate-700">Incoming Traffic Service</label>
                     <button
                       type="button"
-                      @click="openInlineSrvModal"
+                      @click="openInlineSrvModal('traffic_service')"
                       class="text-[10px] font-bold text-[#0072ce] hover:underline cursor-pointer"
                     >
                       + New Service
@@ -330,45 +355,86 @@
                   </div>
                   <select
                     v-model="formRule.traffic_service"
-                    class="w-full p-2 border border-slate-300 rounded bg-white font-medium"
+                    class="w-full p-2 border border-slate-300 rounded-lg bg-white font-medium text-xs"
                   >
-                    <option v-for="srv in serviceDefs" :key="srv.id" :value="srv.name">
+                    <option value="Any">Any Service</option>
+                    <option v-for="srv in serviceDefs" :key="'srv-' + srv.id" :value="srv.name">
                       {{ srv.name }} ({{ srv.protocol }}:{{ srv.dst_port }})
                     </option>
                     <option value="HTTPS">HTTPS (TCP:443)</option>
                     <option value="HTTP">HTTP (TCP:80)</option>
                     <option value="SSH">SSH (TCP:22)</option>
+                    <option value="RDP">RDP (TCP:3389)</option>
+                    <option value="OpenVPN">OpenVPN (UDP:1194)</option>
                   </select>
                 </div>
+
                 <div>
-                  <label class="block font-bold text-slate-700 mb-1">Original Destination</label>
-                  <input
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-slate-700">Original Destination</label>
+                    <button
+                      type="button"
+                      @click="openInlineNetModal('traffic_destination')"
+                      class="text-[10px] font-bold text-[#0072ce] hover:underline cursor-pointer"
+                    >
+                      + Add Object
+                    </button>
+                  </div>
+                  <select
                     v-model="formRule.traffic_destination"
-                    type="text"
-                    placeholder="e.g. Uplink (WAN IP)"
-                    class="w-full p-2 border border-slate-300 rounded bg-white"
-                  />
+                    class="w-full p-2 border border-slate-300 rounded-lg bg-white font-mono text-xs"
+                  >
+                    <option value="Uplink (WAN IP)">Uplink Interfaces (WAN IP)</option>
+                    <option value="External (WAN) (Address)">External (WAN) (Address)</option>
+                    <option v-for="net in networkDefs" :key="'dst-' + net.id" :value="net.name">
+                      {{ net.name }} ({{ net.address }})
+                    </option>
+                  </select>
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-3">
+              <!-- Target Host & Service Translation Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label class="block font-bold text-slate-700 mb-1">Target Host / IP *</label>
-                  <input
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-slate-700">Destination NAT Target Host *</label>
+                    <button
+                      type="button"
+                      @click="openInlineNetModal('destination_nat_target')"
+                      class="text-[10px] font-bold text-[#0072ce] hover:underline cursor-pointer"
+                    >
+                      + Add Host
+                    </button>
+                  </div>
+                  <select
                     v-model="formRule.destination_nat_target"
-                    type="text"
                     required
-                    placeholder="e.g. 192.168.1.100"
-                    class="w-full p-2 border border-slate-300 rounded font-mono bg-white"
-                  />
+                    class="w-full p-2 border border-slate-300 rounded-lg font-mono bg-white text-xs"
+                  >
+                    <option v-for="net in networkDefs" :key="'tgt-' + net.id" :value="net.address || net.name">
+                      {{ net.name }} ({{ net.address }})
+                    </option>
+                    <option value="192.168.1.100">192.168.1.100</option>
+                    <option value="192.168.1.50">192.168.1.50</option>
+                  </select>
                 </div>
+
                 <div>
-                  <label class="block font-bold text-slate-700 mb-1">Translated Port</label>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-slate-700">Translated Port / Service</label>
+                    <button
+                      type="button"
+                      @click="openInlineSrvModal('service_translation')"
+                      class="text-[10px] font-bold text-[#0072ce] hover:underline cursor-pointer"
+                    >
+                      + New Service
+                    </button>
+                  </div>
                   <input
                     v-model="formRule.service_translation"
                     type="text"
-                    placeholder="e.g. 443 (blank = same)"
-                    class="w-full p-2 border border-slate-300 rounded font-mono bg-white"
+                    placeholder="e.g. 443, 8080 (blank = keep original)"
+                    class="w-full p-2 border border-slate-300 rounded-lg font-mono bg-white text-xs focus:border-[#0072ce] focus:outline-none"
                   />
                 </div>
               </div>
@@ -597,12 +663,17 @@ const filteredRules = computed(() => {
   return list
 })
 
-const openInlineNetModal = () => {
+const inlineNetTarget = ref('source_network')
+const inlineSrvTarget = ref('traffic_service')
+
+const openInlineNetModal = (target = 'source_network') => {
+  inlineNetTarget.value = target
   newInlineNet.value = { name: '', type: 'Host', address: '' }
   isInlineNetModalOpen.value = true
 }
 
-const openInlineSrvModal = () => {
+const openInlineSrvModal = (target = 'traffic_service') => {
+  inlineSrvTarget.value = target
   newInlineSrv.value = { name: '', type: 'TCP', dst_port: '' }
   isInlineSrvModalOpen.value = true
 }
@@ -618,7 +689,18 @@ const saveInlineNet = async () => {
       console.error(e)
     }
   }
-  formRule.value.source_network = newInlineNet.value.name
+
+  // Assign newly created object to target field
+  if (inlineNetTarget.value === 'destination_nat_target') {
+    formRule.value.destination_nat_target = newInlineNet.value.address || newInlineNet.value.name
+  } else if (inlineNetTarget.value === 'traffic_source') {
+    formRule.value.traffic_source = newInlineNet.value.name
+  } else if (inlineNetTarget.value === 'traffic_destination') {
+    formRule.value.traffic_destination = newInlineNet.value.name
+  } else {
+    formRule.value.source_network = newInlineNet.value.name
+  }
+
   isInlineNetModalOpen.value = false
 }
 
@@ -638,7 +720,13 @@ const saveInlineSrv = async () => {
       console.error(e)
     }
   }
-  formRule.value.traffic_service = newInlineSrv.value.name
+
+  if (inlineSrvTarget.value === 'service_translation') {
+    formRule.value.service_translation = newInlineSrv.value.dst_port || newInlineSrv.value.name
+  } else {
+    formRule.value.traffic_service = newInlineSrv.value.name
+  }
+
   isInlineSrvModalOpen.value = false
 }
 

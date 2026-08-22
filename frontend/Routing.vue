@@ -282,25 +282,55 @@
 
           <form @submit.prevent="saveRoute" class="p-5 space-y-3.5 text-xs text-slate-800">
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Destination Subnet (CIDR) *</label>
-              <input
-                v-model="form.destination"
-                type="text"
-                required
-                placeholder="e.g. 10.200.0.0/16 or 0.0.0.0/0"
-                class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none"
-              />
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-bold text-slate-700">Destination Subnet (CIDR) *</label>
+                <span v-if="networkDefs.length > 0" class="text-[10px] text-[#0072ce] font-semibold">Choose Object &darr;</span>
+              </div>
+              <div class="space-y-1.5">
+                <select
+                  v-if="networkDefs.length > 0"
+                  @change="e => { if (e.target.value) form.destination = e.target.value }"
+                  class="w-full p-2 border border-slate-300 rounded font-mono bg-white text-xs"
+                >
+                  <option value="">-- Choose from Network Definitions --</option>
+                  <option v-for="net in networkDefs" :key="'dst-rt-' + net.id" :value="net.address || net.name">
+                    🌐 {{ net.name }} ({{ net.address }})
+                  </option>
+                </select>
+                <input
+                  v-model="form.destination"
+                  type="text"
+                  required
+                  placeholder="e.g. 10.200.0.0/16 or 0.0.0.0/0"
+                  class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none"
+                />
+              </div>
             </div>
 
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Gateway Next-Hop IP *</label>
-              <input
-                v-model="form.gateway"
-                type="text"
-                required
-                placeholder="e.g. 192.168.1.254"
-                class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none"
-              />
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-bold text-slate-700">Gateway Next-Hop IP *</label>
+                <span v-if="networkDefs.length > 0" class="text-[10px] text-[#0072ce] font-semibold">Choose Object &darr;</span>
+              </div>
+              <div class="space-y-1.5">
+                <select
+                  v-if="networkDefs.length > 0"
+                  @change="e => { if (e.target.value) form.gateway = e.target.value }"
+                  class="w-full p-2 border border-slate-300 rounded font-mono bg-white text-xs"
+                >
+                  <option value="">-- Choose from Host Definitions --</option>
+                  <option v-for="net in networkDefs" :key="'gw-rt-' + net.id" :value="net.address || net.name">
+                    🖥️ {{ net.name }} ({{ net.address }})
+                  </option>
+                </select>
+                <input
+                  v-model="form.gateway"
+                  type="text"
+                  required
+                  placeholder="e.g. 192.168.1.254"
+                  class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none"
+                />
+              </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -384,6 +414,7 @@ import { ref, onMounted } from 'vue'
 const activeTab = ref('static')
 const loading = ref(false)
 const routes = ref([])
+const networkDefs = ref([])
 const kernelFIB = ref('')
 const isModalOpen = ref(false)
 
@@ -408,15 +439,21 @@ const form = ref({
 async function fetchRoutes() {
   loading.value = true
   try {
-    const res = await fetch('/api/routing/routes')
-    if (res.ok) {
+    const [res, fibRes, netRes] = await Promise.all([
+      fetch('/api/routing/routes').catch(() => null),
+      fetch('/api/routing/status').catch(() => null),
+      fetch('/api/definitions/networks').catch(() => null)
+    ])
+    if (res && res.ok) {
       routes.value = await res.json()
       tabs[0].badge = String(routes.value.length)
     }
-    const fibRes = await fetch('/api/routing/status')
-    if (fibRes.ok) {
+    if (fibRes && fibRes.ok) {
       const data = await fibRes.json()
       kernelFIB.value = data.kernel_routes || 'default via 192.168.1.254 dev ens33'
+    }
+    if (netRes && netRes.ok) {
+      networkDefs.value = await netRes.json()
     }
   } catch (err) {
     console.error('Failed to fetch routes:', err)

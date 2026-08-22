@@ -479,14 +479,45 @@
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label class="block font-bold text-slate-700 mb-1">Local Network (Advertised)</label>
-                  <input v-model="formTunnel.local_networks_text" type="text" placeholder="192.168.1.0/24" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-slate-700">Local Network (Advertised)</label>
+                    <span v-if="networkDefs.length > 0" class="text-[10px] text-[#0072ce] font-semibold">Pick Object &darr;</span>
+                  </div>
+                  <div class="space-y-1.5">
+                    <select
+                      v-if="networkDefs.length > 0"
+                      @change="e => { if (e.target.value) formTunnel.local_networks_text = e.target.value }"
+                      class="w-full p-1.5 border border-slate-300 rounded bg-white text-xs font-mono"
+                    >
+                      <option value="">-- Choose Local Definition --</option>
+                      <option v-for="net in networkDefs" :key="'loc-' + net.id" :value="net.address || net.name">
+                        🌐 {{ net.name }} ({{ net.address }})
+                      </option>
+                    </select>
+                    <input v-model="formTunnel.local_networks_text" type="text" placeholder="192.168.1.0/24" class="w-full p-2 border border-slate-300 rounded bg-white font-mono text-xs" />
+                  </div>
                 </div>
+
                 <div>
-                  <label class="block font-bold text-slate-700 mb-1">Remote Subnets (Routed via Tunnel) *</label>
-                  <input v-model="formTunnel.remote_subnets_text" type="text" required placeholder="10.50.0.0/16, 172.16.0.0/24" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-slate-700">Remote Subnets *</label>
+                    <span v-if="networkDefs.length > 0" class="text-[10px] text-[#0072ce] font-semibold">Pick Object &darr;</span>
+                  </div>
+                  <div class="space-y-1.5">
+                    <select
+                      v-if="networkDefs.length > 0"
+                      @change="e => { if (e.target.value) formTunnel.remote_subnets_text = e.target.value }"
+                      class="w-full p-1.5 border border-slate-300 rounded bg-white text-xs font-mono"
+                    >
+                      <option value="">-- Choose Remote Definition --</option>
+                      <option v-for="net in networkDefs" :key="'rem-' + net.id" :value="net.address || net.name">
+                        🌐 {{ net.name }} ({{ net.address }})
+                      </option>
+                    </select>
+                    <input v-model="formTunnel.remote_subnets_text" type="text" required placeholder="10.50.0.0/16, 172.16.0.0/24" class="w-full p-2 border border-slate-300 rounded bg-white font-mono text-xs" />
+                  </div>
                 </div>
               </div>
 
@@ -521,14 +552,42 @@
                   <input v-model="formTunnel.preshared_key" type="password" required placeholder="SecretKey123!#" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
                 </div>
               </div>
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label class="block font-bold text-slate-700 mb-1">Local Subnets</label>
-                  <input v-model="formTunnel.local_networks_text" type="text" placeholder="192.168.1.0/24" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-slate-700">Local Subnets</label>
+                  </div>
+                  <div class="space-y-1.5">
+                    <select
+                      v-if="networkDefs.length > 0"
+                      @change="e => { if (e.target.value) formTunnel.local_networks_text = e.target.value }"
+                      class="w-full p-1.5 border border-slate-300 rounded bg-white text-xs font-mono"
+                    >
+                      <option value="">-- Choose Local Definition --</option>
+                      <option v-for="net in networkDefs" :key="'loc-ipsec-' + net.id" :value="net.address || net.name">
+                        🌐 {{ net.name }} ({{ net.address }})
+                      </option>
+                    </select>
+                    <input v-model="formTunnel.local_networks_text" type="text" placeholder="192.168.1.0/24" class="w-full p-2 border border-slate-300 rounded bg-white font-mono text-xs" />
+                  </div>
                 </div>
                 <div>
-                  <label class="block font-bold text-slate-700 mb-1">Remote Subnets *</label>
-                  <input v-model="formTunnel.remote_subnets_text" type="text" required placeholder="10.100.0.0/16" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-slate-700">Remote Subnets *</label>
+                  </div>
+                  <div class="space-y-1.5">
+                    <select
+                      v-if="networkDefs.length > 0"
+                      @change="e => { if (e.target.value) formTunnel.remote_subnets_text = e.target.value }"
+                      class="w-full p-1.5 border border-slate-300 rounded bg-white text-xs font-mono"
+                    >
+                      <option value="">-- Choose Remote Definition --</option>
+                      <option v-for="net in networkDefs" :key="'rem-ipsec-' + net.id" :value="net.address || net.name">
+                        🌐 {{ net.name }} ({{ net.address }})
+                      </option>
+                    </select>
+                    <input v-model="formTunnel.remote_subnets_text" type="text" required placeholder="10.100.0.0/16" class="w-full p-2 border border-slate-300 rounded bg-white font-mono text-xs" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -581,14 +640,28 @@
                   <input v-model="formTunnel.remote_public_key" type="text" required placeholder="xK8b3s90j12LmOP947vbcKqLmNwz458vBnmQ123aA=" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
                 </div>
               </div>
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label class="block font-bold text-slate-700 mb-1">Local Tunnel IP</label>
-                  <input v-model="formTunnel.local_virtual_ip" type="text" placeholder="10.250.0.2/30" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                  <input v-model="formTunnel.local_virtual_ip" type="text" placeholder="10.250.0.2/30" class="w-full p-2 border border-slate-300 rounded bg-white font-mono text-xs" />
                 </div>
                 <div>
-                  <label class="block font-bold text-slate-700 mb-1">Allowed Remote Subnets *</label>
-                  <input v-model="formTunnel.remote_subnets_text" type="text" required placeholder="10.100.0.0/16, 172.16.0.0/16" class="w-full p-2 border border-slate-300 rounded bg-white font-mono" />
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-slate-700">Allowed Remote Subnets *</label>
+                  </div>
+                  <div class="space-y-1.5">
+                    <select
+                      v-if="networkDefs.length > 0"
+                      @change="e => { if (e.target.value) formTunnel.remote_subnets_text = e.target.value }"
+                      class="w-full p-1.5 border border-slate-300 rounded bg-white text-xs font-mono"
+                    >
+                      <option value="">-- Choose Remote Definition --</option>
+                      <option v-for="net in networkDefs" :key="'rem-wg-' + net.id" :value="net.address || net.name">
+                        🌐 {{ net.name }} ({{ net.address }})
+                      </option>
+                    </select>
+                    <input v-model="formTunnel.remote_subnets_text" type="text" required placeholder="10.100.0.0/16, 172.16.0.0/16" class="w-full p-2 border border-slate-300 rounded bg-white font-mono text-xs" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -819,6 +892,8 @@ const activeTabLabel = computed(() => {
   return 'Site-to-Site Tunnel'
 })
 
+const networkDefs = ref([])
+
 const formTunnel = ref({
   tunnel_name: '',
   tunnel_type: 'ssl_client',
@@ -934,15 +1009,19 @@ const fetchData = async (isManual = false) => {
   try {
     const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
     if (axiosLib) {
-      const [tunRes, peerRes] = await Promise.all([
+      const [tunRes, peerRes, netRes] = await Promise.all([
         axiosLib.get('/api/vpn/tunnels').catch(() => null),
-        axiosLib.get('/api/vpn/peers').catch(() => null)
+        axiosLib.get('/api/vpn/peers').catch(() => null),
+        axiosLib.get('/api/definitions/networks').catch(() => null)
       ])
       if (tunRes && tunRes.data && tunRes.data.tunnels) {
         tunnelsList.value = tunRes.data.tunnels
       }
       if (peerRes && peerRes.data && peerRes.data.peers) {
         peersList.value = peerRes.data.peers
+      }
+      if (netRes && netRes.data) {
+        networkDefs.value = netRes.data
       }
     }
   } catch (e) {

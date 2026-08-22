@@ -92,6 +92,56 @@
               </div>
             </div>
 
+            <!-- Protected Local Networks (Matching Sophos UTM 9 Local Networks Card) -->
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Local Networks to Protect</label>
+                  <p class="text-[11px] text-slate-500">Internal subnets inspected by Suricata DPI against inbound and lateral exploits.</p>
+                </div>
+                <span class="text-[10px] bg-blue-50 text-[#005299] font-mono px-2 py-0.5 rounded font-bold border border-blue-200">
+                  {{ protectedNetworks.length }} Networks Protected
+                </span>
+              </div>
+
+              <!-- Protected Networks Badge Pills -->
+              <div class="flex flex-wrap gap-1.5 p-2 bg-white rounded-lg border border-slate-200 min-h-8">
+                <span
+                  v-for="(pNet, pIdx) in protectedNetworks"
+                  :key="pIdx"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-[#005299] border border-blue-200 shadow-2xs font-mono"
+                >
+                  <span>🌐</span>
+                  <span>{{ pNet }}</span>
+                  <button
+                    type="button"
+                    @click="removeProtectedNetwork(pIdx)"
+                    class="text-blue-400 hover:text-rose-600 font-bold ml-1 cursor-pointer leading-none"
+                    title="Remove network"
+                  >
+                    ✕
+                  </button>
+                </span>
+                <span v-if="protectedNetworks.length === 0" class="text-slate-400 text-[11px] italic py-0.5">
+                  No local networks selected. Pick from definitions below.
+                </span>
+              </div>
+
+              <!-- Add from Network Definitions -->
+              <div class="space-y-1">
+                <label class="block text-[11px] font-bold text-slate-600">Add Network Object to Protection Scope:</label>
+                <select
+                  @change="onAddProtectedNetworkSelect"
+                  class="w-full p-2 border border-slate-300 rounded-lg bg-white text-xs font-mono"
+                >
+                  <option value="">-- Choose from Network Definitions --</option>
+                  <option v-for="net in networkDefs" :key="'ips-net-' + net.id" :value="net.name">
+                    🌐 {{ net.name }} ({{ net.address }})
+                  </option>
+                </select>
+              </div>
+            </div>
+
             <!-- Signature Feed Update Interval -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -471,7 +521,7 @@
 </template>
 
 <script setup>
-import { ref, h } from 'vue'
+import { ref, onMounted, h } from 'vue'
 
 const props = defineProps({
   authToken: {
@@ -581,6 +631,35 @@ const availableInterfaces = ref([
   { name: 'br0', type: 'Bridge' }
 ])
 
+const networkDefs = ref([])
+const protectedNetworks = ref(['Internal (Network)', 'DMZ (Network)'])
+
+const onAddProtectedNetworkSelect = (e) => {
+  const val = e.target.value
+  if (val && !protectedNetworks.value.includes(val)) {
+    protectedNetworks.value.push(val)
+  }
+  e.target.value = ''
+}
+
+const removeProtectedNetwork = (idx) => {
+  protectedNetworks.value.splice(idx, 1)
+}
+
+const loadNetworkDefs = async () => {
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      const res = await axiosLib.get('/api/definitions/networks').catch(() => null)
+      if (res && res.data) {
+        networkDefs.value = res.data
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load network definitions for IPS:', e)
+  }
+}
+
 const ipsConfig = ref({
   enabled: true,
   mode: 'inline_drop',
@@ -640,4 +719,8 @@ const savePortscanSettings = async () => {
 const updateSignaturesNow = () => {
   alert('Downloading latest Emerging Threats Open signature ruleset...')
 }
+
+onMounted(() => {
+  loadNetworkDefs()
+})
 </script>

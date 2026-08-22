@@ -712,26 +712,73 @@
               />
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-3">
               <div>
-                <label class="block font-bold text-slate-700 mb-1">Host / IP *</label>
-                <input
-                  v-model="newInlineRS.host"
-                  type="text"
-                  required
-                  placeholder="e.g. 192.168.1.50"
-                  class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none"
-                />
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block font-bold text-slate-700">Host Definition / Target IP *</label>
+                  <button
+                    type="button"
+                    @click="isInlineHostOpen = !isInlineHostOpen"
+                    class="text-[10px] font-bold text-[#0072ce] hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    <span>{{ isInlineHostOpen ? '▲ Close Creator' : '+ New Host Object...' }}</span>
+                  </button>
+                </div>
+
+                <!-- Embedded Mini Host Creator -->
+                <div v-if="isInlineHostOpen" class="p-2.5 bg-blue-50/60 rounded-lg border border-blue-200 mb-2 space-y-2 text-[11px]">
+                  <div class="font-bold text-blue-900 flex items-center justify-between">
+                    <span>Create Host Definition</span>
+                    <button type="button" @click="isInlineHostOpen = false" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <input v-model="inlineHostName" placeholder="Host Name (e.g. AppServer01)" class="p-1.5 border border-slate-300 rounded bg-white" />
+                    <input v-model="inlineHostIp" placeholder="IPv4 (e.g. 192.168.1.50)" class="p-1.5 border border-slate-300 rounded font-mono bg-white" />
+                  </div>
+                  <div class="flex justify-end gap-1.5">
+                    <button type="button" @click="isInlineHostOpen = false" class="px-2.5 py-1 border border-slate-300 rounded bg-white text-slate-600 font-medium">Cancel</button>
+                    <button type="button" @click="createInlineHostObject" class="px-2.5 py-1 bg-[#0072ce] text-white rounded font-bold">Save &amp; Select</button>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <select
+                    v-model="newInlineRS.host"
+                    class="w-full p-2 border border-slate-300 rounded font-mono bg-white text-xs"
+                  >
+                    <option value="" disabled>-- Select from Host Definitions --</option>
+                    <option v-for="net in networkDefs" :key="'host-' + net.id" :value="net.address || net.name">
+                      🖥️ {{ net.name }} ({{ net.address }})
+                    </option>
+                  </select>
+                  <input
+                    v-model="newInlineRS.host"
+                    type="text"
+                    required
+                    placeholder="Or type IP e.g. 192.168.1.50"
+                    class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none text-xs"
+                  />
+                </div>
               </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Port *</label>
-                <input
-                  v-model.number="newInlineRS.port"
-                  type="number"
-                  required
-                  placeholder="443"
-                  class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none"
-                />
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Port *</label>
+                  <input
+                    v-model.number="newInlineRS.port"
+                    type="number"
+                    required
+                    placeholder="443"
+                    class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none text-xs"
+                  />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Protocol</label>
+                  <select v-model="newInlineRS.protocol" class="w-full p-2 border border-slate-300 rounded bg-white font-medium text-xs">
+                    <option value="HTTPS">HTTPS (Encrypted)</option>
+                    <option value="HTTP">HTTP (Plaintext)</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1232,17 +1279,64 @@ const openNginxPreview = () => {
   isNginxPreviewOpen.value = true
 }
 
+const networkDefs = ref([])
+const isInlineHostOpen = ref(false)
+const inlineHostName = ref('')
+const inlineHostIp = ref('')
+
+const createInlineHostObject = async () => {
+  if (!inlineHostName.value.trim() || !inlineHostIp.value.trim()) {
+    alert('Please enter both a host name and IP address.')
+    return
+  }
+
+  const payload = {
+    name: inlineHostName.value.trim(),
+    type: 'Host',
+    address: inlineHostIp.value.trim(),
+    comment: 'Created from Webserver Protection'
+  }
+
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.post('/api/definitions/networks', payload)
+    } else {
+      await fetch('/api/definitions/networks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+    }
+    networkDefs.value.push({ id: `net-${Date.now()}`, ...payload })
+    newInlineRS.value.host = payload.address
+    inlineHostName.value = ''
+    inlineHostIp.value = ''
+    isInlineHostOpen.value = false
+  } catch (e) {
+    console.error('Failed to create host object:', e)
+    newInlineRS.value.host = payload.address
+    isInlineHostOpen.value = false
+  }
+}
+
 const loadCertificates = async () => {
   try {
     const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
     if (axiosLib) {
-      const res = await axiosLib.get('/api/certificates').catch(() => null)
-      if (res && res.data && res.data.certificates && res.data.certificates.length) {
-        availableCertificates.value = res.data.certificates
+      const [certRes, netRes] = await Promise.all([
+        axiosLib.get('/api/certificates').catch(() => null),
+        axiosLib.get('/api/definitions/networks').catch(() => null)
+      ])
+      if (certRes && certRes.data && certRes.data.certificates && certRes.data.certificates.length) {
+        availableCertificates.value = certRes.data.certificates
+      }
+      if (netRes && netRes.data) {
+        networkDefs.value = netRes.data
       }
     }
   } catch (e) {
-    console.error('Failed to load certificates for WAF:', e)
+    console.error('Failed to load certificates/definitions for WAF:', e)
   }
 }
 

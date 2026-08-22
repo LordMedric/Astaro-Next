@@ -545,6 +545,7 @@
                 <div class="flex items-center gap-2">
                   <button
                     type="button"
+                    @click="isBrowsingHostDefs = !isBrowsingHostDefs"
                     class="text-amber-700 hover:text-amber-800 text-xs cursor-pointer"
                     title="Browse Network Definitions"
                   >
@@ -557,6 +558,25 @@
                     title="Add host"
                   >
                     +
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Host Definition Browser Dropdown -->
+              <div v-if="isBrowsingHostDefs" class="p-2 bg-amber-50 border-x border-b border-amber-200 text-xs space-y-1.5">
+                <div class="font-bold text-amber-900 flex items-center justify-between">
+                  <span>Select from Host Definitions</span>
+                  <button type="button" @click="isBrowsingHostDefs = false" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                </div>
+                <div class="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                  <button
+                    v-for="net in networkDefs"
+                    :key="'mh-' + net.id"
+                    type="button"
+                    @click="selectHostDefForRouting(net)"
+                    class="px-2 py-0.5 bg-white border border-amber-300 hover:bg-amber-100 rounded text-[11px] font-mono cursor-pointer"
+                  >
+                    🖥️ {{ net.name }} ({{ net.address }})
                   </button>
                 </div>
               </div>
@@ -755,25 +775,56 @@
         </div>
 
         <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
-          <div class="border-b border-slate-100 pb-3">
-            <h3 class="font-bold text-sm text-slate-900">Allowed Relaying Networks</h3>
-            <p class="text-xs text-slate-500 mt-0.5">Internal networks permitted to relay unauthenticated outbound mail.</p>
+          <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-sm text-slate-900">Allowed Relaying Networks</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Internal networks permitted to relay unauthenticated outbound mail.</p>
+            </div>
+            <span class="text-[10px] bg-blue-50 text-[#005299] font-mono px-2 py-0.5 rounded font-bold border border-blue-200">
+              {{ allowedRelayNetworks.length }} Networks Allowed
+            </span>
           </div>
 
           <div class="space-y-3 text-xs">
+            <!-- Selected Relaying Networks Pills -->
             <div class="p-3 bg-[#f4f6f9] rounded-xl border border-slate-200 space-y-2 font-mono">
-              <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-[#005299]"></span>
-                <span class="font-bold text-slate-900">Internal (Network) [192.168.1.0/24]</span>
+              <div
+                v-for="(netName, rIdx) in allowedRelayNetworks"
+                :key="rIdx"
+                class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded border border-slate-200 text-[11px]"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-[#005299]"></span>
+                  <span class="font-bold text-slate-900">🌐 {{ netName }}</span>
+                </div>
+                <button
+                  type="button"
+                  @click="removeRelayNetwork(rIdx)"
+                  class="text-slate-400 hover:text-rose-600 font-bold cursor-pointer"
+                  title="Remove network"
+                >
+                  ✕
+                </button>
               </div>
-              <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-[#005299]"></span>
-                <span class="font-bold text-slate-900">DMZ (Network) [192.168.2.0/24]</span>
+
+              <div v-if="allowedRelayNetworks.length === 0" class="text-center py-3 text-slate-400 text-[11px] font-sans">
+                No networks allowed. Select from existing definitions below.
               </div>
             </div>
-            <p class="text-[11px] text-slate-400">
-              Manage these networks in <strong>Configure &rarr; Definitions &amp; Objects</strong>.
-            </p>
+
+            <!-- Select from Existing Network Definitions -->
+            <div class="space-y-1.5">
+              <label class="block font-bold text-slate-700">Add Network Object to Allowed Relaying:</label>
+              <select
+                @change="onAddRelayNetworkSelect"
+                class="w-full p-2 border border-slate-300 rounded-lg bg-white text-xs font-mono"
+              >
+                <option value="">-- Choose from Network Definitions --</option>
+                <option v-for="net in networkDefs" :key="'rel-' + net.id" :value="net.name">
+                  🌐 {{ net.name }} ({{ net.address }})
+                </option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -2810,6 +2861,30 @@ const fetchQuarantine = (isManual = false) => {
   setTimeout(() => { isLoading.value = false }, 600)
 }
 
+const networkDefs = ref([])
+const isBrowsingHostDefs = ref(false)
+const allowedRelayNetworks = ref(['Internal (Network)', 'DMZ (Network)'])
+
+const selectHostDefForRouting = (net) => {
+  const target = net.name || net.address
+  if (target && !routingConfig.value.host_list.includes(target)) {
+    routingConfig.value.host_list.push(target)
+  }
+  isBrowsingHostDefs.value = false
+}
+
+const onAddRelayNetworkSelect = (e) => {
+  const val = e.target.value
+  if (val && !allowedRelayNetworks.value.includes(val)) {
+    allowedRelayNetworks.value.push(val)
+  }
+  e.target.value = ''
+}
+
+const removeRelayNetwork = (idx) => {
+  allowedRelayNetworks.value.splice(idx, 1)
+}
+
 const routingConfig = ref({
   domains: ['medricnetworks.com'],
   route_by: 'Static host list',
@@ -2856,9 +2931,15 @@ const fetchRoutingConfig = async () => {
   try {
     const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
     if (axiosLib) {
-      const res = await axiosLib.get('/api/mail/routing').catch(() => null)
-      if (res && res.data && res.data.routing) {
-        routingConfig.value = { ...routingConfig.value, ...res.data.routing }
+      const [routeRes, netRes] = await Promise.all([
+        axiosLib.get('/api/mail/routing').catch(() => null),
+        axiosLib.get('/api/definitions/networks').catch(() => null)
+      ])
+      if (routeRes && routeRes.data && routeRes.data.routing) {
+        routingConfig.value = { ...routingConfig.value, ...routeRes.data.routing }
+      }
+      if (netRes && netRes.data) {
+        networkDefs.value = netRes.data
       }
     }
   } catch (e) {
