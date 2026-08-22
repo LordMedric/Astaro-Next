@@ -15,7 +15,7 @@
         </p>
       </div>
 
-      <!-- Tab Navigation Pills (Matching Sophos UTM 9 Sections) -->
+      <!-- Tab Navigation Pills (Matching Astaro-Next Sections) -->
       <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 overflow-x-auto text-xs font-semibold">
         <button
           v-for="tab in tabs"
@@ -35,7 +35,7 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- TAB 1: NETWORK STATISTICS (TODAY) - SOPHOS UTM 9 PARITY                    -->
+    <!-- TAB 1: NETWORK STATISTICS (TODAY) - Astaro-Next PARITY                    -->
     <!-- ========================================================================= -->
     <div v-if="activeTab === 'network_stats'" class="space-y-6">
       <div class="flex items-center justify-between">
@@ -231,7 +231,7 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- TAB 2: NETWORK PROTECTION STATISTICS (TODAY) - EXACT SOPHOS UTM 9 PARITY   -->
+    <!-- TAB 2: NETWORK PROTECTION STATISTICS (TODAY) - EXACT Astaro-Next PARITY   -->
     <!-- ========================================================================= -->
     <div v-if="activeTab === 'network_protection'" class="space-y-6">
       <div class="flex items-center justify-between">
@@ -372,7 +372,7 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- TAB 3: WEB PROTECTION STATISTICS (TODAY) - EXACT SOPHOS UTM 9 PARITY       -->
+    <!-- TAB 3: WEB PROTECTION STATISTICS (TODAY) - EXACT Astaro-Next PARITY       -->
     <!-- ========================================================================= -->
     <div v-if="activeTab === 'web_protection'" class="space-y-6">
       <div class="flex items-center justify-between">
@@ -691,7 +691,7 @@ const topApps = ref([
   { name: 'Akamai', traffic: '440.3 MB', pct: 11.02, color: '#1565c0' },
   { name: 'Amazon Prime Video', traffic: '375.7 MB', pct: 9.40, color: '#6a1b9a' },
   { name: 'QUIC IETF', traffic: '329.1 MB', pct: 8.24, color: '#ad1457' },
-  { name: 'Sophos UTM Up2Date', traffic: '166.5 MB', pct: 4.17, color: '#c2185b' },
+  { name: 'Astaro Up2Date', traffic: '166.5 MB', pct: 4.17, color: '#c2185b' },
   { name: 'Apple', traffic: '136.1 MB', pct: 3.41, color: '#e65100' },
   { name: 'iTunes', traffic: '114.3 MB', pct: 2.86, color: '#f57f17' },
   { name: 'SSL', traffic: '97.1 MB', pct: 2.43, color: '#9e9d24' }

@@ -56,7 +56,7 @@
 
     <!-- Top Management & Telemetry Header Banner -->
     <div class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-      <!-- Title & Subtitle with Sophos Blue Accent -->
+      <!-- Title & Subtitle with Astaro Blue Accent -->
       <div class="flex items-center gap-4">
         <div class="w-12 h-12 rounded-xl bg-[#0072ce] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -148,7 +148,7 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs Strip (Sophos UTM 9 Style) -->
+    <!-- Navigation Tabs Strip (Astaro-Next Style) -->
     <div class="flex border-b border-slate-200 gap-1 bg-[#f4f6f9] p-1.5 rounded-t-xl overflow-x-auto text-xs font-bold mb-6">
       <button
         type="button"
@@ -210,7 +210,7 @@
       </button>
     </div>
 
-    <!-- TAB 0: WEB PROTECTION STATISTICS (TODAY) - EXACT SOPHOS UTM 9 DASHBOARD -->
+    <!-- TAB 0: WEB PROTECTION STATISTICS (TODAY) - EXACT Astaro-Next DASHBOARD -->
     <div v-if="activeTab === 'stats'" class="space-y-6">
       <div class="flex items-center justify-between">
         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Web Protection Statistics — Today</h2>
@@ -423,7 +423,7 @@
       <!-- LEFT COLUMN: SECURITY FILTERS (5 Cols on LG)                              -->
       <!-- ========================================================================= -->
       <section class="lg:col-span-5 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col transition-shadow hover:shadow-md">
-        <!-- Card Header with Sophos Blue Accent -->
+        <!-- Card Header with Astaro Blue Accent -->
         <div class="px-5 py-4 border-b border-slate-100 bg-[#f4f6f9]/60 flex items-center justify-between">
           <div class="flex items-center gap-2.5">
             <span class="w-1.5 h-4 bg-[#0072ce] rounded-full"></span>
@@ -662,7 +662,7 @@
             </label>
           </div>
 
-          <!-- Allowed Networks (Transparent Proxy & Filter Scope - Sophos UTM 9 Parity) -->
+          <!-- Allowed Networks (Transparent Proxy & Filter Scope - Astaro-Next Parity) -->
           <div class="pt-4 border-t border-slate-100 space-y-2.5">
             <div class="flex items-center justify-between">
               <div>
@@ -985,7 +985,7 @@
     </div>
   </div>
 
-  <!-- TAB 2: EXCEPTIONS & BYPASS RULES (Sophos UTM 9 Parity) -->
+  <!-- TAB 2: EXCEPTIONS & BYPASS RULES (Astaro-Next Parity) -->
   <div v-if="activeTab === 'exceptions'" class="space-y-6">
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <div class="p-4 border-b border-slate-200 bg-[#f4f6f9] flex items-center justify-between">
@@ -1465,7 +1465,7 @@ const activeProfile = ref('corporate_default')
 const categorySearch = ref('')
 
 // -----------------------------------------------------------------------------
-// SVG Pie Chart Generator Utility & Datasets (Sophos UTM 9 Web Statistics)
+// SVG Pie Chart Generator Utility & Datasets (Astaro-Next Web Statistics)
 // -----------------------------------------------------------------------------
 function buildPieSlices(items) {
   let cumulativePercent = 0
@@ -1496,7 +1496,7 @@ const topApps = ref([
   { name: 'Akamai', traffic: '440.3 MB', pct: 11.02, color: '#1565c0' },
   { name: 'Amazon Prime Video', traffic: '375.7 MB', pct: 9.40, color: '#6a1b9a' },
   { name: 'QUIC IETF', traffic: '329.1 MB', pct: 8.24, color: '#ad1457' },
-  { name: 'Sophos UTM Up2Date', traffic: '166.5 MB', pct: 4.17, color: '#c2185b' },
+  { name: 'Astaro Up2Date', traffic: '166.5 MB', pct: 4.17, color: '#c2185b' },
   { name: 'Apple', traffic: '136.1 MB', pct: 3.41, color: '#e65100' },
   { name: 'iTunes', traffic: '114.3 MB', pct: 2.86, color: '#f57f17' },
   { name: 'SSL', traffic: '97.1 MB', pct: 2.43, color: '#9e9d24' }
@@ -2056,7 +2056,7 @@ const fetchPolicy = async (isManual = false) => {
       }
     }
   } catch (err) {
-    console.warn('[WebProtection] Live backend unreachable, operating with standard Sophos UTM Defaults:', err.message)
+    console.warn('[WebProtection] Live backend unreachable, operating with standard Astaro-Next Defaults:', err.message)
     if (isManual) {
       addToast('Gateway Telemetry Note', 'Operating on active cached policy configuration.', 'info')
     }
@@ -2099,7 +2099,7 @@ const applyWebPolicy = async () => {
     emit('policy-updated', payload)
     addToast(
       'Web Policy Applied Successfully',
-      `Enforced ${activeSecurityFiltersCount.value} security definitions and ${blockedCategoriesCount.value} blocked categories across SFOS L7 engine.`,
+      `Enforced ${activeSecurityFiltersCount.value} security definitions and ${blockedCategoriesCount.value} blocked categories across Astaro-Next L7 engine.`,
       'success'
     )
   } catch (err) {

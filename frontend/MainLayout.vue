@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-[#161e29] text-slate-100 font-sans flex flex-col antialiased selection:bg-[#0072ce] selection:text-white">
-    <!-- Top Global System Header Bar (Astaro / Sophos UTM Style) -->
+    <!-- Top Global System Header Bar (Astaro / Astaro-Next Style) -->
     <header class="bg-[#1b232e] border-b border-slate-700/80 sticky top-0 z-50 flex-none shadow-sm">
       <!-- High-contrast corporate Astaro Orange top accent bar -->
       <div class="h-1 w-full bg-[#ee7f00]"></div>
@@ -109,7 +109,7 @@
               type="button"
               @click="handleLogout"
               class="px-2.5 py-1.5 text-xs font-medium rounded bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-300 border border-slate-700 hover:border-rose-500 transition-colors flex items-center gap-1.5"
-              title="Log out of SFOS Console"
+              title="Log out of Astaro Console"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -131,14 +131,14 @@
         aria-hidden="true"
       ></div>
 
-      <!-- Sophos UTM Dark Slate Sidebar Container (bg-[#1a2332]) -->
+      <!-- Astaro-Next Dark Slate Sidebar Container (bg-[#1a2332]) -->
       <aside
         :class="[
           'fixed lg:static inset-y-0 left-0 z-40 w-64 bg-[#1a2332] border-r border-slate-700/80 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 select-none shadow-xl lg:shadow-none',
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         ]"
         role="navigation"
-        aria-label="Sophos UTM 9 Main Navigation"
+        aria-label="Astaro-Next Main Navigation"
       >
         <!-- Four Hardcoded Vertical Navigation Groupings -->
         <nav class="flex-1 overflow-y-auto py-3 px-2.5 space-y-4 scrollbar-thin scrollbar-thumb-slate-700">
@@ -529,7 +529,7 @@ const SystemSettingsIcon = {
   ])
 }
 
-// Sophos UTM 9 (SFOS) Four Clean Vertical Navigation Groupings
+// Astaro-Next (Astaro-Next) Four Clean Vertical Navigation Groupings
 const navGroups = [
   {
     id: 'monitor_analyze',

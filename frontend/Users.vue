@@ -66,7 +66,7 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs Strip (Sophos UTM 9 Style) -->
+    <!-- Navigation Tabs Strip (Astaro-Next Style) -->
     <div class="flex border-b border-slate-200 gap-1 bg-[#f4f6f9] p-1.5 rounded-t-xl overflow-x-auto text-xs font-bold">
       <button
         type="button"
@@ -216,7 +216,7 @@
       </table>
     </div>
 
-    <!-- TAB 2: USER GROUPS TABLE (Sophos UTM 9 Parity) -->
+    <!-- TAB 2: USER GROUPS TABLE (Astaro-Next Parity) -->
     <div v-else-if="activeTab === 'groups'" class="bg-white rounded-b-xl border border-slate-200 shadow-xs overflow-hidden">
       <table class="w-full text-left text-xs border-collapse">
         <thead class="bg-[#f4f6f9] text-slate-700 font-bold border-b border-slate-200">
@@ -906,7 +906,7 @@
     >
       <div class="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-sm w-full overflow-hidden text-center p-6 space-y-4">
         <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900">Scan Authenticator QR Code</h3>
-        <p class="text-xs text-slate-500">Scan with Google Authenticator, Sophos Authenticator, or 1Password for user <span class="font-bold text-slate-800">{{ activeQrToken.username }}</span></p>
+        <p class="text-xs text-slate-500">Scan with Google Authenticator, Astaro Authenticator, or 1Password for user <span class="font-bold text-slate-800">{{ activeQrToken.username }}</span></p>
 
         <!-- Dynamic QR SVG Simulation -->
         <div class="p-4 bg-slate-900 rounded-xl inline-block shadow-inner">

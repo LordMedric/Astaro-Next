@@ -3,7 +3,7 @@
 ===============================================================================
 Astaro-Next Firewall OS - Internal Configuration Middleware Daemon
 ===============================================================================
-Target Platform: Debian GNU/Linux 12 (Bookworm) / Sophos XGS Architectural Style
+Target Platform: Debian GNU/Linux 12 (Bookworm) / Astaro-Next Architectural Style
 Daemon Port:     4444 (HTTPS / TLS 1.3)
 Architecture:    FastAPI / Pydantic v2 / Python Subprocess Core Engine
 
@@ -368,7 +368,7 @@ class NetworkInterfaceSavePayload(BaseModel):
     port_number: Optional[str] = Field(default=None, alias="portNumber", description="Port physical label, e.g. 'P1'")
     name: Optional[str] = Field(default=None, description="Interface display name, e.g. 'Port1 (WAN)'")
     hw_name: Optional[str] = Field(default=None, alias="hwName", description="Underlying Linux network interface device name, e.g. 'eth0'")
-    zone: str = Field(default="LAN", description="SFOS Zone Assignment: WAN, LAN, DMZ, HA")
+    zone: str = Field(default="LAN", description="Astaro-Next Zone Assignment: WAN, LAN, DMZ, HA")
     mode: str = Field(default="static", alias="type", description="Addressing mode: 'dhcp' or 'static'")
     ip_address: Optional[str] = Field(default="", alias="ipAddress", description="Static IPv4 address")
     netmask: Optional[str] = Field(default="", description="Subnet netmask, e.g. '255.255.255.0'")
@@ -427,7 +427,7 @@ class NFTablesApplyResponse(BaseModel):
 
 
 class FirewallRule(BaseModel):
-    """Sophos UTM / Astaro base rule schema supporting Host, DNS Host, Network, Range, IP objects."""
+    """Astaro-Next / Astaro base rule schema supporting Host, DNS Host, Network, Range, IP objects."""
     id: Optional[Union[int, str]] = None
     name: str = Field(..., description="Descriptive name of the firewall policy rule")
     src_zone: Optional[str] = Field(default="LAN", description="Source zone: 'LAN', 'WAN', 'VPN', 'DMZ', 'Any'")
@@ -551,7 +551,7 @@ class EmailActionConfig(BaseModel):
         return v.lower()
 
 
-# --- Web Protection (Zenarmor / SFOS L7 Filter) Models ---
+# --- Web Protection (Zenarmor / Astaro-Next L7 Filter) Models ---
 class SecurityFiltersModel(BaseModel):
     block_known_malware: bool = Field(default=True, description="Block verified malware and ransomware staging domains")
     block_phishing_deceptive: bool = Field(default=True, description="Block credential harvesting and phishing portals")
@@ -782,7 +782,7 @@ def get_live_bandwidth() -> Dict[str, Any]:
 @app.get("/api/system/control-center", tags=["System"])
 def get_control_center_data(_: Optional[str] = Depends(verify_admin_auth)):
     """
-    Fetches real-time system metrics for the Sophos XGS style Control Center dashboard.
+    Fetches real-time system metrics for the Astaro-Next style Control Center dashboard.
     Gathers CPU utilization, memory pressure, storage utilization, service states, and live network bandwidth.
     """
     try:
@@ -1368,7 +1368,7 @@ async def apply_network_rules(
             temp_nft.unlink(missing_ok=True)
 
 
-# Default zone-based firewall rules with Sophos UTM Base Objects
+# Default zone-based firewall rules with Astaro-Next Base Objects
 _DEFAULT_FIREWALL_RULES = [
     {
         "id": 1,
@@ -1434,7 +1434,7 @@ _DEFAULT_FIREWALL_RULES = [
 
 @app.get("/api/firewall/rules", tags=["Network Firewall"])
 def get_firewall_rules(_: Optional[str] = Depends(verify_admin_auth)):
-    """Reads saved custom zone-based firewall rules (Sophos UTM style) with SQLite persistence."""
+    """Reads saved custom zone-based firewall rules (Astaro-Next style) with SQLite persistence."""
     if HAS_DB:
         return db_get_firewall_rules()
     return _DEFAULT_FIREWALL_RULES
@@ -2765,7 +2765,7 @@ def delete_dkim_key(key_id: str, _: Optional[str] = Depends(verify_admin_auth)):
 
 
 # -----------------------------------------------------------------------------
-# Section 12: Web Protection (Zenarmor / SFOS L7 Filter) Subsystem
+# Section 12: Web Protection (Zenarmor / Astaro-Next L7 Filter) Subsystem
 # -----------------------------------------------------------------------------
 # In-memory / persistent active policy state cache
 _ACTIVE_WEB_POLICY: Dict[str, Any] = {
@@ -2817,7 +2817,7 @@ async def save_web_protection_policy(
     )
     return {
         "status": "success",
-        "message": f"Web Protection Policy '{payload.policy_name}' committed and applied across SFOS L7 engine.",
+        "message": f"Web Protection Policy '{payload.policy_name}' committed and applied across Astaro-Next L7 engine.",
         "policy": _ACTIVE_WEB_POLICY
     }
 
@@ -3371,7 +3371,7 @@ async def serve_webadmin_index():
 
 
 # -----------------------------------------------------------------------------
-# Section 13: Definitions & Objects Subsystem (Sophos UTM Standard)
+# Section 13: Definitions & Objects Subsystem (Astaro-Next Standard)
 # -----------------------------------------------------------------------------
 class NetworkObjectConfig(BaseModel):
     id: Optional[str] = None

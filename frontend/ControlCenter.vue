@@ -1062,7 +1062,7 @@ function buildPieSlices(items) {
   })
 }
 
-// Sophos UTM 9 Statistics Datasets
+// Astaro-Next Statistics Datasets
 const accountingServices = ref([
   { proto: 'TCP', port: 443, name: 'HTTPS', packets: 1707287, traffic: '2.5 GB', pct: 64.1, color: '#00838f' },
   { proto: 'UDP', port: 443, name: 'HTTPS', packets: 1203151, traffic: '1.2 GB', pct: 30.8, color: '#00bcd4' },
@@ -1126,7 +1126,7 @@ const topApps = ref([
   { name: 'Akamai', traffic: '440.3 MB', pct: 11.02, color: '#1565c0' },
   { name: 'Amazon Prime Video', traffic: '375.7 MB', pct: 9.40, color: '#6a1b9a' },
   { name: 'QUIC IETF', traffic: '329.1 MB', pct: 8.24, color: '#ad1457' },
-  { name: 'Sophos UTM Up2Date', traffic: '166.5 MB', pct: 4.17, color: '#c2185b' },
+  { name: 'Astaro Up2Date', traffic: '166.5 MB', pct: 4.17, color: '#c2185b' },
   { name: 'Apple', traffic: '136.1 MB', pct: 3.41, color: '#e65100' },
   { name: 'iTunes', traffic: '114.3 MB', pct: 2.86, color: '#f57f17' },
   { name: 'SSL', traffic: '97.1 MB', pct: 2.43, color: '#9e9d24' }

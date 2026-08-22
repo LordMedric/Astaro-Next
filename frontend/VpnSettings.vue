@@ -1337,7 +1337,7 @@ Address = ${peer.virtual_ip}
 DNS = 1.1.1.1, 8.8.8.8
 
 [Peer]
-PublicKey = SFOSxgsFirewallServerPublicKeyBase64WireGuard=
+PublicKey = Astaro-NextxgsFirewallServerPublicKeyBase64WireGuard=
 Endpoint = vpn.astaro-gateway.internal:51820
 AllowedIPs = 0.0.0.0/0, ::/0
 PersistentKeepalive = 25`

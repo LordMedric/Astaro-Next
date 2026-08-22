@@ -110,7 +110,7 @@
             <div>
               <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">WebAdmin HTTPS Port</label>
               <input type="number" v-model.number="webadminConfig.port" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-              <p class="text-[11px] text-slate-500 mt-1">Default Sophos UTM / Astaro port is 4444.</p>
+              <p class="text-[11px] text-slate-500 mt-1">Default Astaro-Next / Astaro port is 4444.</p>
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Session Timeout (Minutes)</label>
@@ -277,7 +277,7 @@
               </div>
             </div>
 
-            <!-- Event Category Checklists (Sophos UTM 9 Parity) -->
+            <!-- Event Category Checklists (Astaro-Next Parity) -->
             <div>
               <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Notification Event Triggers</label>
               <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

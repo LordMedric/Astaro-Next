@@ -1,11 +1,11 @@
 # Astaro-Next Firewall OS
 
-A modern Next-Generation Firewall (NGFW) management dashboard and backend middleware inspired by Sophos XGS / SFOS architecture, targeting Debian GNU/Linux systems.
+A modern Next-Generation Firewall (NGFW) management dashboard and backend middleware inspired by Astaro-Next / Astaro-Next architecture, targeting Debian GNU/Linux systems.
 
 ## Project Structure
 
 - **`backend/`**: FastAPI-based firewall configuration daemon and middleware service (`port 4444`). Interacts directly with Linux subsystems (nftables, WireGuard, network interfaces, Postfix, Squid, etc.).
-- **`frontend/`**: Vue 3 single-page web management application with Tailwind CSS styling modeled after Sophos SFOS appliances.
+- **`frontend/`**: Vue 3 single-page web management application with Tailwind CSS styling modeled after Astaro-Next appliances.
 
 ## Subsystems & Features
 

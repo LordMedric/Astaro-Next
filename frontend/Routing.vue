@@ -163,7 +163,7 @@
       </div>
     </div>
 
-    <!-- TAB 2: Policy-Based Routing (PBR) (Sophos UTM 9 Parity) -->
+    <!-- TAB 2: Policy-Based Routing (PBR) (Astaro-Next Parity) -->
     <div v-else-if="activeTab === 'pbr'" class="space-y-4">
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">

@@ -116,7 +116,7 @@
               <div>
                 <label class="block font-bold text-slate-700 uppercase mb-1">Threat Intelligence Feed Sync</label>
                 <select v-model="atpConfig.sync_interval" class="w-full p-2.5 bg-white border border-slate-300 rounded-lg font-medium">
-                  <option value="realtime">Real-Time Cloud Push (SophosLabs Cloud)</option>
+                  <option value="realtime">Real-Time Cloud Push (Astaro Threat Cloud)</option>
                   <option value="hourly">Hourly Delta Feeds</option>
                 </select>
               </div>
@@ -127,7 +127,7 @@
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-                  <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400">Sophos Sandstorm Cloud Sandboxing</h3>
+                  <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400">Astaro Sandstorm Cloud Sandboxing</h3>
                 </div>
                 <input type="checkbox" v-model="atpConfig.sandstorm_enabled" class="w-4 h-4 text-rose-500 rounded cursor-pointer" />
               </div>

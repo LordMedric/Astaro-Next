@@ -92,7 +92,7 @@
               </div>
             </div>
 
-            <!-- Protected Local Networks (Matching Sophos UTM 9 Local Networks Card) -->
+            <!-- Protected Local Networks (Matching Astaro-Next Local Networks Card) -->
             <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
               <div class="flex items-center justify-between">
                 <div>
@@ -443,7 +443,7 @@
       </div>
     </div>
 
-    <!-- TAB 6: COUNTRY BLOCKING & ADVANCED NETWORK DEFENSE (SOPHOS UTM PARITY) -->
+    <!-- TAB 6: COUNTRY BLOCKING & ADVANCED NETWORK DEFENSE (Astaro-Next PARITY) -->
     <div v-else-if="activeTab === 'country'" class="space-y-6">
       <div class="bg-white border border-slate-200 rounded-xl shadow-xs p-6 space-y-6">
         <div class="flex items-center justify-between border-b border-slate-100 pb-4">

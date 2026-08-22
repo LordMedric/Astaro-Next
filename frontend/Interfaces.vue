@@ -56,7 +56,7 @@
 
     <!-- Top Management & Telemetry Header Banner -->
     <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-      <!-- Title & Subtitle with Sophos Blue Accent -->
+      <!-- Title & Subtitle with Astaro Blue Accent -->
       <div class="flex items-center gap-3.5">
         <div class="w-11 h-11 rounded-lg bg-[#0072ce] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,7 +133,7 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs Strip (Sophos UTM 9 Style) -->
+    <!-- Navigation Tabs Strip (Astaro-Next Style) -->
     <div class="flex border-b border-slate-200 gap-1 bg-[#f4f6f9] p-1.5 rounded-t-xl overflow-x-auto text-xs font-bold mb-6">
       <button
         type="button"
@@ -198,7 +198,7 @@
       </button>
     </div>
 
-    <!-- TAB 0: NETWORK STATISTICS (TODAY) - EXACT SOPHOS UTM 9 DASHBOARD -->
+    <!-- TAB 0: NETWORK STATISTICS (TODAY) - EXACT Astaro-Next DASHBOARD -->
     <div v-if="activeTab === 'stats'" class="space-y-6">
       <div class="flex items-center justify-between">
         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Network Statistics — Today</h2>
@@ -586,7 +586,7 @@
     </div>
   </div>
 
-  <!-- TAB 2: INTERFACE GROUPS & LAGS (Sophos UTM 9 Parity) -->
+  <!-- TAB 2: INTERFACE GROUPS & LAGS (Astaro-Next Parity) -->
   <div v-if="activeTab === 'groups'" class="space-y-6">
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <div class="p-4 border-b border-slate-200 bg-[#f4f6f9] flex items-center justify-between">
@@ -650,7 +650,7 @@
     </div>
   </div>
 
-  <!-- TAB 3: UPLINK BALANCING & MULTI-WAN (Sophos UTM 9 Parity) -->
+  <!-- TAB 3: UPLINK BALANCING & MULTI-WAN (Astaro-Next Parity) -->
   <div v-if="activeTab === 'uplinks'" class="space-y-6">
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <div class="p-4 border-b border-slate-200 bg-[#f4f6f9] flex items-center justify-between">
@@ -803,7 +803,7 @@
           class="w-full max-w-xl bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col my-8"
           @click.stop
         >
-          <!-- Modal Top Header Ribbon (Sophos UTM 9 Style) -->
+          <!-- Modal Top Header Ribbon (Astaro-Next Style) -->
           <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
             <div class="flex items-center gap-3">
               <div class="w-9 h-9 rounded-lg bg-[#0072ce] flex items-center justify-center text-white font-mono font-black text-sm shadow-md">
@@ -1183,7 +1183,7 @@ const lastScannedTime = ref(new Date().toLocaleTimeString())
 const toasts = ref([])
 
 // -----------------------------------------------------------------------------
-// SVG Pie Chart Generator Utility & Datasets (Sophos UTM 9 Network Statistics)
+// SVG Pie Chart Generator Utility & Datasets (Astaro-Next Network Statistics)
 // -----------------------------------------------------------------------------
 function buildPieSlices(items) {
   let cumulativePercent = 0

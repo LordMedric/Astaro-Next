@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Astaro-Next Firewall OS - Sophos UTM Style Automated Installer ISO Builder
+# Astaro-Next Firewall OS - Astaro-Next Style Automated Installer ISO Builder
 # ==============================================================================
 # Target: Debian 12 (Bookworm) / Debian 13 (Trixie) 64-bit amd64
 # Output: dist/astaro-next-installer-amd64.iso (Hybrid BIOS & UEFI Bootable)
@@ -170,7 +170,7 @@ fi
 cp "${WORK_DIR}/preseed.cfg" "${WORK_DIR}/iso_root/preseed.cfg"
 
 # 5. Customize Boot Menu Branding
-echo "[+] Step 5/6: Customizing bootloader branding & timeout (Sophos UTM Style)..."
+echo "[+] Step 5/6: Customizing bootloader branding & timeout (Astaro-Next Style)..."
 
 # ISOLINUX Menu (BIOS)
 if [ -f "${WORK_DIR}/iso_root/isolinux/isolinux.cfg" ]; then
@@ -240,7 +240,7 @@ echo "    🎉 Astaro-Next Installer ISO Built Successfully!"
 echo "===================================================================="
 echo "  ISO Path:    ${OUTPUT_DIR}/${ISO_NAME}"
 echo "  Format:      Hybrid BIOS (MBR) + UEFI Bootable"
-echo "  Installer:   Automated (Sophos UTM / ASG Style)"
+echo "  Installer:   Automated (Astaro-Next / ASG Style)"
 echo "  Default Web: https://<device-ip>:4444"
 echo "  Root Login:  root / astaro"
 echo "===================================================================="

@@ -56,7 +56,7 @@
 
     <!-- Top Management & Telemetry Header Banner -->
     <div class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-      <!-- Title & Subtitle with Sophos Blue Accent -->
+      <!-- Title & Subtitle with Astaro Blue Accent -->
       <div class="flex items-center gap-3.5">
         <div class="w-11 h-11 rounded-lg bg-[#0072ce] flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,7 +141,7 @@
           <span class="hidden sm:inline">Refresh</span>
         </button>
 
-        <!-- Primary "Add Firewall Rule" Button (Matching Sophos UTM 9 Header) -->
+        <!-- Primary "Add Firewall Rule" Button (Matching Astaro-Next Header) -->
         <button
           v-if="activeTab === 'rules'"
           type="button"
@@ -157,7 +157,7 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs Strip (Sophos UTM 9 Style) -->
+    <!-- Navigation Tabs Strip (Astaro-Next Style) -->
     <div class="flex border-b border-slate-200 gap-1 bg-[#f4f6f9] p-1.5 rounded-t-xl overflow-x-auto text-xs font-bold mb-6">
       <button
         type="button"
@@ -219,7 +219,7 @@
       </button>
     </div>
 
-    <!-- TAB 0: PROTECTION STATISTICS (TODAY) - EXACT SOPHOS UTM 9 DASHBOARD -->
+    <!-- TAB 0: PROTECTION STATISTICS (TODAY) - EXACT Astaro-Next DASHBOARD -->
     <div v-if="activeTab === 'stats'" class="space-y-6">
       <div class="flex items-center justify-between">
         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Network Protection Statistics — Today</h2>
@@ -351,7 +351,7 @@
 
     <!-- TAB 1: RULES MATRIX -->
     <div v-if="activeTab === 'rules'">
-      <!-- Telemetry Statistics Strip (Sophos UTM 9 Style) -->
+      <!-- Telemetry Statistics Strip (Astaro-Next Style) -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
       <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex items-center gap-3">
         <div class="w-9 h-9 rounded-lg bg-blue-50 text-[#0072ce] flex items-center justify-center font-bold">
@@ -679,7 +679,7 @@
     </div>
   </div>
 
-  <!-- TAB 2: COUNTRY BLOCKING (Geo-IP Filtering - Sophos UTM 9 Parity) -->
+  <!-- TAB 2: COUNTRY BLOCKING (Geo-IP Filtering - Astaro-Next Parity) -->
   <div v-if="activeTab === 'country'" class="space-y-6">
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <div class="p-5 border-b border-slate-200 bg-[#f4f6f9]/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -812,7 +812,7 @@
     </div>
   </div>
 
-  <!-- TAB 3: ICMP & PING SETTINGS (Sophos UTM 9 Parity) -->
+  <!-- TAB 3: ICMP & PING SETTINGS (Astaro-Next Parity) -->
   <div v-if="activeTab === 'icmp'" class="space-y-6">
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <div class="p-5 border-b border-slate-200 bg-[#f4f6f9]/80 flex items-center justify-between">
@@ -898,7 +898,7 @@
           class="w-full max-w-lg bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col my-6 max-h-[90vh]"
           @click.stop
         >
-          <!-- Modal Top Header Ribbon (Sophos UTM 9 Style) -->
+          <!-- Modal Top Header Ribbon (Astaro-Next Style) -->
           <div class="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
             <div class="flex items-center gap-2.5">
               <div class="w-8 h-8 rounded-lg bg-[#0072ce] flex items-center justify-center text-white font-black text-xs shadow-md">
@@ -1242,7 +1242,7 @@
     <!-- INLINE SUB-MODAL: CREATE NEW NETWORK OBJECT / GROUP ON THE FLY            -->
     <!-- ========================================================================= -->
     <!-- ========================================================================= -->
-    <!-- INLINE SUB-MODAL: ADD NETWORK DEFINITION (SOPHOS UTM 9 PARITY)            -->
+    <!-- INLINE SUB-MODAL: ADD NETWORK DEFINITION (Astaro-Next PARITY)            -->
     <!-- ========================================================================= -->
     <transition
       enter-active-class="transition duration-150 ease-out"
@@ -1258,7 +1258,7 @@
         @keydown.esc="isInlineObjectModalOpen = false"
       >
         <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col">
-          <!-- Top Ribbon matching Sophos UTM Add Network Definition title -->
+          <!-- Top Ribbon matching Astaro-Next Add Network Definition title -->
           <div class="bg-[#005299] text-white px-5 py-3.5 flex items-center justify-between border-b border-blue-900">
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-[#ee7f00]"></span>
@@ -1279,7 +1279,7 @@
               />
             </div>
 
-            <!-- 2. Type Dropdown (Exact 8 Sophos UTM Types) -->
+            <!-- 2. Type Dropdown (Exact 8 Astaro-Next Types) -->
             <div>
               <label class="block font-bold text-slate-700 mb-1">Type:</label>
               <select
@@ -1598,7 +1598,7 @@ const activeContinent = ref('europe')
 const countryBlockingExceptionsInput = ref('')
 
 // -----------------------------------------------------------------------------
-// SVG Pie Chart Generator Utility & Datasets (Sophos UTM 9 Protection Statistics)
+// SVG Pie Chart Generator Utility & Datasets (Astaro-Next Protection Statistics)
 // -----------------------------------------------------------------------------
 function buildPieSlices(items) {
   let cumulativePercent = 0
@@ -1957,7 +1957,7 @@ const formData = reactive({
   comment: ''
 })
 
-// Baseline Rules Matrix Data (Matching standard Sophos UTM 9 deployment)
+// Baseline Rules Matrix Data (Matching standard Astaro-Next deployment)
 const rulesList = ref([
   {
     id: 1,

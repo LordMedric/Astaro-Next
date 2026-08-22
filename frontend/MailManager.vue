@@ -45,7 +45,7 @@
       </div>
     </div>
 
-    <!-- Tab Navigation Strip (Modern Sophos UTM Style with Orange Accent) -->
+    <!-- Tab Navigation Strip (Modern Astaro-Next Style with Orange Accent) -->
     <div class="flex border-b border-slate-200 gap-1 bg-[#f4f6f9] p-1.5 rounded-t-xl overflow-x-auto">
       <button
         type="button"
@@ -278,7 +278,7 @@
             <div>
               <div class="font-bold text-slate-900 text-xs flex items-center gap-2">
                 <span>Profile Mode (Multiple SMTP Profiles)</span>
-                <span class="text-[10px] bg-purple-100 px-1.5 py-0.5 rounded text-purple-800 font-bold">Sophos UTM Advanced</span>
+                <span class="text-[10px] bg-purple-100 px-1.5 py-0.5 rounded text-purple-800 font-bold">Astaro Advanced Security</span>
               </div>
               <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
                 Define distinct domain profiles with independent target Exchange/Postfix hosts, recipient verification callouts, SPX encryption, and quarantine actions per domain.
@@ -325,7 +325,7 @@
       </div>
     </div>
 
-    <!-- TAB 2: SMTP PROFILES (Modern Sophos UTM 9 Layout with 17 Option Groups in Modal) -->
+    <!-- TAB 2: SMTP PROFILES (Modern Astaro-Next Layout with 17 Option Groups in Modal) -->
     <div v-if="activeTab === 'profiles'" class="space-y-4">
       <!-- Search & Filters -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
@@ -471,7 +471,7 @@
       </div>
     </div>
 
-    <!-- TAB 2: ROUTING (EXACT SOPHOS UTM 9 LAYOUT) -->
+    <!-- TAB 2: ROUTING (EXACT Astaro-Next LAYOUT) -->
     <div v-if="activeTab === 'routing'" class="space-y-6">
       <!-- 1. Domains and Routing Target Card -->
       <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
@@ -691,7 +691,7 @@
             </div>
           </div>
 
-          <!-- Right Column (Sophos UTM Explanatory Documentation) -->
+          <!-- Right Column (Astaro-Next Explanatory Documentation) -->
           <div class="lg:col-span-5 p-4 bg-[#f8fafc] rounded-xl border border-slate-200 text-slate-600 leading-relaxed text-xs space-y-3">
             <p>
               Please specify your internal domains. The system will accept mail for these domains and route them to the target specified.
@@ -745,7 +745,7 @@
             </div>
           </div>
 
-          <!-- Right Column (Sophos UTM Explanatory Documentation) -->
+          <!-- Right Column (Astaro-Next Explanatory Documentation) -->
           <div class="lg:col-span-5 p-4 bg-[#f8fafc] rounded-xl border border-slate-200 text-slate-600 leading-relaxed text-xs space-y-2">
             <p>
               Please specify if and how recipient addresses should be verified. Leaving the option set to <em>With callout</em> is heavily recommended to avoid bouncing messages. To use <em>In Active Directory</em>, you must have an Active Directory Server specified in <a class="text-[#005299] underline cursor-pointer">Definitions &amp; Users &gt; Authentication Services &gt; Servers</a>. The <em>Base DN</em> setting here is optional.
@@ -957,7 +957,7 @@
       </div>
     </div>
 
-    <!-- TAB 5: ADVANCED (Sophos UTM 9 SMTP Advanced Options with Modern Sleek Design) -->
+    <!-- TAB 5: ADVANCED (Astaro-Next SMTP Advanced Options with Modern Sleek Design) -->
     <div v-if="activeTab === 'advanced'" class="space-y-6">
       
       <!-- 1. Header Modifications -->
@@ -1618,7 +1618,7 @@
       </table>
     </div>
 
-    <!-- TAB 8: POP3 PROXY (Sophos UTM 9 Parity) -->
+    <!-- TAB 8: POP3 PROXY (Astaro-Next Parity) -->
     <div v-if="activeTab === 'pop3'" class="space-y-6">
       <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
@@ -1744,7 +1744,7 @@
                 <select v-model="encryptionConfig.default_method" class="w-full p-2 bg-white border border-slate-300 rounded-lg font-medium">
                   <option value="SMIME">S/MIME (X.509 Digital Certificates)</option>
                   <option value="OpenPGP">OpenPGP / GPG Public Keys</option>
-                  <option value="SPX">Sophos SPX Encrypted PDF Wrapper</option>
+                  <option value="SPX">Astaro SPX Encrypted PDF Wrapper</option>
                 </select>
               </div>
               <div>
@@ -1930,10 +1930,10 @@
             </div>
           </div>
 
-          <!-- ALL 17 SOPHOS UTM 9 OPTION GROUPS (Clean Modern Accordions) -->
+          <!-- ALL 17 Astaro-Next OPTION GROUPS (Clean Modern Accordions) -->
           <div class="space-y-2 pt-2 border-t border-slate-200">
             <h4 class="font-bold text-slate-900 uppercase text-[11px] tracking-wider text-slate-500 mb-2">
-              Sophos UTM Security &amp; Policy Option Groups (17 Groups)
+              Astaro-Next Security &amp; Policy Option Groups (17 Groups)
             </h4>
 
             <!-- 1. Routing -->
@@ -2035,23 +2035,23 @@
               </div>
             </div>
 
-            <!-- 3. Sophos UTM RBLs -->
+            <!-- 3. Astaro Threat RBLs -->
             <div class="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
               <button
                 type="button"
-                @click="toggleAccordion('sophos_rbls')"
+                @click="toggleAccordion('astaro_rbls')"
                 class="w-full px-4 py-2.5 bg-[#f8fafc] hover:bg-slate-100 flex items-center justify-between font-bold text-slate-800 cursor-pointer transition-colors"
               >
                 <div class="flex items-center gap-2.5">
                   <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-[11px] flex items-center justify-center font-bold">3</span>
-                  <span>Sophos UTM RBLs</span>
+                  <span>Astaro Threat RBLs</span>
                 </div>
-                <span class="text-slate-400 text-xs">{{ openAccordions.includes('sophos_rbls') ? '▲ Collapse' : '▼ Expand' }}</span>
+                <span class="text-slate-400 text-xs">{{ openAccordions.includes('astaro_rbls') ? '▲ Collapse' : '▼ Expand' }}</span>
               </button>
-              <div v-if="openAccordions.includes('sophos_rbls')" class="p-4 bg-white space-y-2 border-t border-slate-200">
+              <div v-if="openAccordions.includes('astaro_rbls')" class="p-4 bg-white space-y-2 border-t border-slate-200">
                 <div class="flex items-center gap-2">
-                  <input id="rbl-sophos-m" v-model="editProfileData.use_sophos_rbls" type="checkbox" class="rounded text-[#005299]" />
-                  <label for="rbl-sophos-m" class="font-bold text-slate-700 cursor-pointer">Use Sophos Real-time Blacklists (SBL/XBL/PBL)</label>
+                  <input id="rbl-astaro-m" v-model="editProfileData.use_astaro_rbls" type="checkbox" class="rounded text-[#005299]" />
+                  <label for="rbl-astaro-m" class="font-bold text-slate-700 cursor-pointer">Use Astaro Real-time Blacklists (SBL/XBL/PBL)</label>
                 </div>
               </div>
             </div>
@@ -2680,7 +2680,7 @@ const smtpProfiles = ref([
     certificate_name: 'WAF SSL Offloading Wildcard (*.medric.net)',
     enable_sni: true,
     recipient_verification: 'Active Directory (LDAP)',
-    use_sophos_rbls: true,
+    use_astaro_rbls: true,
     extra_rbls: 'zen.spamhaus.org\nbl.spamcop.net',
     batv: true,
     rdns: true,
@@ -2718,7 +2718,7 @@ const smtpProfiles = ref([
     certificate_name: 'Microsoft Exchange SAN Certificate',
     enable_sni: true,
     recipient_verification: 'SMTP Callout',
-    use_sophos_rbls: true,
+    use_astaro_rbls: true,
     extra_rbls: '',
     batv: true,
     rdns: true,
@@ -2756,7 +2756,7 @@ const smtpProfiles = ref([
     certificate_name: 'WAF SSL Offloading Wildcard (*.medric.net)',
     enable_sni: true,
     recipient_verification: 'None',
-    use_sophos_rbls: true,
+    use_astaro_rbls: true,
     extra_rbls: '',
     batv: true,
     rdns: true,
@@ -2795,7 +2795,7 @@ const editProfileData = ref({
   certificate_name: 'WAF SSL Offloading Wildcard (*.medric.net)',
   enable_sni: true,
   recipient_verification: 'Active Directory (LDAP)',
-  use_sophos_rbls: true,
+  use_astaro_rbls: true,
   extra_rbls: '',
   batv: true,
   rdns: true,
@@ -2859,7 +2859,7 @@ const openCreateProfileModal = () => {
     certificate_name: availableCertificates.value[0]?.name || 'WAF SSL Offloading Wildcard (*.medric.net)',
     enable_sni: true,
     recipient_verification: 'Active Directory (LDAP)',
-    use_sophos_rbls: true,
+    use_astaro_rbls: true,
     extra_rbls: '',
     batv: true,
     rdns: true,

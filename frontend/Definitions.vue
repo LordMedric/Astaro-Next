@@ -334,7 +334,7 @@
       </table>
     </div>
 
-    <!-- TIME PERIOD DEFINITIONS TABLE (Sophos UTM 9 Parity) -->
+    <!-- TIME PERIOD DEFINITIONS TABLE (Astaro-Next Parity) -->
     <div v-if="activeTab === 'times'" class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
       <table class="w-full text-left text-xs border-collapse">
         <thead class="bg-slate-50 text-slate-700 border-b border-slate-200 font-semibold">
@@ -414,7 +414,7 @@
                 <h3 class="text-xs font-bold uppercase tracking-wider text-white">
                   {{ editingId ? 'Edit Object' : 'Create New' }} ({{ activeTab === 'networks' ? 'Network' : 'Service' }})
                 </h3>
-                <p class="text-[10px] text-slate-400">Sophos UTM Reusable Definition &amp; Object Store</p>
+                <p class="text-[10px] text-slate-400">Astaro-Next Reusable Definition &amp; Object Store</p>
               </div>
             </div>
             <button @click="isModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer text-base leading-none">&times;</button>

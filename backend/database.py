@@ -84,7 +84,7 @@ def init_database():
             )
         """)
 
-        # 3. Network Definitions (8 Sophos UTM Types)
+        # 3. Network Definitions (8 Astaro-Next Types)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS network_objects (
                 id TEXT PRIMARY KEY,
