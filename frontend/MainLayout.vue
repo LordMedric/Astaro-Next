@@ -603,6 +603,13 @@ const navGroups = [
         label: 'Intrusion Prevention (IPS)',
         badge: 'Suricata',
         icon: IpsIcon
+      },
+      {
+        id: 'atp',
+        aliases: ['advanced_threat', 'sandstorm', 'botnet_protection', 'c2_protection'],
+        label: 'Advanced Threat (ATP)',
+        badge: 'Sandstorm',
+        icon: IpsIcon
       }
     ]
   },
@@ -629,6 +636,13 @@ const navGroups = [
         aliases: ['interfaces', 'network_interfaces'],
         label: 'Network',
         badge: 'Interfaces',
+        icon: NetworkIcon
+      },
+      {
+        id: 'qos',
+        aliases: ['qos_traffic', 'traffic_shaping', 'bandwidth_pools'],
+        label: 'QoS & Traffic Shaping',
+        badge: 'Shaping',
         icon: NetworkIcon
       },
       {

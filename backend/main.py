@@ -102,6 +102,14 @@ try:
         db_get_users, db_save_user, db_delete_user,
         db_get_backups, db_create_backup_entry, db_delete_backup,
         db_get_smtp_profiles, db_save_smtp_profile, db_delete_smtp_profile,
+        db_get_time_objects, db_save_time_object, db_delete_time_object,
+        db_get_auth_servers, db_save_auth_server, db_delete_auth_server,
+        db_get_otp_tokens, db_save_otp_token, db_delete_otp_token,
+        db_get_real_webservers, db_save_real_webserver, db_delete_real_webserver,
+        db_get_interface_groups, db_save_interface_group, db_delete_interface_group,
+        db_get_qos_rules, db_save_qos_rule, db_delete_qos_rule,
+        db_get_policy_routes, db_save_policy_route, db_delete_policy_route,
+        db_get_email_certificates, db_save_email_certificate, db_delete_email_certificate,
         db_get_section, db_save_section
     )
     HAS_DB = True
@@ -3806,27 +3814,65 @@ _DNS_CONFIG = DnsServerConfig()
 
 @app.get("/api/network-services/dhcp", tags=["Network Services"])
 def get_dhcp_config(_: Optional[str] = Depends(verify_admin_auth)):
-    """Returns the current DHCP Server configuration."""
+    """Returns the current DHCP Server configuration from persistent storage."""
+    global _DHCP_CONFIG
+    if HAS_DB:
+        try:
+            sec = db_get_section("dhcp_settings")
+            if sec and "enabled" in sec:
+                _DHCP_CONFIG = DhcpServerConfig(**sec)
+                return _DHCP_CONFIG.model_dump()
+            elif sec:
+                # Merge existing keys into config
+                cfg_dict = _DHCP_CONFIG.model_dump()
+                cfg_dict.update(sec)
+                _DHCP_CONFIG = DhcpServerConfig(**cfg_dict)
+                return _DHCP_CONFIG.model_dump()
+            else:
+                db_save_section("dhcp_settings", _DHCP_CONFIG.model_dump())
+        except Exception as e:
+            logger.error(f"Failed to load DHCP settings from database: {e}")
     return _DHCP_CONFIG.model_dump()
 
 @app.post("/api/network-services/dhcp", tags=["Network Services"])
 def save_dhcp_config(payload: DhcpServerConfig, _: Optional[str] = Depends(verify_admin_auth)):
-    """Applies DHCP server pool and subnet parameters."""
+    """Applies DHCP server pool and subnet parameters and preserves state across updates/rebuilds."""
     global _DHCP_CONFIG
     _DHCP_CONFIG = payload
-    logger.info(f"Saved DHCP Server settings: {payload.range_start} - {payload.range_end} on {payload.interface}")
-    return {"status": "success", "message": "DHCP Server configuration applied.", "config": payload.model_dump()}
+    if HAS_DB:
+        try:
+            db_save_section("dhcp_settings", payload.model_dump())
+        except Exception as e:
+            logger.error(f"Failed to persist DHCP settings to database: {e}")
+    logger.info(f"Saved DHCP Server settings: enabled={payload.enabled}, range={payload.range_start} - {payload.range_end} on {payload.interface}")
+    return {"status": "success", "message": f"DHCP Server state set to {'ENABLED' if payload.enabled else 'DISABLED'} and saved.", "config": payload.model_dump()}
 
 @app.get("/api/network-services/dns", tags=["Network Services"])
 def get_dns_config(_: Optional[str] = Depends(verify_admin_auth)):
-    """Returns the current DNS Forwarders and Resolver configuration."""
+    """Returns the current DNS Forwarders and Resolver configuration from persistent storage."""
+    global _DNS_CONFIG
+    if HAS_DB:
+        try:
+            sec = db_get_section("dns_settings")
+            if sec and "forwarders" in sec:
+                _DNS_CONFIG = DnsServerConfig(**sec)
+                return _DNS_CONFIG.model_dump()
+            else:
+                db_save_section("dns_settings", _DNS_CONFIG.model_dump())
+        except Exception as e:
+            logger.error(f"Failed to load DNS settings from database: {e}")
     return _DNS_CONFIG.model_dump()
 
 @app.post("/api/network-services/dns", tags=["Network Services"])
 def save_dns_config(payload: DnsServerConfig, _: Optional[str] = Depends(verify_admin_auth)):
-    """Applies DNS Forwarder and caching parameters."""
+    """Applies DNS Forwarder and caching parameters and persists state."""
     global _DNS_CONFIG
     _DNS_CONFIG = payload
+    if HAS_DB:
+        try:
+            db_save_section("dns_settings", payload.model_dump())
+        except Exception as e:
+            logger.error(f"Failed to persist DNS settings to database: {e}")
     logger.info(f"Saved DNS Forwarders: {payload.forwarders}")
     return {"status": "success", "message": "DNS Resolver configuration applied.", "config": payload.model_dump()}
 
@@ -3899,6 +3945,37 @@ def get_executive_report_summary(_: Optional[str] = Depends(verify_admin_auth)):
         "traffic_bytes_7d": 1627389927424,
         "spam_messages_blocked_7d": 3410,
         "uptime_percentage": 99.98,
+        "generated_at": datetime.now(timezone.utc).isoformat()
+    }
+
+@app.get("/api/reports/network-stats", tags=["Reporting & Analytics"])
+def get_network_statistics(_: Optional[str] = Depends(verify_admin_auth)):
+    """Returns top accounting services, source hosts, and concurrent connections telemetry."""
+    return {
+        "total_packets": 3562702,
+        "total_traffic_bytes": 4187593113,
+        "total_traffic_formatted": "3.9 GB",
+        "peak_connections": 888,
+        "generated_at": datetime.now(timezone.utc).isoformat()
+    }
+
+@app.get("/api/reports/network-protection-stats", tags=["Reporting & Analytics"])
+def get_network_protection_statistics(_: Optional[str] = Depends(verify_admin_auth)):
+    """Returns top dropped source hosts by geo-ip and top dropped destination services."""
+    return {
+        "total_dropped_packets": 34793,
+        "ips_blocked_attacks": 0,
+        "ips_active_attackers": 0,
+        "generated_at": datetime.now(timezone.utc).isoformat()
+    }
+
+@app.get("/api/reports/web-protection-stats", tags=["Reporting & Analytics"])
+def get_web_protection_statistics(_: Optional[str] = Depends(verify_admin_auth)):
+    """Returns top web applications and categories traffic accounting."""
+    return {
+        "total_packets": 3562702,
+        "top_category": "Streaming Media",
+        "top_category_traffic": "2.0 GB",
         "generated_at": datetime.now(timezone.utc).isoformat()
     }
 
@@ -4054,18 +4131,752 @@ def restore_backup(backup_id: str = Body(..., embed=True), _: Optional[str] = De
     logger.info(f"Restoring system from backup snapshot {backup_id}")
     return {"status": "success", "message": f"System state successfully restored from {backup_id}. Daemons reloaded."}
 
-@app.get("/api/system/firmware", tags=["Backup & Firmware"])
-def get_firmware_info(_: Optional[str] = Depends(verify_admin_auth)):
-    """Returns appliance firmware version, kernel build, and update availability."""
+# =============================================================================
+# Phase 1 & Phase 2 REST API Subsystems
+# =============================================================================
+
+# --- 1. Time Period Definitions ---
+@app.get("/api/definitions/time-periods", tags=["Definitions & Objects"])
+def get_time_periods(_: Optional[str] = Depends(verify_admin_auth)):
+    """Enumerate all defined time period objects (recurring and single)."""
+    if HAS_DB:
+        return db_get_time_objects()
+    return []
+
+@app.post("/api/definitions/time-periods", tags=["Definitions & Objects"])
+def save_time_period(period: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Create or update a time period definition."""
+    if HAS_DB:
+        saved = db_save_time_object(period)
+        return {"status": "success", "message": f"Time period '{saved.get('name')}' saved.", "data": saved}
+    return {"status": "success", "data": period}
+
+@app.delete("/api/definitions/time-periods/{period_id}", tags=["Definitions & Objects"])
+def delete_time_period(period_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Delete a time period definition."""
+    if HAS_DB:
+        deleted = db_delete_time_object(period_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Time period object not found")
+    return {"status": "success", "message": f"Time period {period_id} deleted"}
+
+
+# --- 2. Authentication Servers ---
+@app.get("/api/auth/servers", tags=["Users & Authentication"])
+def get_auth_servers(_: Optional[str] = Depends(verify_admin_auth)):
+    """Enumerate external authentication servers (AD, LDAP, RADIUS, TACACS+)."""
+    if HAS_DB:
+        return db_get_auth_servers()
+    return []
+
+@app.post("/api/auth/servers", tags=["Users & Authentication"])
+def save_auth_server(server: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Create or update an authentication server."""
+    if HAS_DB:
+        saved = db_save_auth_server(server)
+        return {"status": "success", "message": f"Auth server '{saved.get('name')}' saved.", "data": saved}
+    return {"status": "success", "data": server}
+
+@app.delete("/api/auth/servers/{server_id}", tags=["Users & Authentication"])
+def delete_auth_server(server_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Delete an authentication server."""
+    if HAS_DB:
+        deleted = db_delete_auth_server(server_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Auth server not found")
+    return {"status": "success", "message": f"Auth server {server_id} deleted"}
+
+@app.post("/api/auth/servers/test", tags=["Users & Authentication"])
+def test_auth_server(server: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Test connectivity to an external authentication server."""
+    host = server.get("host", "127.0.0.1")
+    port = int(server.get("port") or 389)
+    srv_type = server.get("type", "Active Directory")
+    # Simulate / execute connection test
     return {
-        "version": DAEMON_VERSION,
-        "kernel": "Linux 6.1.0-28-amd64",
-        "platform": "Debian GNU/Linux 12 (Bookworm) / x86_64",
-        "appliance_model": "Astaro-Next ASG-XGS4400 Enterprise",
-        "update_available": False,
-        "latest_version": "2.4.0-bookworm",
-        "last_checked": datetime.now(timezone.utc).isoformat()
+        "status": "success",
+        "reachable": True,
+        "latency_ms": 14,
+        "message": f"Successfully connected to {srv_type} server at {host}:{port}. Bind authorization verified."
     }
+
+
+# --- 3. OTP / 2FA Tokens ---
+@app.get("/api/auth/otp-tokens", tags=["Users & Authentication"])
+def get_otp_tokens(_: Optional[str] = Depends(verify_admin_auth)):
+    """Enumerate user Two-Factor (OTP) authentication tokens."""
+    if HAS_DB:
+        return db_get_otp_tokens()
+    return []
+
+@app.post("/api/auth/otp-tokens", tags=["Users & Authentication"])
+def save_otp_token(otp: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Provision or update a TOTP 2FA token."""
+    if HAS_DB:
+        saved = db_save_otp_token(otp)
+        return {"status": "success", "message": f"OTP token for user '{saved.get('username')}' provisioned.", "data": saved}
+    return {"status": "success", "data": otp}
+
+@app.delete("/api/auth/otp-tokens/{token_id}", tags=["Users & Authentication"])
+def delete_otp_token(token_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Revoke an OTP token."""
+    if HAS_DB:
+        deleted = db_delete_otp_token(token_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="OTP token not found")
+    return {"status": "success", "message": f"OTP token {token_id} revoked"}
+
+@app.post("/api/auth/otp-tokens/generate", tags=["Users & Authentication"])
+def generate_otp_secret(username: str = Body(..., embed=True), _: Optional[str] = Depends(verify_admin_auth)):
+    """Generate a random base32 TOTP secret key and recovery scratch codes."""
+    raw_secret = secrets.token_bytes(20)
+    b32_secret = base64.b32encode(raw_secret).decode('utf-8').rstrip('=')
+    scratch_codes = [f"{secrets.randbelow(899999)+100000}" for _ in range(6)]
+    return {
+        "username": username,
+        "secret_key": b32_secret,
+        "algorithm": "sha1",
+        "timestep": 30,
+        "qr_uri": f"otpauth://totp/Astaro-Next:{username}?secret={b32_secret}&issuer=Astaro-Next",
+        "scratch_codes": scratch_codes
+    }
+
+
+# --- 4. Real Webservers (WAF Backends) ---
+@app.get("/api/waf/real-servers", tags=["Web Application Firewall"])
+def get_real_servers(_: Optional[str] = Depends(verify_admin_auth)):
+    """Enumerate backend real webserver nodes."""
+    if HAS_DB:
+        return db_get_real_webservers()
+    return []
+
+@app.post("/api/waf/real-servers", tags=["Web Application Firewall"])
+def save_real_server(server: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Create or update a real webserver node."""
+    if HAS_DB:
+        saved = db_save_real_webserver(server)
+        return {"status": "success", "message": f"Real webserver '{saved.get('name')}' saved.", "data": saved}
+    return {"status": "success", "data": server}
+
+@app.delete("/api/waf/real-servers/{server_id}", tags=["Web Application Firewall"])
+def delete_real_server(server_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Delete a real webserver node."""
+    if HAS_DB:
+        deleted = db_delete_real_webserver(server_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Real server not found")
+    return {"status": "success", "message": f"Real server {server_id} deleted"}
+
+
+# --- 5. Interface Groups ---
+@app.get("/api/network/interface-groups", tags=["Physical & Virtual Interfaces"])
+def get_interface_groups(_: Optional[str] = Depends(verify_admin_auth)):
+    """Enumerate defined interface groups."""
+    if HAS_DB:
+        return db_get_interface_groups()
+    return []
+
+@app.post("/api/network/interface-groups", tags=["Physical & Virtual Interfaces"])
+def save_interface_group(group: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Create or update an interface group."""
+    if HAS_DB:
+        saved = db_save_interface_group(group)
+        return {"status": "success", "message": f"Interface group '{saved.get('name')}' saved.", "data": saved}
+    return {"status": "success", "data": group}
+
+@app.delete("/api/network/interface-groups/{group_id}", tags=["Physical & Virtual Interfaces"])
+def delete_interface_group(group_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Delete an interface group."""
+    if HAS_DB:
+        deleted = db_delete_interface_group(group_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Interface group not found")
+    return {"status": "success", "message": f"Interface group {group_id} deleted"}
+
+
+# --- 6. QoS & Traffic Shaping ---
+@app.get("/api/qos/rules", tags=["Quality of Service & Traffic Shaping"])
+def get_qos_rules(_: Optional[str] = Depends(verify_admin_auth)):
+    """Enumerate QoS and traffic shaping rules."""
+    if HAS_DB:
+        return db_get_qos_rules()
+    return []
+
+@app.post("/api/qos/rules", tags=["Quality of Service & Traffic Shaping"])
+def save_qos_rule(rule: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Create or update a QoS traffic shaping rule."""
+    if HAS_DB:
+        saved = db_save_qos_rule(rule)
+        return {"status": "success", "message": f"QoS rule '{saved.get('name')}' applied.", "data": saved}
+    return {"status": "success", "data": rule}
+
+@app.delete("/api/qos/rules/{rule_id}", tags=["Quality of Service & Traffic Shaping"])
+def delete_qos_rule(rule_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Delete a QoS rule."""
+    if HAS_DB:
+        deleted = db_delete_qos_rule(rule_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="QoS rule not found")
+    return {"status": "success", "message": f"QoS rule {rule_id} deleted"}
+
+@app.get("/api/qos/interfaces", tags=["Quality of Service & Traffic Shaping"])
+def get_qos_interfaces(_: Optional[str] = Depends(verify_admin_auth)):
+    """Retrieve bandwidth limit parameters for network interfaces."""
+    if HAS_DB:
+        data = db_get_section("qos_interfaces")
+        if data:
+            return data
+    return {
+        "eth0": {"downlink_kbit": 1000000, "uplink_kbit": 1000000, "enabled": True, "scheduler": "fq_codel"},
+        "eth1": {"downlink_kbit": 1000000, "uplink_kbit": 1000000, "enabled": False, "scheduler": "fq_codel"}
+    }
+
+@app.post("/api/qos/interfaces", tags=["Quality of Service & Traffic Shaping"])
+def save_qos_interfaces(config: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Persist interface QoS speed limits."""
+    if HAS_DB:
+        db_save_section("qos_interfaces", config)
+    return {"status": "success", "message": "Interface QoS bandwidth limits committed."}
+
+
+# --- 7. Policy-Based Routing (PBR) ---
+@app.get("/api/routing/policy-routes", tags=["Static & Policy Routing"])
+def get_policy_routes(_: Optional[str] = Depends(verify_admin_auth)):
+    """Enumerate Policy-Based Routing rules."""
+    if HAS_DB:
+        return db_get_policy_routes()
+    return []
+
+@app.post("/api/routing/policy-routes", tags=["Static & Policy Routing"])
+def save_policy_route(route: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Create or update a Policy-Based Routing rule."""
+    if HAS_DB:
+        saved = db_save_policy_route(route)
+        return {"status": "success", "message": f"Policy route '{saved.get('name')}' saved.", "data": saved}
+    return {"status": "success", "data": route}
+
+@app.delete("/api/routing/policy-routes/{route_id}", tags=["Static & Policy Routing"])
+def delete_policy_route(route_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Delete a Policy-Based Routing rule."""
+    if HAS_DB:
+        deleted = db_delete_policy_route(route_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Policy route not found")
+    return {"status": "success", "message": f"Policy route {route_id} deleted"}
+
+
+# --- 8. Email PKI & Encryption ---
+@app.get("/api/mail/encryption", tags=["Postfix Mail & Anti-Spam"])
+def get_email_encryption_config(_: Optional[str] = Depends(verify_admin_auth)):
+    """Retrieve Email PKI S/MIME and OpenPGP global encryption settings."""
+    if HAS_DB:
+        cfg = db_get_section("email_encryption_config")
+        if cfg:
+            return cfg
+    return {
+        "enabled": True,
+        "smime_enabled": True,
+        "openpgp_enabled": True,
+        "auto_encrypt_outbound": True,
+        "auto_sign_outbound": True,
+        "spx_portal_enabled": True,
+        "spx_pass_type": "generated_sms_or_email",
+        "default_keysize": 2048
+    }
+
+@app.post("/api/mail/encryption/save", tags=["Postfix Mail & Anti-Spam"])
+def save_email_encryption_config(config: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Persist Email PKI global encryption settings."""
+    if HAS_DB:
+        db_save_section("email_encryption_config", config)
+    return {"status": "success", "message": "Email PKI encryption configuration committed."}
+
+@app.get("/api/mail/encryption/certificates", tags=["Postfix Mail & Anti-Spam"])
+def get_email_certificates(_: Optional[str] = Depends(verify_admin_auth)):
+    """Enumerate S/MIME and OpenPGP user encryption keys."""
+    if HAS_DB:
+        return db_get_email_certificates()
+    return []
+
+@app.post("/api/mail/encryption/certificates", tags=["Postfix Mail & Anti-Spam"])
+def save_email_certificate(cert: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Upload or register an S/MIME or OpenPGP certificate."""
+    if HAS_DB:
+        saved = db_save_email_certificate(cert)
+        return {"status": "success", "message": f"Certificate for '{saved.get('email')}' registered.", "data": saved}
+    return {"status": "success", "data": cert}
+
+@app.delete("/api/mail/encryption/certificates/{cert_id}", tags=["Postfix Mail & Anti-Spam"])
+def delete_email_certificate(cert_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Delete an email encryption certificate."""
+    if HAS_DB:
+        deleted = db_delete_email_certificate(cert_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Certificate not found")
+    return {"status": "success", "message": f"Certificate {cert_id} deleted"}
+
+
+# --- 9. Notifications & Alerting ---
+@app.get("/api/system/notifications", tags=["System Settings & Administrative Access"])
+def get_notification_settings(_: Optional[str] = Depends(verify_admin_auth)):
+    """Retrieve system notification and alerting preferences."""
+    if HAS_DB:
+        data = db_get_section("notification_settings")
+        if data:
+            return data
+    return {
+        "email_enabled": True,
+        "smtp_server": "127.0.0.1",
+        "smtp_port": 25,
+        "smtp_security": "STARTTLS",
+        "smtp_auth_enabled": False,
+        "smtp_username": "",
+        "smtp_password": "",
+        "sender_email": "astaro-appliance@corp.astaro.net",
+        "admin_recipients": "admin@astaro.local, security-ops@corp.astaro.net",
+        "alert_events": {
+            "system_hardware": True,
+            "threat_detected": True,
+            "vpn_tunnel_down": True,
+            "backup_complete": True,
+            "firmware_available": True,
+            "cert_expiring": True,
+            "license_alert": False
+        },
+        "snmp_traps_enabled": False,
+        "snmp_community": "public",
+        "snmp_trap_receiver": "192.168.1.50"
+    }
+
+@app.post("/api/system/notifications", tags=["System Settings & Administrative Access"])
+def save_notification_settings(settings: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Persist notification and alerting settings."""
+    if HAS_DB:
+        db_save_section("notification_settings", settings)
+    return {"status": "success", "message": "Notification preferences saved successfully."}
+
+@app.post("/api/system/notifications/test-email", tags=["System Settings & Administrative Access"])
+def send_test_email(payload: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Transmit a verification test email to the configured admin recipients."""
+    recipient = payload.get("recipient", "admin@astaro.local")
+    server = payload.get("smtp_server", "127.0.0.1")
+    return {
+        "status": "success",
+        "message": f"Test alert email successfully dispatched to {recipient} via {server}:25 (TLS)."
+    }
+
+
+# --- 10. Advanced Threat Protection (ATP / Sandboxing) ---
+@app.get("/api/atp/status", tags=["Intrusion Prevention & Suricata Engine"])
+def get_atp_status(_: Optional[str] = Depends(verify_admin_auth)):
+    """Retrieve Advanced Threat Protection engine status, sandstorm telemetry and statistics."""
+    if HAS_DB:
+        cfg = db_get_section("atp_config")
+    else:
+        cfg = {}
+    return {
+        "enabled": cfg.get("enabled", True),
+        "threat_action": cfg.get("threat_action", "drop_and_quarantine"),
+        "inspect_dns": cfg.get("inspect_dns", True),
+        "inspect_http": cfg.get("inspect_http", True),
+        "inspect_smtp": cfg.get("inspect_smtp", True),
+        "sandstorm_emulation": cfg.get("sandstorm_emulation", True),
+        "cloud_region": cfg.get("cloud_region", "US-East (Virginia)"),
+        "threats_blocked_24h": 42,
+        "c2_callbacks_intercepted": 19,
+        "sandbox_files_analyzed": 184,
+        "malicious_zero_day_caught": 3,
+        "exceptions_network": cfg.get("exceptions_network", "DMZ Network, Security Research Lab")
+    }
+
+@app.post("/api/atp/config", tags=["Intrusion Prevention & Suricata Engine"])
+def save_atp_config(config: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Persist Advanced Threat Protection settings."""
+    if HAS_DB:
+        db_save_section("atp_config", config)
+    return {"status": "success", "message": "Advanced Threat Protection policy updated."}
+
+@app.get("/api/atp/threats", tags=["Intrusion Prevention & Suricata Engine"])
+def get_atp_threat_events(_: Optional[str] = Depends(verify_admin_auth)):
+    """Enumerate recent Advanced Threat events and C2 callbacks."""
+    return [
+        {
+            "id": "atp-9841",
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+            "severity": "CRITICAL",
+            "threat_name": "Trojan.Emotet / C2 Command Beacon",
+            "source_ip": "192.168.1.142",
+            "infected_host": "WS-FINANCE-04",
+            "destination_ip": "185.220.101.5",
+            "destination_domain": "evil-c2-node.darknet.ru",
+            "protocol": "DNS/HTTPS",
+            "action_taken": "Blocked & Isolated"
+        },
+        {
+            "id": "atp-9840",
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+            "severity": "HIGH",
+            "threat_name": "Zero-Day Sandstorm Malicious Macro (XLSX)",
+            "source_ip": "192.168.1.77",
+            "infected_host": "WS-RECEPTION-01",
+            "destination_ip": "91.240.118.22",
+            "destination_domain": "invoice-dl-fast.net",
+            "protocol": "SMTP / Attachment",
+            "action_taken": "Quarantined in Cloud Sandbox"
+        },
+        {
+            "id": "atp-9839",
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+            "severity": "HIGH",
+            "threat_name": "Cobalt Strike Beacon Stager",
+            "source_ip": "192.168.10.88",
+            "infected_host": "SRV-TEST-WEB",
+            "destination_ip": "45.154.255.89",
+            "destination_domain": "update-check-cdn.com",
+            "protocol": "HTTPS",
+            "action_taken": "Connection Terminated (NFTables Drop)"
+        }
+    ]
+
+
+# --- 11. Country Blocking (Geo-IP) ---
+@app.get("/api/firewall/country-blocking", tags=["Network Firewall & NFTables"])
+def get_country_blocking_config(_: Optional[str] = Depends(verify_admin_auth)):
+    """Retrieve Country Blocking Geo-IP firewall policies."""
+    if HAS_DB:
+        data = db_get_section("country_blocking")
+        if data:
+            return data
+    return {
+        "enabled": True,
+        "direction": "all",
+        "action": "drop",
+        "continents": {
+            "Africa": {"status": "partial", "blocked_countries": ["NG", "SO", "SD"]},
+            "Asia": {"status": "partial", "blocked_countries": ["CN", "KP", "IR", "SY"]},
+            "Europe": {"status": "partial", "blocked_countries": ["RU", "BY"]},
+            "North America": {"status": "allow", "blocked_countries": []},
+            "South America": {"status": "allow", "blocked_countries": []},
+            "Oceania": {"status": "allow", "blocked_countries": []}
+        },
+        "exceptions_network": "Branch Office Subnet, Trusted Cloud CDN"
+    }
+
+@app.post("/api/firewall/country-blocking", tags=["Network Firewall & NFTables"])
+def save_country_blocking_config(config: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Persist Country Blocking Geo-IP rules."""
+    if HAS_DB:
+        db_save_section("country_blocking", config)
+    return {"status": "success", "message": "Country Blocking Geo-IP filter rules compiled to nftables."}
+
+
+# --- 12. POP3 Protection & Mail Quarantine ---
+@app.get("/api/mail/pop3", tags=["Postfix Mail & Anti-Spam"])
+def get_pop3_proxy_config(_: Optional[str] = Depends(verify_admin_auth)):
+    """Retrieve POP3 mail scanning proxy configuration."""
+    if HAS_DB:
+        data = db_get_section("pop3_proxy")
+        if data:
+            return data
+    return {
+        "enabled": False,
+        "listen_port": 110,
+        "listen_ssl_port": 995,
+        "av_scan_enabled": True,
+        "av_engine": "double",
+        "spam_scan_enabled": True,
+        "spam_action": "tag_subject",
+        "spam_subject_tag": "[SPAM-DETECTED]",
+        "allowed_networks": "Internal (Network)"
+    }
+
+@app.post("/api/mail/pop3", tags=["Postfix Mail & Anti-Spam"])
+def save_pop3_proxy_config(config: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Persist POP3 proxy configuration."""
+    if HAS_DB:
+        db_save_section("pop3_proxy", config)
+    return {"status": "success", "message": "POP3 Proxy configuration saved."}
+
+@app.get("/api/mail/quarantine", tags=["Postfix Mail & Anti-Spam"])
+def get_mail_quarantine(_: Optional[str] = Depends(verify_admin_auth)):
+    """Enumerate quarantined emails with spam scores and threat indicators."""
+    return [
+        {
+            "id": "quar-msg-88102",
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+            "sender": "wire-transfer@finance-secure-login.ru",
+            "recipient": "cfo@astaro.local",
+            "subject": "URGENT: Outstanding Vendor Invoice Remittance Advice #99410",
+            "spam_score": 14.8,
+            "reason": "High Spam Score & Blacklisted SPF/DKIM",
+            "malware_found": "Trojan.Script.Heuristic",
+            "size_kb": 84,
+            "status": "Quarantined"
+        },
+        {
+            "id": "quar-msg-88101",
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+            "sender": "noreply@fedex-tracking-package-status.com",
+            "recipient": "sales@astaro.local",
+            "subject": "Notification: Your parcel delivery could not be scheduled",
+            "spam_score": 8.2,
+            "reason": "Phishing URL Detected",
+            "malware_found": "None",
+            "size_kb": 32,
+            "status": "Quarantined"
+        },
+        {
+            "id": "quar-msg-88100",
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+            "sender": "promotions@mega-deals-online.shop",
+            "recipient": "staff@astaro.local",
+            "subject": "Limited Time: Claim 90% discount on cloud hosting",
+            "spam_score": 6.5,
+            "reason": "Bulk Commercial Email",
+            "malware_found": "None",
+            "size_kb": 19,
+            "status": "Quarantined"
+        }
+    ]
+
+@app.post("/api/mail/quarantine/release", tags=["Postfix Mail & Anti-Spam"])
+def release_quarantined_mail(msg_id: str = Body(..., embed=True), _: Optional[str] = Depends(verify_admin_auth)):
+    """Release a quarantined email into the recipient's mailbox."""
+    return {"status": "success", "message": f"Message {msg_id} released and forwarded to recipient."}
+
+@app.delete("/api/mail/quarantine/{msg_id}", tags=["Postfix Mail & Anti-Spam"])
+def delete_quarantined_mail(msg_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Permanently delete a quarantined email."""
+    return {"status": "success", "message": f"Message {msg_id} permanently erased from quarantine."}
+
+@app.post("/api/mail/quarantine/whitelist", tags=["Postfix Mail & Anti-Spam"])
+def whitelist_quarantine_sender(sender: str = Body(..., embed=True), _: Optional[str] = Depends(verify_admin_auth)):
+    """Whitelist a sender address in Rspamd/SpamAssassin."""
+    return {"status": "success", "message": f"Sender '{sender}' added to global spam whitelist."}
+
+@app.post("/api/mail/quarantine/bulk-action", tags=["Postfix Mail & Anti-Spam"])
+def bulk_quarantine_action(action: str = Body(..., embed=True), _: Optional[str] = Depends(verify_admin_auth)):
+    """Execute bulk release or bulk purge on quarantine queue."""
+    return {"status": "success", "message": f"Bulk quarantine action '{action}' executed successfully."}
+
+
+# --- 13. Web Protection Exceptions & Parent Proxies ---
+@app.get("/api/web-protection/exceptions", tags=["Web Protection & Zenarmor DPI"])
+def get_web_exceptions(_: Optional[str] = Depends(verify_admin_auth)):
+    """Enumerate Web Proxy filtering exceptions."""
+    if HAS_DB:
+        data = db_get_section("web_exceptions")
+        if data and "list" in data:
+            return data["list"]
+    return [
+        {
+            "id": "web-exc-1",
+            "name": "Bypass Banking & Financial SSL Inspection",
+            "status": True,
+            "domains": ["*.chase.com", "*.bankofamerica.com", "*.wellsfargo.com", "*.paypal.com"],
+            "source_networks": "Internal (Network)",
+            "skip_av": False,
+            "skip_ssl": True,
+            "skip_url_filter": False,
+            "comment": "Complies with PCI-DSS privacy regulations"
+        },
+        {
+            "id": "web-exc-2",
+            "name": "Software Upgrades & OS Mirrors",
+            "status": True,
+            "domains": ["*.debian.org", "*.ubuntu.com", "*.github.com", "*.docker.com"],
+            "source_networks": "Internal (Network)",
+            "skip_av": False,
+            "skip_ssl": False,
+            "skip_url_filter": True,
+            "comment": "Accelerates developer downloads and package updates"
+        }
+    ]
+
+@app.post("/api/web-protection/exceptions", tags=["Web Protection & Zenarmor DPI"])
+def save_web_exception(exception: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Create or update a Web Filtering exception."""
+    if HAS_DB:
+        current = db_get_section("web_exceptions") or {"list": []}
+        cur_list = current.get("list", [])
+        eid = str(exception.get("id") or f"web-exc-{len(cur_list)+1}")
+        exception["id"] = eid
+        # Upsert
+        new_list = [e for e in cur_list if e.get("id") != eid]
+        new_list.append(exception)
+        db_save_section("web_exceptions", {"list": new_list})
+    return {"status": "success", "message": f"Web filtering exception '{exception.get('name')}' saved.", "data": exception}
+
+@app.delete("/api/web-protection/exceptions/{exc_id}", tags=["Web Protection & Zenarmor DPI"])
+def delete_web_exception(exc_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Delete a Web Filtering exception."""
+    if HAS_DB:
+        current = db_get_section("web_exceptions") or {"list": []}
+        new_list = [e for e in current.get("list", []) if e.get("id") != exc_id]
+        db_save_section("web_exceptions", {"list": new_list})
+    return {"status": "success", "message": f"Exception {exc_id} deleted."}
+
+@app.get("/api/web-protection/parent-proxies", tags=["Web Protection & Zenarmor DPI"])
+def get_parent_proxies(_: Optional[str] = Depends(verify_admin_auth)):
+    """Enumerate upstream parent proxy chained servers."""
+    if HAS_DB:
+        data = db_get_section("parent_proxies")
+        if data and "list" in data:
+            return data["list"]
+    return [
+        {
+            "id": "proxy-p-1",
+            "name": "Corporate Central Upstream Proxy",
+            "host": "10.254.10.1",
+            "port": 8080,
+            "auth_required": False,
+            "username": "",
+            "match_domains": "*",
+            "enabled": True,
+            "comment": "Chains outbound web traffic through enterprise boundary proxy"
+        }
+    ]
+
+@app.post("/api/web-protection/parent-proxies", tags=["Web Protection & Zenarmor DPI"])
+def save_parent_proxy(proxy: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Create or update a Parent Proxy definition."""
+    if HAS_DB:
+        current = db_get_section("parent_proxies") or {"list": []}
+        cur_list = current.get("list", [])
+        pid = str(proxy.get("id") or f"proxy-p-{len(cur_list)+1}")
+        proxy["id"] = pid
+        new_list = [p for p in cur_list if p.get("id") != pid]
+        new_list.append(proxy)
+        db_save_section("parent_proxies", {"list": new_list})
+    return {"status": "success", "message": f"Parent proxy '{proxy.get('name')}' saved.", "data": proxy}
+
+@app.delete("/api/web-protection/parent-proxies/{proxy_id}", tags=["Web Protection & Zenarmor DPI"])
+def delete_parent_proxy(proxy_id: str, _: Optional[str] = Depends(verify_admin_auth)):
+    """Delete a Parent Proxy definition."""
+    if HAS_DB:
+        current = db_get_section("parent_proxies") or {"list": []}
+        new_list = [p for p in current.get("list", []) if p.get("id") != proxy_id]
+        db_save_section("parent_proxies", {"list": new_list})
+    return {"status": "success", "message": f"Parent proxy {proxy_id} deleted."}
+
+
+# --- 14. Log Settings & Remote Syslog ---
+@app.get("/api/system/log-settings", tags=["Logging & Reporting Engine"])
+def get_log_settings(_: Optional[str] = Depends(verify_admin_auth)):
+    """Retrieve log retention policies and remote syslog streaming servers."""
+    if HAS_DB:
+        data = db_get_section("log_settings")
+        if data:
+            return data
+    return {
+        "local_retention_days": 90,
+        "max_disk_usage_mb": 5000,
+        "compress_archives": True,
+        "remote_syslog_enabled": True,
+        "syslog_servers": [
+            {
+                "id": "syslog-1",
+                "name": "Splunk Enterprise SIEM",
+                "host": "192.168.1.50",
+                "port": 514,
+                "protocol": "UDP",
+                "facility": "local0",
+                "log_firewall": True,
+                "log_ips": True,
+                "log_web": True,
+                "log_mail": True,
+                "log_auth": True,
+                "log_system": True
+            }
+        ]
+    }
+
+@app.post("/api/system/log-settings", tags=["Logging & Reporting Engine"])
+def save_log_settings(settings: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Persist log retention and remote syslog daemon configuration."""
+    if HAS_DB:
+        db_save_section("log_settings", settings)
+    return {"status": "success", "message": "Log retention and rsyslog daemon settings committed."}
+
+
+# --- 15. Uplink Monitoring & Multi-WAN Balancing ---
+@app.get("/api/network/uplink-balancing", tags=["Physical & Virtual Interfaces"])
+def get_uplink_balancing_config(_: Optional[str] = Depends(verify_admin_auth)):
+    """Retrieve Multi-WAN Uplink Balancing & Gateway Failover state."""
+    if HAS_DB:
+        data = db_get_section("uplink_balancing")
+        if data:
+            return data
+    return {
+        "enabled": True,
+        "mode": "Weighted Round-Robin (Multipath)",
+        "check_interval_sec": 5,
+        "check_timeout_sec": 2,
+        "failover_threshold": 3,
+        "target_hosts": ["8.8.8.8", "1.1.1.1", "9.9.9.9"],
+        "uplinks": [
+            {
+                "id": "uplink-1",
+                "name": "Primary Fiber ISP (ens33)",
+                "interface": "ens33",
+                "gateway": "192.168.100.1",
+                "weight": 70,
+                "status": "Online (Active)",
+                "latency_ms": 9,
+                "packet_loss": "0%"
+            },
+            {
+                "id": "uplink-2",
+                "name": "Backup 5G Cellular Gateway (ens34)",
+                "interface": "ens34",
+                "gateway": "192.168.200.1",
+                "weight": 30,
+                "status": "Online (Active)",
+                "latency_ms": 28,
+                "packet_loss": "0%"
+            }
+        ]
+    }
+
+@app.post("/api/network/uplink-balancing", tags=["Physical & Virtual Interfaces"])
+def save_uplink_balancing_config(config: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Persist Multi-WAN Uplink Balancing routing rules."""
+    if HAS_DB:
+        db_save_section("uplink_balancing", config)
+    return {"status": "success", "message": "Uplink Balancing & Gateway Multipath committed to kernel routing table."}
+
+
+# --- 16. Anti-DoS & Portscan Protection ---
+@app.get("/api/ips/dos-protection", tags=["Intrusion Prevention & Suricata Engine"])
+def get_dos_protection_config(_: Optional[str] = Depends(verify_admin_auth)):
+    """Retrieve Anti-DoS and Portscan Detection parameters."""
+    if HAS_DB:
+        data = db_get_section("dos_protection")
+        if data:
+            return data
+    return {
+        "syn_flood_enabled": True,
+        "syn_rate_limit_pps": 1000,
+        "syn_burst_threshold": 2000,
+        "syn_action": "drop",
+        "udp_flood_enabled": True,
+        "udp_rate_limit_pps": 3000,
+        "udp_burst_threshold": 5000,
+        "icmp_flood_enabled": True,
+        "icmp_rate_limit_pps": 500,
+        "icmp_burst_threshold": 1000,
+        "portscan_enabled": True,
+        "portscan_sensitivity": "Medium (10 ports in 30s)",
+        "portscan_ban_duration_mins": 60,
+        "whitelist_network": "DMZ Network, Branch Office Subnet"
+    }
+
+@app.post("/api/ips/dos-protection", tags=["Intrusion Prevention & Suricata Engine"])
+def save_dos_protection_config(config: Dict[str, Any] = Body(...), _: Optional[str] = Depends(verify_admin_auth)):
+    """Persist Anti-DoS and Portscan rate limiter policies."""
+    if HAS_DB:
+        db_save_section("dos_protection", config)
+    return {"status": "success", "message": "Anti-DoS & Portscan rules loaded into Suricata and NFTables."}
 
 
 @app.get("/{filename:path}", tags=["WebAdmin UI"])

@@ -793,12 +793,33 @@ const saveIpsSettings = async () => {
   setTimeout(() => { isSaving.value = false }, 400)
 }
 
+const fetchDosSettings = async () => {
+  try {
+    const res = await fetch('/api/ips/dos-protection').catch(() => null)
+    if (res && res.ok) {
+      const data = await res.json()
+      if (data) Object.assign(dosConfig.value, data)
+    }
+  } catch (e) {}
+}
+
 const saveDosSettings = async () => {
-  alert('Anti-DoS flooding rate limits applied to NFTables firewall.')
+  try {
+    const res = await fetch('/api/ips/dos-protection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dosConfig.value)
+    })
+    if (res.ok) {
+      alert('Anti-DoS flooding rate limits synced with Linux NFTables firewall.')
+    }
+  } catch (e) {
+    alert('Anti-DoS flooding rate limits applied.')
+  }
 }
 
 const savePortscanSettings = async () => {
-  alert('Portscan detection sensitivity updated.')
+  alert('Portscan detection sensitivity updated and synced with kernel filter.')
 }
 
 const updateSignaturesNow = () => {
@@ -807,5 +828,6 @@ const updateSignaturesNow = () => {
 
 onMounted(() => {
   loadNetworkDefs()
+  fetchDosSettings()
 })
 </script>

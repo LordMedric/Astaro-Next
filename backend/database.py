@@ -207,6 +207,7 @@ def init_database():
         """)
 
         # 11. SMTP Profiles (Email Protection Multi-Domain SNI)
+        # 11. SMTP Profiles (Email Protection Multi-Domain SNI)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS smtp_profiles (
                 id TEXT PRIMARY KEY,
@@ -222,6 +223,133 @@ def init_database():
                 spx_enabled INTEGER DEFAULT 0,
                 enabled INTEGER DEFAULT 1,
                 config_json TEXT DEFAULT '{}',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 12. Time Period Definitions (Recurring / Single)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS time_objects (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                type TEXT DEFAULT 'Recurring',
+                days_json TEXT DEFAULT '["mon","tue","wed","thu","fri"]',
+                start_time TEXT DEFAULT '08:00',
+                end_time TEXT DEFAULT '17:00',
+                start_date TEXT DEFAULT '',
+                end_date TEXT DEFAULT '',
+                comment TEXT DEFAULT '',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 13. Authentication Servers (AD / LDAP / RADIUS / TACACS+)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS auth_servers (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                type TEXT DEFAULT 'Active Directory',
+                host TEXT NOT NULL,
+                port INTEGER DEFAULT 389,
+                ssl_enabled INTEGER DEFAULT 0,
+                base_dn TEXT DEFAULT '',
+                bind_dn TEXT DEFAULT '',
+                bind_pw TEXT DEFAULT '',
+                timeout INTEGER DEFAULT 10,
+                comment TEXT DEFAULT '',
+                status TEXT DEFAULT 'Online',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 14. OTP / 2FA Tokens
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS otp_tokens (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                username TEXT NOT NULL,
+                secret_key TEXT NOT NULL,
+                algorithm TEXT DEFAULT 'sha1',
+                timestep INTEGER DEFAULT 30,
+                status TEXT DEFAULT 'Active',
+                scratch_codes_json TEXT DEFAULT '[]',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 15. Real Webservers (WAF Upstream Nodes)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS real_webservers (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                host TEXT NOT NULL,
+                port INTEGER DEFAULT 80,
+                ssl_enabled INTEGER DEFAULT 0,
+                keepalive INTEGER DEFAULT 1,
+                timeout INTEGER DEFAULT 60,
+                health_check_url TEXT DEFAULT '/',
+                comment TEXT DEFAULT '',
+                status TEXT DEFAULT 'Healthy',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 16. Interface Groups
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS interface_groups (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                members_json TEXT NOT NULL DEFAULT '[]',
+                comment TEXT DEFAULT '',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 17. QoS & Traffic Shaping Rules
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS qos_rules (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                interface TEXT DEFAULT 'eth0 (WAN Uplink)',
+                traffic_selector TEXT DEFAULT 'Web Traffic (HTTP/HTTPS)',
+                guaranteed_bandwidth TEXT DEFAULT '50 Mbps',
+                max_bandwidth TEXT DEFAULT '100 Mbps',
+                priority INTEGER DEFAULT 5,
+                enabled INTEGER DEFAULT 1,
+                comment TEXT DEFAULT '',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 18. Policy-Based Routes (PBR)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS policy_routes (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                source_network TEXT DEFAULT 'Any',
+                destination_network TEXT DEFAULT 'Any',
+                service TEXT DEFAULT 'Any',
+                gateway TEXT NOT NULL,
+                interface TEXT DEFAULT 'eth0 (WAN)',
+                metric INTEGER DEFAULT 10,
+                enabled INTEGER DEFAULT 1,
+                comment TEXT DEFAULT '',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 19. Email Encryption & User Certificates (S/MIME / OpenPGP)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS email_certificates (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                user_id TEXT DEFAULT '',
+                email TEXT NOT NULL,
+                type TEXT DEFAULT 'S/MIME',
+                fingerprint TEXT DEFAULT '',
+                expires_at TEXT DEFAULT '',
+                has_private_key INTEGER DEFAULT 0,
+                comment TEXT DEFAULT '',
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -366,6 +494,24 @@ def _seed_initial_defaults(conn: sqlite3.Connection):
         for k, v in sys_settings.items():
             cursor.execute("INSERT OR REPLACE INTO key_value_store (section, key, value_json) VALUES ('system_settings', ?, ?)", (k, json.dumps(v)))
 
+    # Seed DHCP Server Settings (State preserved across updates/rebuilds)
+    cursor.execute("SELECT COUNT(*) FROM key_value_store WHERE section = 'dhcp_settings'")
+    if cursor.fetchone()[0] == 0:
+        dhcp_defaults = {
+            "enabled": True,
+            "interface": "eth0",
+            "range_start": "192.168.1.100",
+            "range_end": "192.168.1.200",
+            "gateway": "192.168.1.1",
+            "dns_primary": "192.168.1.1",
+            "dns_secondary": "1.1.1.1",
+            "domain_name": "internal.medric.net",
+            "lease_time_hours": 24,
+            "ipv6_enabled": False
+        }
+        for k, v in dhcp_defaults.items():
+            cursor.execute("INSERT OR REPLACE INTO key_value_store (section, key, value_json) VALUES ('dhcp_settings', ?, ?)", (k, json.dumps(v)))
+
     # Seed Backups Catalog
     cursor.execute("SELECT COUNT(*) FROM backups")
     if cursor.fetchone()[0] == 0:
@@ -377,6 +523,91 @@ def _seed_initial_defaults(conn: sqlite3.Connection):
             INSERT INTO backups (id, filename, created_at, size_bytes, version, notes)
             VALUES (?, ?, ?, ?, ?, ?)
         """, default_backups)
+
+    # Seed Time Objects
+    cursor.execute("SELECT COUNT(*) FROM time_objects")
+    if cursor.fetchone()[0] == 0:
+        default_times = [
+            ("time-1", "Working Hours", "Recurring", '["mon","tue","wed","thu","fri"]', "08:00", "17:00", "", "", "Standard business working hours (Mon-Fri 8am-5pm)"),
+            ("time-2", "Weekend Off-Peak", "Recurring", '["sat","sun"]', "00:00", "23:59", "", "", "Weekend maintenance and off-peak window"),
+            ("time-3", "Annual Maintenance Window", "Single", '[]', "22:00", "04:00", "2026-12-24", "2026-12-25", "Scheduled emergency holiday maintenance window")
+        ]
+        cursor.executemany("""
+            INSERT INTO time_objects (id, name, type, days_json, start_time, end_time, start_date, end_date, comment)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, default_times)
+
+    # Seed Auth Servers
+    cursor.execute("SELECT COUNT(*) FROM auth_servers")
+    if cursor.fetchone()[0] == 0:
+        default_auth = [
+            ("auth-1", "HQ Active Directory", "Active Directory", "192.168.1.10", 389, 0, "dc=corp,dc=astaro,dc=net", "cn=Administrator,cn=Users,dc=corp,dc=astaro,dc=net", "", 10, "Primary enterprise domain controller for SSO & User Portal", "Online"),
+            ("auth-2", "Radius MFA Server", "RADIUS", "192.168.1.25", 1812, 0, "", "", "", 5, "Secondary RADIUS authentication server for VPN tunnels", "Online")
+        ]
+        cursor.executemany("""
+            INSERT INTO auth_servers (id, name, type, host, port, ssl_enabled, base_dn, bind_dn, bind_pw, timeout, comment, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, default_auth)
+
+    # Seed Real Webservers
+    cursor.execute("SELECT COUNT(*) FROM real_webservers")
+    if cursor.fetchone()[0] == 0:
+        default_reals = [
+            ("real-1", "Internal Intranet App", "192.168.1.100", 8080, 0, 1, 60, "/health", "Production backend microservice cluster", "Healthy"),
+            ("real-2", "Nextcloud Storage Node", "192.168.1.105", 443, 1, 1, 120, "/status.php", "Enterprise file sharing backend", "Healthy")
+        ]
+        cursor.executemany("""
+            INSERT INTO real_webservers (id, name, host, port, ssl_enabled, keepalive, timeout, health_check_url, comment, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, default_reals)
+
+    # Seed Interface Groups
+    cursor.execute("SELECT COUNT(*) FROM interface_groups")
+    if cursor.fetchone()[0] == 0:
+        default_if_groups = [
+            ("ifg-1", "Internal Interfaces", '["eth1 (LAN)", "vlan10 (VoIP)"]', "Aggregate group of internal trusted network interfaces"),
+            ("ifg-2", "Uplink Interfaces", '["eth0 (WAN Uplink)"]', "All public-facing Internet gateway interfaces")
+        ]
+        cursor.executemany("""
+            INSERT INTO interface_groups (id, name, members_json, comment)
+            VALUES (?, ?, ?, ?)
+        """, default_if_groups)
+
+    # Seed QoS Rules
+    cursor.execute("SELECT COUNT(*) FROM qos_rules")
+    if cursor.fetchone()[0] == 0:
+        default_qos = [
+            ("qos-1", "Prioritize VoIP & Telephony", "eth0 (WAN Uplink)", "VoIP SIP / RTP (UDP 5060, 10000-20000)", "20 Mbps", "50 Mbps", 8, 1, "Guarantees low latency and jitter for voice calls"),
+            ("qos-2", "Throttle Bulk File Transfers & P2P", "eth0 (WAN Uplink)", "P2P / Torrent Traffic", "1 Mbps", "5 Mbps", 1, 1, "Caps non-essential bulk bandwidth consumption")
+        ]
+        cursor.executemany("""
+            INSERT INTO qos_rules (id, name, interface, traffic_selector, guaranteed_bandwidth, max_bandwidth, priority, enabled, comment)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, default_qos)
+
+    # Seed Policy Routes
+    cursor.execute("SELECT COUNT(*) FROM policy_routes")
+    if cursor.fetchone()[0] == 0:
+        default_pbr = [
+            ("pbr-1", "Route Guest Wi-Fi via Secondary WAN", "Guest Wi-Fi Subnet (192.168.20.0/24)", "Any", "Any", "198.51.100.1", "eth2 (WAN Backup)", 5, 1, "Directs non-critical guest traffic away from primary business fiber"),
+            ("pbr-2", "Direct Corporate VPN via MPLS Gateway", "Internal (Network)", "Branch Office Subnet", "Any", "10.254.0.1", "eth1 (LAN)", 10, 1, "Forces inter-branch corporate traffic over dedicated private circuit")
+        ]
+        cursor.executemany("""
+            INSERT INTO policy_routes (id, name, source_network, destination_network, service, gateway, interface, metric, enabled, comment)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, default_pbr)
+
+    # Seed Email Certificates
+    cursor.execute("SELECT COUNT(*) FROM email_certificates")
+    if cursor.fetchone()[0] == 0:
+        default_email_certs = [
+            ("cert-em-1", "Admin Corporate S/MIME Key", "usr-1", "admin@astaro.local", "S/MIME", "9A:8B:7C:6D:5E:4F:3A:2B:1C:0D", "2027-12-31", 1, "Master administrative certificate for email signing and decryption"),
+            ("cert-em-2", "SecOps OpenPGP Public Key", "usr-2", "secops@corp.astaro.net", "OpenPGP", "E4:5A:23:BC:78:90:12:34:56:78", "2028-06-30", 0, "Public key for automated security advisory distribution")
+        ]
+        cursor.executemany("""
+            INSERT INTO email_certificates (id, name, user_id, email, type, fingerprint, expires_at, has_private_key, comment)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, default_email_certs)
 
     conn.commit()
 
@@ -816,6 +1047,288 @@ def db_save_smtp_profile(prof_dict: Dict[str, Any]) -> Dict[str, Any]:
 def db_delete_smtp_profile(profile_id: str) -> bool:
     with get_db_connection() as conn:
         cur = conn.execute("DELETE FROM smtp_profiles WHERE id = ? OR name = ?", (str(profile_id), str(profile_id)))
+        conn.commit()
+        return cur.rowcount > 0
+
+# --- Time Period Objects ---
+def db_get_time_objects() -> List[Dict[str, Any]]:
+    with get_db_connection() as conn:
+        rows = conn.execute("SELECT * FROM time_objects ORDER BY name ASC").fetchall()
+        results = []
+        for r in rows:
+            d = dict(r)
+            try:
+                d["days"] = json.loads(d.get("days_json") or "[]")
+            except Exception:
+                d["days"] = []
+            results.append(d)
+        return results
+
+def db_save_time_object(time_dict: Dict[str, Any]) -> Dict[str, Any]:
+    with get_db_connection() as conn:
+        tid = str(time_dict.get("id") or f"time-{time_dict.get('name', 'unnamed').lower().replace(' ', '-')}")
+        days_json = json.dumps(time_dict.get("days", ["mon","tue","wed","thu","fri"]))
+        conn.execute("""
+            INSERT OR REPLACE INTO time_objects (id, name, type, days_json, start_time, end_time, start_date, end_date, comment)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            tid,
+            time_dict.get("name", "Unnamed Time Period"),
+            time_dict.get("type", "Recurring"),
+            days_json,
+            time_dict.get("start_time", "08:00"),
+            time_dict.get("end_time", "17:00"),
+            time_dict.get("start_date", ""),
+            time_dict.get("end_date", ""),
+            time_dict.get("comment", "")
+        ))
+        conn.commit()
+        return time_dict
+
+def db_delete_time_object(time_id: str) -> bool:
+    with get_db_connection() as conn:
+        cur = conn.execute("DELETE FROM time_objects WHERE id = ? OR name = ?", (str(time_id), str(time_id)))
+        conn.commit()
+        return cur.rowcount > 0
+
+# --- Authentication Servers ---
+def db_get_auth_servers() -> List[Dict[str, Any]]:
+    with get_db_connection() as conn:
+        rows = conn.execute("SELECT * FROM auth_servers ORDER BY name ASC").fetchall()
+        return [dict(r) for r in rows]
+
+def db_save_auth_server(server_dict: Dict[str, Any]) -> Dict[str, Any]:
+    with get_db_connection() as conn:
+        sid = str(server_dict.get("id") or f"auth-{server_dict.get('name', 'srv').lower().replace(' ', '-')}")
+        conn.execute("""
+            INSERT OR REPLACE INTO auth_servers (id, name, type, host, port, ssl_enabled, base_dn, bind_dn, bind_pw, timeout, comment, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            sid,
+            server_dict.get("name", "Auth Server"),
+            server_dict.get("type", "Active Directory"),
+            server_dict.get("host", "127.0.0.1"),
+            int(server_dict.get("port") or 389),
+            1 if server_dict.get("ssl_enabled", False) else 0,
+            server_dict.get("base_dn", ""),
+            server_dict.get("bind_dn", ""),
+            server_dict.get("bind_pw", ""),
+            int(server_dict.get("timeout") or 10),
+            server_dict.get("comment", ""),
+            server_dict.get("status", "Online")
+        ))
+        conn.commit()
+        return server_dict
+
+def db_delete_auth_server(server_id: str) -> bool:
+    with get_db_connection() as conn:
+        cur = conn.execute("DELETE FROM auth_servers WHERE id = ? OR name = ?", (str(server_id), str(server_id)))
+        conn.commit()
+        return cur.rowcount > 0
+
+# --- OTP / 2FA Tokens ---
+def db_get_otp_tokens() -> List[Dict[str, Any]]:
+    with get_db_connection() as conn:
+        rows = conn.execute("SELECT * FROM otp_tokens ORDER BY username ASC").fetchall()
+        results = []
+        for r in rows:
+            d = dict(r)
+            try:
+                d["scratch_codes"] = json.loads(d.get("scratch_codes_json") or "[]")
+            except Exception:
+                d["scratch_codes"] = []
+            results.append(d)
+        return results
+
+def db_save_otp_token(otp_dict: Dict[str, Any]) -> Dict[str, Any]:
+    with get_db_connection() as conn:
+        oid = str(otp_dict.get("id") or f"otp-{otp_dict.get('username', 'user').lower()}")
+        scratch_json = json.dumps(otp_dict.get("scratch_codes", []))
+        conn.execute("""
+            INSERT OR REPLACE INTO otp_tokens (id, user_id, username, secret_key, algorithm, timestep, status, scratch_codes_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            oid,
+            str(otp_dict.get("user_id", "")),
+            otp_dict.get("username", "admin"),
+            otp_dict.get("secret_key", ""),
+            otp_dict.get("algorithm", "sha1"),
+            int(otp_dict.get("timestep") or 30),
+            otp_dict.get("status", "Active"),
+            scratch_json
+        ))
+        conn.commit()
+        return otp_dict
+
+def db_delete_otp_token(token_id: str) -> bool:
+    with get_db_connection() as conn:
+        cur = conn.execute("DELETE FROM otp_tokens WHERE id = ? OR username = ?", (str(token_id), str(token_id)))
+        conn.commit()
+        return cur.rowcount > 0
+
+# --- Real Webservers ---
+def db_get_real_webservers() -> List[Dict[str, Any]]:
+    with get_db_connection() as conn:
+        rows = conn.execute("SELECT * FROM real_webservers ORDER BY name ASC").fetchall()
+        return [dict(r) for r in rows]
+
+def db_save_real_webserver(server_dict: Dict[str, Any]) -> Dict[str, Any]:
+    with get_db_connection() as conn:
+        rid = str(server_dict.get("id") or f"real-{server_dict.get('name', 'srv').lower().replace(' ', '-')}")
+        conn.execute("""
+            INSERT OR REPLACE INTO real_webservers (id, name, host, port, ssl_enabled, keepalive, timeout, health_check_url, comment, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            rid,
+            server_dict.get("name", "Real Webserver"),
+            server_dict.get("host", "127.0.0.1"),
+            int(server_dict.get("port") or 80),
+            1 if server_dict.get("ssl_enabled", False) else 0,
+            1 if server_dict.get("keepalive", True) else 0,
+            int(server_dict.get("timeout") or 60),
+            server_dict.get("health_check_url", "/"),
+            server_dict.get("comment", ""),
+            server_dict.get("status", "Healthy")
+        ))
+        conn.commit()
+        return server_dict
+
+def db_delete_real_webserver(server_id: str) -> bool:
+    with get_db_connection() as conn:
+        cur = conn.execute("DELETE FROM real_webservers WHERE id = ? OR name = ?", (str(server_id), str(server_id)))
+        conn.commit()
+        return cur.rowcount > 0
+
+# --- Interface Groups ---
+def db_get_interface_groups() -> List[Dict[str, Any]]:
+    with get_db_connection() as conn:
+        rows = conn.execute("SELECT * FROM interface_groups ORDER BY name ASC").fetchall()
+        results = []
+        for r in rows:
+            d = dict(r)
+            try:
+                d["members"] = json.loads(d.get("members_json") or "[]")
+            except Exception:
+                d["members"] = []
+            results.append(d)
+        return results
+
+def db_save_interface_group(group_dict: Dict[str, Any]) -> Dict[str, Any]:
+    with get_db_connection() as conn:
+        gid = str(group_dict.get("id") or f"ifg-{group_dict.get('name', 'grp').lower().replace(' ', '-')}")
+        members_json = json.dumps(group_dict.get("members", []))
+        conn.execute("""
+            INSERT OR REPLACE INTO interface_groups (id, name, members_json, comment)
+            VALUES (?, ?, ?, ?)
+        """, (
+            gid,
+            group_dict.get("name", "Interface Group"),
+            members_json,
+            group_dict.get("comment", "")
+        ))
+        conn.commit()
+        return group_dict
+
+def db_delete_interface_group(group_id: str) -> bool:
+    with get_db_connection() as conn:
+        cur = conn.execute("DELETE FROM interface_groups WHERE id = ? OR name = ?", (str(group_id), str(group_id)))
+        conn.commit()
+        return cur.rowcount > 0
+
+# --- QoS Rules ---
+def db_get_qos_rules() -> List[Dict[str, Any]]:
+    with get_db_connection() as conn:
+        rows = conn.execute("SELECT * FROM qos_rules ORDER BY priority DESC, name ASC").fetchall()
+        return [dict(r) for r in rows]
+
+def db_save_qos_rule(rule_dict: Dict[str, Any]) -> Dict[str, Any]:
+    with get_db_connection() as conn:
+        qid = str(rule_dict.get("id") or f"qos-{rule_dict.get('name', 'rule').lower().replace(' ', '-')}")
+        conn.execute("""
+            INSERT OR REPLACE INTO qos_rules (id, name, interface, traffic_selector, guaranteed_bandwidth, max_bandwidth, priority, enabled, comment)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            qid,
+            rule_dict.get("name", "QoS Rule"),
+            rule_dict.get("interface", "eth0 (WAN Uplink)"),
+            rule_dict.get("traffic_selector", "Any"),
+            rule_dict.get("guaranteed_bandwidth", "10 Mbps"),
+            rule_dict.get("max_bandwidth", "50 Mbps"),
+            int(rule_dict.get("priority") or 5),
+            1 if rule_dict.get("enabled", True) else 0,
+            rule_dict.get("comment", "")
+        ))
+        conn.commit()
+        return rule_dict
+
+def db_delete_qos_rule(rule_id: str) -> bool:
+    with get_db_connection() as conn:
+        cur = conn.execute("DELETE FROM qos_rules WHERE id = ? OR name = ?", (str(rule_id), str(rule_id)))
+        conn.commit()
+        return cur.rowcount > 0
+
+# --- Policy Routes (PBR) ---
+def db_get_policy_routes() -> List[Dict[str, Any]]:
+    with get_db_connection() as conn:
+        rows = conn.execute("SELECT * FROM policy_routes ORDER BY metric ASC, name ASC").fetchall()
+        return [dict(r) for r in rows]
+
+def db_save_policy_route(pbr_dict: Dict[str, Any]) -> Dict[str, Any]:
+    with get_db_connection() as conn:
+        pid = str(pbr_dict.get("id") or f"pbr-{pbr_dict.get('name', 'rule').lower().replace(' ', '-')}")
+        conn.execute("""
+            INSERT OR REPLACE INTO policy_routes (id, name, source_network, destination_network, service, gateway, interface, metric, enabled, comment)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            pid,
+            pbr_dict.get("name", "Policy Route"),
+            pbr_dict.get("source_network", "Any"),
+            pbr_dict.get("destination_network", "Any"),
+            pbr_dict.get("service", "Any"),
+            pbr_dict.get("gateway", "192.168.1.1"),
+            pbr_dict.get("interface", "eth0 (WAN)"),
+            int(pbr_dict.get("metric") or 10),
+            1 if pbr_dict.get("enabled", True) else 0,
+            pbr_dict.get("comment", "")
+        ))
+        conn.commit()
+        return pbr_dict
+
+def db_delete_policy_route(route_id: str) -> bool:
+    with get_db_connection() as conn:
+        cur = conn.execute("DELETE FROM policy_routes WHERE id = ? OR name = ?", (str(route_id), str(route_id)))
+        conn.commit()
+        return cur.rowcount > 0
+
+# --- Email Encryption Certificates ---
+def db_get_email_certificates() -> List[Dict[str, Any]]:
+    with get_db_connection() as conn:
+        rows = conn.execute("SELECT * FROM email_certificates ORDER BY email ASC").fetchall()
+        return [dict(r) for r in rows]
+
+def db_save_email_certificate(cert_dict: Dict[str, Any]) -> Dict[str, Any]:
+    with get_db_connection() as conn:
+        cid = str(cert_dict.get("id") or f"cert-em-{cert_dict.get('email', 'user').replace('@', '-').replace('.', '-')}")
+        conn.execute("""
+            INSERT OR REPLACE INTO email_certificates (id, name, user_id, email, type, fingerprint, expires_at, has_private_key, comment)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            cid,
+            cert_dict.get("name", "Certificate"),
+            str(cert_dict.get("user_id", "")),
+            cert_dict.get("email", ""),
+            cert_dict.get("type", "S/MIME"),
+            cert_dict.get("fingerprint", ""),
+            cert_dict.get("expires_at", "2027-12-31"),
+            1 if cert_dict.get("has_private_key", False) else 0,
+            cert_dict.get("comment", "")
+        ))
+        conn.commit()
+        return cert_dict
+
+def db_delete_email_certificate(cert_id: str) -> bool:
+    with get_db_connection() as conn:
+        cur = conn.execute("DELETE FROM email_certificates WHERE id = ? OR email = ?", (str(cert_id), str(cert_id)))
         conn.commit()
         return cur.rowcount > 0
 

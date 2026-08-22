@@ -113,7 +113,7 @@
             </div>
             <!-- Global DHCP Switch -->
             <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" v-model="dhcpConfig.enabled" class="sr-only peer" />
+              <input type="checkbox" v-model="dhcpConfig.enabled" @change="saveDhcpSettings" class="sr-only peer" />
               <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0072ce]"></div>
               <span class="ml-2 text-xs font-bold" :class="dhcpConfig.enabled ? 'text-emerald-600' : 'text-slate-400'">
                 {{ dhcpConfig.enabled ? 'Enabled' : 'Disabled' }}
@@ -1068,12 +1068,62 @@ const saveDnsRecord = () => {
   isDnsModalOpen.value = false
 }
 
+const fetchDhcpSettings = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      const res = await axiosLib.get('/api/network-services/dhcp').catch(() => null)
+      if (res && res.data) {
+        Object.assign(dhcpConfig.value, res.data)
+      }
+    } catch (e) {
+      console.error('Failed to fetch DHCP config:', e)
+    }
+  } else {
+    try {
+      const res = await fetch('/api/network-services/dhcp').catch(() => null)
+      if (res && res.ok) {
+        const data = await res.json()
+        if (data) Object.assign(dhcpConfig.value, data)
+      }
+    } catch (e) {}
+  }
+}
+
+const fetchDnsSettings = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      const res = await axiosLib.get('/api/network-services/dns').catch(() => null)
+      if (res && res.data) {
+        Object.assign(dnsConfig.value, res.data)
+      }
+    } catch (e) {
+      console.error('Failed to fetch DNS config:', e)
+    }
+  } else {
+    try {
+      const res = await fetch('/api/network-services/dns').catch(() => null)
+      if (res && res.ok) {
+        const data = await res.json()
+        if (data) Object.assign(dnsConfig.value, data)
+      }
+    } catch (e) {}
+  }
+}
+
 const saveDhcpSettings = async () => {
   isSaving.value = true
   try {
     const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
     if (axiosLib) {
       await axiosLib.post('/api/network-services/dhcp', dhcpConfig.value)
+    } else {
+      await fetch('/api/network-services/dhcp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dhcpConfig.value)
+      })
     }
   } catch (e) {
     console.error('Failed to save DHCP config:', e)
@@ -1099,6 +1149,12 @@ const saveDnsSettings = async () => {
     const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
     if (axiosLib) {
       await axiosLib.post('/api/network-services/dns', dnsConfig.value)
+    } else {
+      await fetch('/api/network-services/dns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dnsConfig.value)
+      })
     }
   } catch (e) {
     console.error('Failed to save DNS config:', e)
@@ -1144,5 +1200,7 @@ const syncNtpNow = () => {
 
 onMounted(() => {
   loadNetworkDefs()
+  fetchDhcpSettings()
+  fetchDnsSettings()
 })
 </script>

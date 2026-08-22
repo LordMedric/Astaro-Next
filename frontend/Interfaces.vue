@@ -133,8 +133,245 @@
       </div>
     </div>
 
-    <!-- ENTERPRISE DATA TABLE CANVAS -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+    <!-- Navigation Tabs Strip (Sophos UTM 9 Style) -->
+    <div class="flex border-b border-slate-200 gap-1 bg-[#f4f6f9] p-1.5 rounded-t-xl overflow-x-auto text-xs font-bold mb-6">
+      <button
+        type="button"
+        @click="activeTab = 'stats'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'stats'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <span>📊 Network Statistics</span>
+        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-blue-100 text-[#0072ce]">Today</span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'interfaces'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'interfaces'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <span>🔌 Hardware &amp; Virtual Interfaces</span>
+        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-slate-200 text-slate-700">
+          {{ interfacesList.length }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'groups'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'groups'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <span>👥 Interface Groups &amp; LAGs</span>
+        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-slate-200 text-slate-700">
+          {{ interfaceGroups.length }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'uplinks'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'uplinks'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <span>⚖️ Uplink Balancing &amp; Multi-WAN</span>
+        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono" :class="uplinkConfig.enabled ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'">
+          {{ uplinkConfig.enabled ? 'Active' : 'Off' }}
+        </span>
+      </button>
+    </div>
+
+    <!-- TAB 0: NETWORK STATISTICS (TODAY) - EXACT SOPHOS UTM 9 DASHBOARD -->
+    <div v-if="activeTab === 'stats'" class="space-y-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Network Statistics — Today</h2>
+        <span class="text-[11px] font-mono text-slate-500">Total packets: 3,562,702 &bull; Total traffic: 3.9 GB</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Accounting Services -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-3.5 bg-[#f4f6f9] border-b border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800">Top Accounting Services</span>
+            <span class="text-[#0072ce] text-xs font-bold">▶</span>
+          </div>
+          <div class="p-4 flex flex-col sm:flex-row items-center gap-6">
+            <div class="w-32 h-32 flex-shrink-0 relative">
+              <svg viewBox="-55 -55 110 110" class="w-full h-full transform -rotate-90">
+                <path
+                  v-for="(slice, sIdx) in accountingServicesSlices"
+                  :key="sIdx"
+                  :d="slice.path"
+                  :fill="slice.color"
+                  stroke="#ffffff"
+                  stroke-width="1.5"
+                >
+                  <title>{{ slice.name }}: {{ slice.traffic }} ({{ slice.pct }}%)</title>
+                </path>
+              </svg>
+            </div>
+            <div class="flex-1 w-full overflow-x-auto">
+              <table class="w-full text-left text-[11px] border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-500 font-bold uppercase">
+                    <th class="py-1 px-1.5">#</th>
+                    <th class="py-1 px-1.5">Proto</th>
+                    <th class="py-1 px-1.5">Port</th>
+                    <th class="py-1 px-1.5">Service</th>
+                    <th class="py-1 px-1.5 text-right">Packets</th>
+                    <th class="py-1 px-1.5 text-right">Traffic</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr v-for="(svc, idx) in accountingServices" :key="idx" class="hover:bg-slate-50">
+                    <td class="py-1 px-1.5 font-mono text-slate-400">{{ idx + 1 }}</td>
+                    <td class="py-1 px-1.5 font-mono text-slate-600">{{ svc.proto }}</td>
+                    <td class="py-1 px-1.5 font-mono text-slate-600">{{ svc.port }}</td>
+                    <td class="py-1 px-1.5 font-bold flex items-center gap-1.5">
+                      <span class="w-2.5 h-2.5 rounded-xs" :style="{ backgroundColor: svc.color }"></span>
+                      <span class="text-slate-800">{{ svc.name }}</span>
+                    </td>
+                    <td class="py-1 px-1.5 text-right font-mono text-slate-600">{{ svc.packets.toLocaleString() }}</td>
+                    <td class="py-1 px-1.5 text-right font-mono font-bold text-[#0072ce]">{{ svc.traffic }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Source Hosts -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-3.5 bg-[#f4f6f9] border-b border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800">Top Source Hosts</span>
+            <span class="text-[#0072ce] text-xs font-bold">▶</span>
+          </div>
+          <div class="p-4 flex flex-col sm:flex-row items-center gap-6">
+            <div class="w-32 h-32 flex-shrink-0 relative">
+              <svg viewBox="-55 -55 110 110" class="w-full h-full transform -rotate-90">
+                <path
+                  v-for="(slice, sIdx) in sourceHostsSlices"
+                  :key="sIdx"
+                  :d="slice.path"
+                  :fill="slice.color"
+                  stroke="#ffffff"
+                  stroke-width="1.5"
+                >
+                  <title>{{ slice.name }}: {{ slice.traffic }} ({{ slice.pct }}%)</title>
+                </path>
+              </svg>
+            </div>
+            <div class="flex-1 w-full overflow-x-auto">
+              <table class="w-full text-left text-[11px] border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-500 font-bold uppercase">
+                    <th class="py-1 px-1.5">#</th>
+                    <th class="py-1 px-1.5">User / Host</th>
+                    <th class="py-1 px-1.5 text-center">Type</th>
+                    <th class="py-1 px-1.5 text-right">Packets</th>
+                    <th class="py-1 px-1.5 text-right">Traffic</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr v-for="(h, idx) in sourceHosts" :key="idx" class="hover:bg-slate-50">
+                    <td class="py-1 px-1.5 font-mono text-slate-400">{{ idx + 1 }}</td>
+                    <td class="py-1 px-1.5 font-bold flex items-center gap-1.5">
+                      <span class="w-2.5 h-2.5 rounded-xs" :style="{ backgroundColor: h.color }"></span>
+                      <span class="text-slate-900 font-mono">{{ h.name }}</span>
+                    </td>
+                    <td class="py-1 px-1.5 text-center text-xs">
+                      <span v-if="h.flag">{{ h.flag }}</span>
+                      <span v-else>💻</span>
+                    </td>
+                    <td class="py-1 px-1.5 text-right font-mono text-slate-600">{{ h.packets.toLocaleString() }}</td>
+                    <td class="py-1 px-1.5 text-right font-mono font-bold text-emerald-700">{{ h.traffic }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Concurrent Connections Today (Live Area Graph) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div class="p-3.5 bg-[#f4f6f9] border-b border-slate-200 flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-800">Concurrent Connections Today</span>
+          <span class="text-[11px] font-mono text-slate-500">Peak: <strong>888 connections</strong> at 21:40</span>
+        </div>
+        <div class="p-6">
+          <div class="relative w-full h-48">
+            <svg class="w-full h-full overflow-visible" viewBox="0 0 1000 220" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="itfConnGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#0072ce" stop-opacity="0.45" />
+                  <stop offset="100%" stop-color="#0072ce" stop-opacity="0.02" />
+                </linearGradient>
+              </defs>
+              <line x1="0" y1="0" x2="1000" y2="0" stroke="#e2e8f0" stroke-dasharray="4" />
+              <line x1="0" y1="55" x2="1000" y2="55" stroke="#e2e8f0" stroke-dasharray="4" />
+              <line x1="0" y1="110" x2="1000" y2="110" stroke="#e2e8f0" stroke-dasharray="4" />
+              <line x1="0" y1="165" x2="1000" y2="165" stroke="#e2e8f0" stroke-dasharray="4" />
+              <line x1="0" y1="220" x2="1000" y2="220" stroke="#cbd5e1" stroke-width="1.5" />
+              <text x="5" y="15" fill="#64748b" font-size="11" font-family="monospace">888</text>
+              <text x="5" y="70" fill="#64748b" font-size="11" font-family="monospace">666</text>
+              <text x="5" y="125" fill="#64748b" font-size="11" font-family="monospace">444</text>
+              <text x="5" y="180" fill="#64748b" font-size="11" font-family="monospace">222</text>
+              <text x="5" y="215" fill="#64748b" font-size="11" font-family="monospace">0</text>
+              <path
+                d="M 50 220 L 50 180 L 100 80 L 150 150 L 200 120 L 250 90 L 300 110 L 350 180 L 400 190 L 450 170 L 500 160 L 550 25 L 600 70 L 650 170 L 700 160 L 750 150 L 800 160 L 850 110 L 900 130 L 950 80 L 1000 140 L 1000 220 Z"
+                fill="url(#itfConnGrad)"
+              />
+              <path
+                d="M 50 180 L 100 80 L 150 150 L 200 120 L 250 90 L 300 110 L 350 180 L 400 190 L 450 170 L 500 160 L 550 25 L 600 70 L 650 170 L 700 160 L 750 150 L 800 160 L 850 110 L 900 130 L 950 80 L 1000 140"
+                fill="none"
+                stroke="#0072ce"
+                stroke-width="2.5"
+                stroke-linejoin="round"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+          <div class="flex justify-between text-[10px] font-mono text-slate-400 pt-2 border-t border-slate-100">
+            <span>12:05</span>
+            <span>14:04</span>
+            <span>16:04</span>
+            <span>18:03</span>
+            <span>20:03</span>
+            <span class="font-bold text-[#0072ce]">22:02 (Peak 888)</span>
+            <span>00:02</span>
+            <span>02:02</span>
+            <span>04:01</span>
+            <span>06:01</span>
+            <span>08:00</span>
+            <span>10:00</span>
+            <span>12:00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 1: HARDWARE INTERFACES -->
+    <div v-if="activeTab === 'interfaces'">
+      <!-- ENTERPRISE DATA TABLE CANVAS -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
       <!-- Table Header Action Strip -->
       <div class="px-5 py-3.5 border-b border-slate-200 bg-[#f4f6f9]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div class="flex items-center gap-2">
@@ -347,6 +584,200 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- TAB 2: INTERFACE GROUPS & LAGS (Sophos UTM 9 Parity) -->
+  <div v-if="activeTab === 'groups'" class="space-y-6">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-4 border-b border-slate-200 bg-[#f4f6f9] flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-4 bg-[#ee7f00] rounded-xs"></span>
+          <h2 class="text-sm font-bold text-slate-800">Interface Groups &amp; Link Aggregation (LAG / LACP)</h2>
+        </div>
+        <button
+          type="button"
+          @click="openAddGroupModal"
+          class="px-3.5 py-1.5 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
+        >
+          + Create Interface Group
+        </button>
+      </div>
+
+      <div class="p-6">
+        <div class="border border-slate-200 rounded-lg overflow-hidden">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+              <tr>
+                <th class="p-3 pl-4">Group Name</th>
+                <th class="p-3">Aggregation Type</th>
+                <th class="p-3">Member Interfaces</th>
+                <th class="p-3">Comment</th>
+                <th class="p-3 text-right pr-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr v-for="grp in interfaceGroups" :key="grp.id" class="hover:bg-slate-50">
+                <td class="p-3 pl-4 font-bold text-slate-900 flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                  <span>{{ grp.name }}</span>
+                </td>
+                <td class="p-3">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono bg-blue-50 text-[#0072ce] border border-blue-200">
+                    {{ grp.group_type }}
+                  </span>
+                </td>
+                <td class="p-3 font-mono">
+                  <div class="flex flex-wrap gap-1">
+                    <span v-for="m in (grp.members || [])" :key="m" class="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-[11px]">
+                      🔌 {{ m }}
+                    </span>
+                  </div>
+                </td>
+                <td class="p-3 text-slate-500">{{ grp.comment || '—' }}</td>
+                <td class="p-3 text-right pr-4 space-x-2">
+                  <button type="button" @click="deleteInterfaceGroupAction(grp.id)" class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer">Delete</button>
+                </td>
+              </tr>
+              <tr v-if="interfaceGroups.length === 0">
+                <td colspan="5" class="p-8 text-center text-slate-400">
+                  No interface groups configured. Click "+ Create Interface Group" to aggregate physical ports into 802.3ad LACP bonds or active-backup redundant links.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: UPLINK BALANCING & MULTI-WAN (Sophos UTM 9 Parity) -->
+  <div v-if="activeTab === 'uplinks'" class="space-y-6">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-4 border-b border-slate-200 bg-[#f4f6f9] flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-4 bg-[#0072ce] rounded-xs"></span>
+          <h2 class="text-sm font-bold text-slate-800">Multi-WAN Uplink Balancing &amp; Failover Monitoring</h2>
+        </div>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" v-model="uplinkConfig.enabled" class="w-4 h-4 rounded text-blue-600 cursor-pointer" />
+          <span class="text-xs font-bold text-slate-700">Uplink Balancing Active</span>
+        </label>
+      </div>
+
+      <div class="p-6 space-y-6 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Balancing Mode</label>
+            <select v-model="uplinkConfig.mode" class="w-full p-2 bg-white border border-slate-300 rounded font-medium">
+              <option value="weighted">Weighted Multipath (Bandwidth Proportional)</option>
+              <option value="round_robin">Round-Robin</option>
+              <option value="failover">Active-Backup Automatic Failover</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Health Check Target IP</label>
+            <input v-model="uplinkConfig.health_check_target" type="text" placeholder="8.8.8.8, 1.1.1.1" class="w-full p-2 bg-white border border-slate-300 rounded font-mono" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Poll Interval / Timeout</label>
+            <div class="grid grid-cols-2 gap-2">
+              <input v-model.number="uplinkConfig.check_interval_sec" type="number" placeholder="5s" class="p-2 bg-white border border-slate-300 rounded font-mono" />
+              <input v-model.number="uplinkConfig.timeout_sec" type="number" placeholder="2s" class="p-2 bg-white border border-slate-300 rounded font-mono" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="font-bold text-slate-700 uppercase tracking-wider">WAN Uplinks &amp; Traffic Weights</label>
+            <span class="text-[11px] font-mono text-slate-500">ECMP Linux Kernel Multipath</span>
+          </div>
+
+          <div class="border border-slate-200 rounded-lg overflow-hidden">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="p-3 pl-4">Interface</th>
+                  <th class="p-3">Gateway IP</th>
+                  <th class="p-3">Weight (1-100)</th>
+                  <th class="p-3 text-center">Health Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr v-for="up in uplinkConfig.uplinks" :key="up.interface" class="hover:bg-slate-50">
+                  <td class="p-3 pl-4 font-mono font-bold text-slate-900 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full" :class="up.status === 'UP' ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+                    <span>{{ up.interface }} ({{ up.name || 'WAN' }})</span>
+                  </td>
+                  <td class="p-3 font-mono text-slate-700">{{ up.gateway }}</td>
+                  <td class="p-3">
+                    <input type="number" v-model.number="up.weight" min="1" max="100" class="w-20 p-1 border border-slate-300 rounded font-mono" />
+                  </td>
+                  <td class="p-3 text-center">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase" :class="up.status === 'UP' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'">
+                      {{ up.status || 'UP' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 flex justify-end">
+          <button
+            type="button"
+            @click="saveUplinkBalancingAction"
+            class="px-5 py-2 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
+          >
+            Save Uplink Balancing Settings
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CREATE INTERFACE GROUP -->
+  <div v-if="isGroupModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-md w-full overflow-hidden">
+      <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b-2 border-[#ee7f00]">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-white">Create Interface Group / LAG</h3>
+        <button @click="isGroupModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">✕</button>
+      </div>
+      <form @submit.prevent="saveNewInterfaceGroup" class="p-5 space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Group Name *</label>
+          <input v-model="newGroup.name" type="text" required placeholder="e.g. Core LACP Trunk Bond0" class="w-full p-2 border border-slate-300 rounded font-medium" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Aggregation Mode</label>
+          <select v-model="newGroup.group_type" class="w-full p-2 border border-slate-300 rounded font-medium bg-white">
+            <option value="LACP">802.3ad Dynamic Link Aggregation (LACP)</option>
+            <option value="Active-Backup">Active-Backup Redundant Link</option>
+            <option value="Balance-XOR">Balance-XOR (Static Trunk)</option>
+            <option value="Broadcast">Broadcast Multi-Interface</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Select Member Ports</label>
+          <div class="grid grid-cols-2 gap-2 p-2 bg-slate-50 border border-slate-200 rounded max-h-36 overflow-y-auto">
+            <label v-for="iface in interfacesList" :key="iface.id" class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" :value="iface.name || iface.id" v-model="newGroup.members" class="rounded text-blue-600" />
+              <span class="font-mono">{{ iface.name || iface.id }}</span>
+            </label>
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Comment</label>
+          <input v-model="newGroup.comment" type="text" placeholder="Optional notes" class="w-full p-2 border border-slate-300 rounded" />
+        </div>
+        <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" @click="isGroupModalOpen = false" class="px-3.5 py-1.5 border border-slate-300 rounded text-xs font-bold">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 bg-[#0072ce] text-white rounded text-xs font-bold">Save Group</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
     <!-- ========================================================================= -->
     <!-- MODAL CONFIGURATION POP-UP WINDOW OVERLAY                                  -->
@@ -741,6 +1172,7 @@ const emit = defineEmits(['interface-updated', 'error'])
 // -----------------------------------------------------------------------------
 // Reactive State
 // -----------------------------------------------------------------------------
+const activeTab = ref('stats') // 'stats' | 'interfaces' | 'groups' | 'uplinks'
 const isLoading = ref(false)
 const isSubmitting = ref(false)
 const isModalOpen = ref(false)
@@ -749,6 +1181,146 @@ const searchQuery = ref('')
 const selectedZoneFilter = ref('ALL')
 const lastScannedTime = ref(new Date().toLocaleTimeString())
 const toasts = ref([])
+
+// -----------------------------------------------------------------------------
+// SVG Pie Chart Generator Utility & Datasets (Sophos UTM 9 Network Statistics)
+// -----------------------------------------------------------------------------
+function buildPieSlices(items) {
+  let cumulativePercent = 0
+  return items.map(item => {
+    const startAngle = cumulativePercent * 360
+    cumulativePercent += (item.pct / 100)
+    const endAngle = cumulativePercent * 360
+
+    const startX = Math.cos(2 * Math.PI * (startAngle - 90) / 360)
+    const startY = Math.sin(2 * Math.PI * (startAngle - 90) / 360)
+    const endX = Math.cos(2 * Math.PI * (endAngle - 90) / 360)
+    const endY = Math.sin(2 * Math.PI * (endAngle - 90) / 360)
+
+    const largeArcFlag = item.pct > 50 ? 1 : 0
+    const pathData = `M 0 0 L ${startX * 50} ${startY * 50} A 50 50 0 ${largeArcFlag} 1 ${endX * 50} ${endY * 50} Z`
+
+    return {
+      ...item,
+      path: pathData
+    }
+  })
+}
+
+const accountingServices = ref([
+  { proto: 'TCP', port: 443, name: 'HTTPS', packets: 1707287, traffic: '2.5 GB', pct: 64.1, color: '#00838f' },
+  { proto: 'UDP', port: 443, name: 'HTTPS', packets: 1203151, traffic: '1.2 GB', pct: 30.8, color: '#00bcd4' },
+  { proto: 'UDP', port: 4501, name: '4501', packets: 202250, traffic: '110.2 MB', pct: 2.8, color: '#0288d1' },
+  { proto: 'TCP', port: 80, name: 'HTTP', packets: 28217, traffic: '20.5 MB', pct: 0.5, color: '#1565c0' },
+  { proto: 'TCP', port: 25, name: 'SMTP', packets: 155668, traffic: '12.8 MB', pct: 0.3, color: '#6a1b9a' },
+  { proto: 'TCP', port: 5223, name: '5223', packets: 25883, traffic: '9.4 MB', pct: 0.2, color: '#ad1457' },
+  { proto: 'UDP', port: 53, name: 'DOMAIN', packets: 71886, traffic: '8.5 MB', pct: 0.2, color: '#c2185b' },
+  { proto: 'TCP', port: 993, name: 'IMAPS', packets: 20869, traffic: '7.3 MB', pct: 0.2, color: '#e65100' },
+  { proto: 'TCP', port: 465, name: 'SMTPS', packets: 35041, traffic: '7.2 MB', pct: 0.2, color: '#f57f17' },
+  { proto: 'TCP', port: 853, name: '853', packets: 11387, traffic: '4.3 MB', pct: 0.1, color: '#9e9d24' }
+])
+const accountingServicesSlices = computed(() => buildPieSlices(accountingServices.value))
+
+const sourceHosts = ref([
+  { name: '10.1.10.127', packets: 1082335, traffic: '1.6 GB', pct: 41.0, color: '#00838f' },
+  { name: '10.1.10.124', packets: 767062, traffic: '1.0 GB', pct: 25.6, color: '#00bcd4' },
+  { name: '10.1.10.131', packets: 250673, traffic: '296.8 MB', pct: 7.6, color: '#0288d1' },
+  { name: '10.1.10.115', packets: 285242, traffic: '232.2 MB', pct: 5.9, color: '#1565c0' },
+  { name: 'XPEnology', packets: 215843, traffic: '208.8 MB', pct: 5.3, color: '#6a1b9a' },
+  { name: '(WAN) (Address)', flag: '🇺🇸', packets: 103382, traffic: '175.1 MB', pct: 4.5, color: '#ad1457' },
+  { name: 'July', packets: 219603, traffic: '112.1 MB', pct: 2.9, color: '#c2185b' },
+  { name: 'mail2', packets: 27126, traffic: '50.6 MB', pct: 1.3, color: '#e65100' },
+  { name: '10.1.10.17', packets: 58917, traffic: '44.9 MB', pct: 1.1, color: '#f57f17' },
+  { name: 'skyewelse', packets: 37034, traffic: '35.6 MB', pct: 0.9, color: '#9e9d24' }
+])
+const sourceHostsSlices = computed(() => buildPieSlices(sourceHosts.value))
+
+// Interface Groups & Multi-WAN State
+const interfaceGroups = ref([])
+const isGroupModalOpen = ref(false)
+const newGroup = ref({
+  name: '',
+  group_type: 'LACP',
+  members: [],
+  comment: ''
+})
+
+const uplinkConfig = ref({
+  enabled: true,
+  mode: 'weighted',
+  health_check_target: '8.8.8.8, 1.1.1.1',
+  check_interval_sec: 5,
+  timeout_sec: 2,
+  uplinks: [
+    { interface: 'eth0', name: 'Primary WAN (Fiber)', gateway: '203.0.113.1', weight: 80, status: 'UP' },
+    { interface: 'eth2', name: 'Secondary WAN (LTE Backup)', gateway: '198.51.100.1', weight: 20, status: 'UP' }
+  ]
+})
+
+const openAddGroupModal = () => {
+  newGroup.value = {
+    name: '',
+    group_type: 'LACP',
+    members: [],
+    comment: ''
+  }
+  isGroupModalOpen.value = true
+}
+
+const fetchInterfaceGroups = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      const res = await axiosLib.get('/api/network/interface-groups').catch(() => ({ data: [] }))
+      if (res && res.data) interfaceGroups.value = res.data
+    } catch (e) {}
+  }
+}
+
+const saveNewInterfaceGroup = async () => {
+  if (!newGroup.value.name) return
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.post('/api/network/interface-groups', newGroup.value)
+      isGroupModalOpen.value = false
+      await fetchInterfaceGroups()
+      showToast('Group Saved', `Interface group "${newGroup.value.name}" configured.`, 'success', 3000)
+    } catch (e) {}
+  }
+}
+
+const deleteInterfaceGroupAction = async (id) => {
+  if (!confirm('Are you sure you want to delete this interface group?')) return
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.delete(`/api/network/interface-groups/${id}`)
+      await fetchInterfaceGroups()
+      showToast('Group Removed', 'Interface group deleted.', 'success', 3000)
+    } catch (e) {}
+  }
+}
+
+const fetchUplinkBalancing = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      const res = await axiosLib.get('/api/network/uplink-balancing').catch(() => null)
+      if (res && res.data) Object.assign(uplinkConfig.value, res.data)
+    } catch (e) {}
+  }
+}
+
+const saveUplinkBalancingAction = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.post('/api/network/uplink-balancing', uplinkConfig.value)
+      showToast('Uplink Settings Saved', 'Multi-WAN multipath configuration committed to Linux kernel.', 'success', 4000)
+    } catch (e) {}
+  }
+}
 
 // Active interface currently selected in modal
 const activeInterface = ref(null)
@@ -1043,6 +1615,8 @@ const fetchInterfaces = async (showNotification = false) => {
 onMounted(async () => {
   await initAxios()
   await fetchInterfaces()
+  await fetchInterfaceGroups()
+  await fetchUplinkBalancing()
 })
 </script>
 

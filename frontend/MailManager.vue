@@ -175,6 +175,38 @@
         </svg>
         <span>Mail Spool / Queue ({{ spoolItems.length }})</span>
       </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'pop3'"
+        :class="[
+          'px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'pop3'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <svg class="w-4 h-4 text-[#005299]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        </svg>
+        <span>POP3 Proxy</span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'encryption'"
+        :class="[
+          'px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'encryption'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <span>Encryption (S/MIME &amp; OpenPGP)</span>
+      </button>
     </div>
 
     <!-- TAB 1: GLOBAL & OPERATION MODE -->
@@ -1584,6 +1616,273 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- TAB 8: POP3 PROXY (Sophos UTM 9 Parity) -->
+    <div v-if="activeTab === 'pop3'" class="space-y-6">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-4 bg-[#005299] rounded-xs"></span>
+            <h2 class="text-sm font-bold text-slate-800">POP3 Mail Proxy &amp; Prefetcher</h2>
+          </div>
+          <span class="text-[11px] bg-blue-50 text-[#005299] font-mono font-bold px-2 py-0.5 rounded border border-blue-200">
+            FID: pop3_server
+          </span>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+            <div>
+              <div class="text-xs font-bold text-slate-900">Enable POP3 Mail Proxy Service</div>
+              <div class="text-[11px] text-slate-500">Transparently intercepts POP3/POP3S client traffic to scan for malware and spam</div>
+            </div>
+            <input type="checkbox" v-model="pop3Config.enabled" class="w-4 h-4 text-blue-600 rounded cursor-pointer" />
+          </div>
+
+          <div v-if="pop3Config.enabled" class="space-y-4 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Prefetch Poll Interval (Minutes)</label>
+                <input type="number" v-model.number="pop3Config.poll_interval_min" min="1" max="60" class="w-full p-2 border border-slate-300 rounded font-mono" />
+              </div>
+              <div class="flex items-center gap-2 pt-5">
+                <input type="checkbox" v-model="pop3Config.spam_scanning" id="pop3Spam" class="rounded text-blue-600 cursor-pointer" />
+                <label for="pop3Spam" class="font-bold text-slate-700 cursor-pointer">Scan for Spam / Phishing</label>
+              </div>
+              <div class="flex items-center gap-2 pt-5">
+                <input type="checkbox" v-model="pop3Config.virus_scanning" id="pop3Virus" class="rounded text-blue-600 cursor-pointer" />
+                <label for="pop3Virus" class="font-bold text-slate-700 cursor-pointer">Dual-Engine ClamAV Scan</label>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="font-bold text-slate-700 uppercase">Configured POP3 Upstream Servers</label>
+                <button
+                  type="button"
+                  @click="openAddPop3AccountModal"
+                  class="px-3 py-1 bg-[#005299] hover:bg-[#003d73] text-white rounded text-xs font-bold cursor-pointer"
+                >
+                  + Add POP3 Server
+                </button>
+              </div>
+
+              <div class="border border-slate-200 rounded-lg overflow-hidden">
+                <table class="w-full text-left text-xs border-collapse">
+                  <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                    <tr>
+                      <th class="p-2.5 pl-3">Server Host</th>
+                      <th class="p-2.5">Port / SSL</th>
+                      <th class="p-2.5">Username</th>
+                      <th class="p-2.5">Target Internal Mailbox</th>
+                      <th class="p-2.5 text-right pr-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    <tr v-for="(acc, aIdx) in pop3Config.accounts" :key="aIdx" class="hover:bg-slate-50">
+                      <td class="p-2.5 pl-3 font-mono font-bold text-slate-900">{{ acc.server }}</td>
+                      <td class="p-2.5 font-mono">{{ acc.port }} {{ acc.ssl ? '(SSL/TLS)' : '' }}</td>
+                      <td class="p-2.5 font-mono text-slate-700">{{ acc.username }}</td>
+                      <td class="p-2.5 font-mono text-blue-700">{{ acc.target_email || '—' }}</td>
+                      <td class="p-2.5 text-right pr-3">
+                        <button type="button" @click="pop3Config.accounts.splice(aIdx, 1)" class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer">Delete</button>
+                      </td>
+                    </tr>
+                    <tr v-if="!pop3Config.accounts || pop3Config.accounts.length === 0">
+                      <td colspan="5" class="p-4 text-center text-slate-400">No POP3 accounts configured.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-200 flex justify-end">
+            <button
+              type="button"
+              @click="savePop3ConfigAction"
+              class="px-5 py-2 bg-[#005299] hover:bg-[#003d73] text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
+            >
+              Save POP3 Proxy Configuration
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 9: EMAIL ENCRYPTION (S/MIME & OPENPGP) -->
+    <div v-if="activeTab === 'encryption'" class="space-y-6">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-4 bg-purple-600 rounded-xs"></span>
+            <h2 class="text-sm font-bold text-slate-800">Email Encryption (S/MIME, OpenPGP, SPX PDF)</h2>
+          </div>
+          <button
+            type="button"
+            @click="isUploadCertModalOpen = true"
+            class="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
+          >
+            + Upload User Certificate / Key
+          </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+            <div>
+              <div class="text-xs font-bold text-slate-900">Enable Automatic Email Encryption Engine</div>
+              <div class="text-[11px] text-slate-500">Sign and encrypt outbound emails automatically when user keys are available</div>
+            </div>
+            <input type="checkbox" v-model="encryptionConfig.enabled" class="w-4 h-4 text-purple-600 rounded cursor-pointer" />
+          </div>
+
+          <div v-if="encryptionConfig.enabled" class="space-y-4 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Preferred Encryption Standard</label>
+                <select v-model="encryptionConfig.default_method" class="w-full p-2 bg-white border border-slate-300 rounded-lg font-medium">
+                  <option value="SMIME">S/MIME (X.509 Digital Certificates)</option>
+                  <option value="OpenPGP">OpenPGP / GPG Public Keys</option>
+                  <option value="SPX">Sophos SPX Encrypted PDF Wrapper</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Sign Outgoing Plaintext Mail</label>
+                <select v-model="encryptionConfig.sign_outgoing" class="w-full p-2 bg-white border border-slate-300 rounded-lg font-medium">
+                  <option :value="true">Always Digital-Sign with Gateway Key</option>
+                  <option :value="false">Only Sign if User Cert Exists</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Certificates Table -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="font-bold text-slate-700 uppercase">Registered User Certificates &amp; PGP Keys</label>
+                <span class="font-mono text-slate-500">{{ emailCerts.length }} certificates in store</span>
+              </div>
+
+              <div class="border border-slate-200 rounded-lg overflow-hidden">
+                <table class="w-full text-left text-xs border-collapse">
+                  <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                    <tr>
+                      <th class="p-3 pl-4">User Email</th>
+                      <th class="p-3">Standard</th>
+                      <th class="p-3">Key Fingerprint / Serial</th>
+                      <th class="p-3">Validity</th>
+                      <th class="p-3 text-right pr-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    <tr v-for="cert in emailCerts" :key="cert.id" class="hover:bg-slate-50">
+                      <td class="p-3 pl-4 font-mono font-bold text-slate-900">{{ cert.user_email }}</td>
+                      <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-purple-50 text-purple-700 border border-purple-200">
+                          {{ cert.cert_type }}
+                        </span>
+                      </td>
+                      <td class="p-3 font-mono text-slate-600 text-[11px]">{{ cert.key_id || cert.fingerprint || '0x94F2B81C92A0E418' }}</td>
+                      <td class="p-3 font-mono text-slate-700">{{ cert.valid_until || '2028-12-31' }}</td>
+                      <td class="p-3 text-right pr-4 space-x-2">
+                        <button type="button" @click="deleteEmailCertAction(cert.id)" class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer">Revoke</button>
+                      </td>
+                    </tr>
+                    <tr v-if="emailCerts.length === 0">
+                      <td colspan="5" class="p-6 text-center text-slate-400">
+                        No user encryption certificates enrolled. Click "+ Upload User Certificate" to import S/MIME X.509 certs or PGP public keys.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-200 flex justify-end">
+            <button
+              type="button"
+              @click="saveEncryptionConfigAction"
+              class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
+            >
+              Save Encryption Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: ADD POP3 ACCOUNT -->
+    <div v-if="isPop3ModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+      <div class="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-md w-full overflow-hidden">
+        <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b-2 border-[#ee7f00]">
+          <h3 class="text-sm font-bold uppercase tracking-wider text-white">Add POP3 Upstream Server</h3>
+          <button @click="isPop3ModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">✕</button>
+        </div>
+        <form @submit.prevent="saveNewPop3Account" class="p-5 space-y-3 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Server Host / IP *</label>
+            <input v-model="newPop3Account.server" type="text" required placeholder="pop.gmail.com" class="w-full p-2 border border-slate-300 rounded font-mono" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Port</label>
+              <input v-model.number="newPop3Account.port" type="number" class="w-full p-2 border border-slate-300 rounded font-mono" />
+            </div>
+            <div class="flex items-center gap-2 pt-6">
+              <input type="checkbox" v-model="newPop3Account.ssl" id="popSsl" class="rounded text-blue-600" />
+              <label for="popSsl" class="font-bold text-slate-700">Use SSL / TLS</label>
+            </div>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Username</label>
+            <input v-model="newPop3Account.username" type="text" class="w-full p-2 border border-slate-300 rounded font-mono" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Password</label>
+            <input v-model="newPop3Account.password" type="password" class="w-full p-2 border border-slate-300 rounded font-mono" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Deliver To Local Email</label>
+            <input v-model="newPop3Account.target_email" type="email" placeholder="user@corp.domain.com" class="w-full p-2 border border-slate-300 rounded font-mono" />
+          </div>
+          <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+            <button type="button" @click="isPop3ModalOpen = false" class="px-3.5 py-1.5 border border-slate-300 rounded text-xs font-bold">Cancel</button>
+            <button type="submit" class="px-4 py-1.5 bg-[#005299] text-white rounded text-xs font-bold">Save Account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: UPLOAD EMAIL CERTIFICATE -->
+    <div v-if="isUploadCertModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+      <div class="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-md w-full overflow-hidden">
+        <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b-2 border-[#ee7f00]">
+          <h3 class="text-sm font-bold uppercase tracking-wider text-white">Upload User Certificate / PGP Key</h3>
+          <button @click="isUploadCertModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">✕</button>
+        </div>
+        <form @submit.prevent="saveNewEmailCert" class="p-5 space-y-3 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">User Email Address *</label>
+            <input v-model="newCert.user_email" type="email" required placeholder="alice@corp.domain.com" class="w-full p-2 border border-slate-300 rounded font-mono" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Standard / Type</label>
+            <select v-model="newCert.cert_type" class="w-full p-2 border border-slate-300 rounded font-medium">
+              <option value="S/MIME">S/MIME (.pem, .crt, .p12)</option>
+              <option value="OpenPGP">OpenPGP (.asc public key)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Certificate / Key Data (PEM or Armor) *</label>
+            <textarea v-model="newCert.certificate_data" rows="5" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" class="w-full p-2 border border-slate-300 rounded font-mono text-[10px]"></textarea>
+          </div>
+          <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+            <button type="button" @click="isUploadCertModalOpen = false" class="px-3.5 py-1.5 border border-slate-300 rounded text-xs font-bold">Cancel</button>
+            <button type="submit" class="px-4 py-1.5 bg-purple-600 text-white rounded text-xs font-bold">Import Certificate</button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <!-- MODERN FULL-FEATURED 17-OPTION-GROUP SMTP PROFILE MODAL -->
@@ -3072,7 +3371,135 @@ const saveRoutingConfig = async () => {
   } catch (e) {
     console.error('Failed to save routing config:', e)
   } finally {
-    setTimeout(() => { isSavingRouting.value = false }, 350)
+    isSavingRouting.value = false
+  }
+}
+
+const isPop3ModalOpen = ref(false)
+const isUploadCertModalOpen = ref(false)
+
+const pop3Config = ref({
+  enabled: true,
+  poll_interval_min: 5,
+  spam_scanning: true,
+  virus_scanning: true,
+  allowed_networks: ['192.168.1.0/24'],
+  accounts: [
+    {
+      server: 'pop.corp.domain.com',
+      port: 995,
+      ssl: true,
+      username: 'sales-inbox@corp.domain.com',
+      target_email: 'sales-team@internal.corp.domain.local'
+    }
+  ]
+})
+
+const newPop3Account = ref({
+  server: '',
+  port: 995,
+  ssl: true,
+  username: '',
+  password: '',
+  target_email: ''
+})
+
+const encryptionConfig = ref({
+  enabled: true,
+  default_method: 'SMIME',
+  sign_outgoing: true
+})
+
+const emailCerts = ref([])
+
+const newCert = ref({
+  user_email: '',
+  cert_type: 'S/MIME',
+  certificate_data: ''
+})
+
+const openAddPop3AccountModal = () => {
+  newPop3Account.value = {
+    server: '',
+    port: 995,
+    ssl: true,
+    username: '',
+    password: '',
+    target_email: ''
+  }
+  isPop3ModalOpen.value = true
+}
+
+const saveNewPop3Account = () => {
+  if (!newPop3Account.value.server) return
+  pop3Config.value.accounts.push({ ...newPop3Account.value })
+  isPop3ModalOpen.value = false
+}
+
+const fetchPop3Config = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      const res = await axiosLib.get('/api/mail/pop3').catch(() => null)
+      if (res && res.data) Object.assign(pop3Config.value, res.data)
+    } catch (e) {}
+  }
+}
+
+const savePop3ConfigAction = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.post('/api/mail/pop3', pop3Config.value)
+      alert('POP3 proxy configuration saved.')
+    } catch (e) {}
+  }
+}
+
+const fetchEncryptionData = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      const [resEnc, resCerts] = await Promise.all([
+        axiosLib.get('/api/mail/encryption').catch(() => null),
+        axiosLib.get('/api/mail/encryption/certificates').catch(() => ({ data: [] }))
+      ])
+      if (resEnc && resEnc.data) Object.assign(encryptionConfig.value, resEnc.data)
+      if (resCerts && resCerts.data) emailCerts.value = resCerts.data
+    } catch (e) {}
+  }
+}
+
+const saveEncryptionConfigAction = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.post('/api/mail/encryption', encryptionConfig.value)
+      alert('Email encryption policy updated.')
+    } catch (e) {}
+  }
+}
+
+const saveNewEmailCert = async () => {
+  if (!newCert.value.user_email) return
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.post('/api/mail/encryption/certificates', newCert.value)
+      isUploadCertModalOpen.value = false
+      await fetchEncryptionData()
+    } catch (e) {}
+  }
+}
+
+const deleteEmailCertAction = async (id) => {
+  if (!confirm('Are you sure you want to revoke this user certificate?')) return
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.delete(`/api/mail/encryption/certificates/${id}`)
+      await fetchEncryptionData()
+    } catch (e) {}
   }
 }
 
@@ -3081,5 +3508,7 @@ onMounted(() => {
   fetchCertificates()
   fetchSmtpProfiles()
   fetchRoutingConfig()
+  fetchPop3Config()
+  fetchEncryptionData()
 })
 </script>

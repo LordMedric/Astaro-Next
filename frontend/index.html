@@ -99,6 +99,8 @@
         'users-view': Vue.defineAsyncComponent(() => loadModule('./Users.vue', options)),
         'network-services': Vue.defineAsyncComponent(() => loadModule('./NetworkServices.vue', options)),
         'intrusion-prevention': Vue.defineAsyncComponent(() => loadModule('./IntrusionPrevention.vue', options)),
+        'advanced-threat': Vue.defineAsyncComponent(() => loadModule('./AdvancedThreat.vue', options)),
+        'qos-traffic': Vue.defineAsyncComponent(() => loadModule('./QosTraffic.vue', options)),
         'system-settings': Vue.defineAsyncComponent(() => loadModule('./SystemSettings.vue', options)),
         'executive-reports': Vue.defineAsyncComponent(() => loadModule('./ExecutiveReports.vue', options)),
         'routing-view': Vue.defineAsyncComponent(() => loadModule('./Routing.vue', options)),
@@ -151,6 +153,14 @@
           />
           <intrusion-prevention
             v-else-if="currentItem === 'ips' || currentItem === 'intrusion_prevention' || currentItem === 'suricata' || currentItem === 'antidos'"
+            :authToken="authToken"
+          />
+          <advanced-threat
+            v-else-if="currentItem === 'atp' || currentItem === 'advanced_threat' || currentItem === 'sandstorm'"
+            :authToken="authToken"
+          />
+          <qos-traffic
+            v-else-if="currentItem === 'qos' || currentItem === 'qos_traffic' || currentItem === 'traffic_shaping' || currentItem === 'bandwidth_pools'"
             :authToken="authToken"
           />
           <firewall-rules

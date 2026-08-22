@@ -31,6 +31,7 @@
           <span>Refresh FIB</span>
         </button>
         <button
+          v-if="activeTab === 'static'"
           @click="openAddModal"
           class="px-4 py-2 bg-[#0072ce] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
         >
@@ -38,6 +39,17 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
           <span>+ Add Route</span>
+        </button>
+
+        <button
+          v-else-if="activeTab === 'pbr'"
+          @click="openAddPbrModal"
+          class="px-4 py-2 bg-[#0072ce] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>+ Add Policy Route</span>
         </button>
       </div>
     </div>
@@ -151,39 +163,63 @@
       </div>
     </div>
 
-    <!-- TAB 2: Policy-Based Routing (PBR) -->
+    <!-- TAB 2: Policy-Based Routing (PBR) (Sophos UTM 9 Parity) -->
     <div v-else-if="activeTab === 'pbr'" class="space-y-4">
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
           <div>
             <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Policy-Based Routing (PBR) Rules</h3>
             <p class="text-[11px] text-slate-500 mt-0.5">Route traffic through specific WAN interfaces based on source IP, protocol port, or destination service</p>
           </div>
-          <span class="text-[10px] bg-purple-100 text-purple-800 font-mono font-bold px-2 py-1 rounded">
-            MULTI-WAN SD-WAN
+          <span class="text-xs font-mono font-bold text-slate-500 bg-white px-2.5 py-1 rounded border border-slate-200">
+            {{ pbrRoutes.length }} Rule(s)
           </span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="p-4 rounded-xl bg-[#f4f6f9] border border-slate-200 space-y-2">
-            <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> VoIP Traffic Priority (SIP / RTP)
-            </span>
-            <p class="text-[11px] text-slate-600">Forces all UDP 5060 / RTP traffic through Low-Latency Fiber WAN (ens33) gateway.</p>
-            <div class="text-[10px] font-mono text-slate-500 bg-white p-2 rounded border border-slate-200">
-              Source: Internal LAN &rarr; Port: UDP 5060 &rarr; Gateway: 192.168.1.254 (Fiber WAN)
-            </div>
-          </div>
-
-          <div class="p-4 rounded-xl bg-[#f4f6f9] border border-slate-200 space-y-2">
-            <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-blue-500"></span> Guest WiFi WAN Spillover
-            </span>
-            <p class="text-[11px] text-slate-600">Routes all Guest VLAN 50 traffic out through secondary Broadband connection (ens35).</p>
-            <div class="text-[10px] font-mono text-slate-500 bg-white p-2 rounded border border-slate-200">
-              Source: 192.168.50.0/24 &rarr; Destination: ANY &rarr; Gateway: 10.0.0.1 (Backup WAN)
-            </div>
-          </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-[#f4f6f9] text-slate-600 font-bold border-b border-slate-200">
+              <tr>
+                <th class="p-3 pl-5">Status</th>
+                <th class="p-3">Rule Name</th>
+                <th class="p-3">Source Network</th>
+                <th class="p-3">Destination Network</th>
+                <th class="p-3">Service / Port</th>
+                <th class="p-3">Target Gateway / Interface</th>
+                <th class="p-3">Comment</th>
+                <th class="p-3 pr-5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+              <tr v-if="pbrRoutes.length === 0" class="text-center">
+                <td colspan="8" class="p-8 text-slate-400">No policy-based routes configured. Click "+ Add Policy Route" to steer application traffic.</td>
+              </tr>
+              <tr v-for="pbr in pbrRoutes" :key="pbr.id" class="hover:bg-slate-50/80 transition-colors">
+                <td class="p-3 pl-5">
+                  <span
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold font-mono"
+                    :class="pbr.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full" :class="pbr.enabled ? 'bg-emerald-500' : 'bg-slate-400'"></span>
+                    {{ pbr.enabled ? 'ACTIVE' : 'DISABLED' }}
+                  </span>
+                </td>
+                <td class="p-3 font-bold text-slate-900">{{ pbr.name }}</td>
+                <td class="p-3 font-mono text-slate-700">{{ pbr.source || 'Any' }}</td>
+                <td class="p-3 font-mono text-slate-700">{{ pbr.destination || 'Any' }}</td>
+                <td class="p-3">
+                  <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 font-mono text-[10px] font-bold">
+                    {{ pbr.service || 'Any' }}
+                  </span>
+                </td>
+                <td class="p-3 font-mono font-bold text-[#0072ce]">{{ pbr.target_gateway || pbr.interface }}</td>
+                <td class="p-3 text-slate-500 max-w-xs truncate">{{ pbr.comment || '—' }}</td>
+                <td class="p-3 pr-5 text-right space-x-2">
+                  <button @click="deletePbrAction(pbr.id)" class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -467,6 +503,50 @@
         </div>
       </div>
     </transition>
+
+    <!-- MODAL: CREATE POLICY ROUTE (PBR) -->
+    <div v-if="isPbrModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+      <div class="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-lg w-full overflow-hidden">
+        <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b-2 border-[#ee7f00]">
+          <h3 class="text-sm font-bold uppercase tracking-wider text-white">Create Policy-Based Routing Rule</h3>
+          <button @click="isPbrModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">✕</button>
+        </div>
+        <form @submit.prevent="savePbrRoute" class="p-5 space-y-3.5 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Rule Name *</label>
+            <input v-model="pbrForm.name" type="text" required placeholder="e.g. VoIP SIP Gateway Steering" class="w-full p-2 border border-slate-300 rounded font-medium" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Source Network</label>
+              <input v-model="pbrForm.source" type="text" placeholder="192.168.1.0/24 or Any" class="w-full p-2 border border-slate-300 rounded font-mono" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Destination Network</label>
+              <input v-model="pbrForm.destination" type="text" placeholder="0.0.0.0/0 or Any" class="w-full p-2 border border-slate-300 rounded font-mono" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Service / Protocol</label>
+              <input v-model="pbrForm.service" type="text" placeholder="UDP 5060, HTTPS, Any" class="w-full p-2 border border-slate-300 rounded font-mono" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Target Gateway / Interface *</label>
+              <input v-model="pbrForm.target_gateway" type="text" required placeholder="192.168.1.254 (Fiber WAN)" class="w-full p-2 border border-slate-300 rounded font-mono font-bold" />
+            </div>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Comment</label>
+            <input v-model="pbrForm.comment" type="text" placeholder="Optional notes" class="w-full p-2 border border-slate-300 rounded" />
+          </div>
+          <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+            <button type="button" @click="isPbrModalOpen = false" class="px-3.5 py-1.5 border border-slate-300 rounded text-xs font-bold">Cancel</button>
+            <button type="submit" class="px-4 py-1.5 bg-[#0072ce] text-white rounded text-xs font-bold">Save Policy Route</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -610,7 +690,74 @@ async function deleteRoute(routeId) {
   }
 }
 
+const pbrRoutes = ref([])
+const isPbrModalOpen = ref(false)
+const pbrForm = ref({
+  name: '',
+  source: '',
+  destination: '',
+  service: '',
+  target_gateway: '',
+  interface: 'eth0',
+  comment: '',
+  enabled: true
+})
+
+function openAddPbrModal() {
+  pbrForm.value = {
+    name: '',
+    source: '',
+    destination: '',
+    service: '',
+    target_gateway: '',
+    interface: 'eth0',
+    comment: '',
+    enabled: true
+  }
+  isPbrModalOpen.value = true
+}
+
+async function fetchPbrRoutes() {
+  try {
+    const res = await fetch('/api/routing/policy-routes')
+    if (res.ok) {
+      pbrRoutes.value = await res.json()
+      tabs[1].badge = `${pbrRoutes.value.length} Rules`
+    }
+  } catch (err) {}
+}
+
+async function savePbrRoute() {
+  if (!pbrForm.value.name || !pbrForm.value.target_gateway) return
+  try {
+    const res = await fetch('/api/routing/policy-routes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(pbrForm.value)
+    })
+    if (res.ok) {
+      isPbrModalOpen.value = false
+      await fetchPbrRoutes()
+    }
+  } catch (err) {
+    console.error('Failed to save policy route:', err)
+  }
+}
+
+async function deletePbrAction(id) {
+  if (!confirm('Are you sure you want to delete this policy-based route?')) return
+  try {
+    const res = await fetch(`/api/routing/policy-routes/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      await fetchPbrRoutes()
+    }
+  } catch (err) {
+    console.error('Failed to delete policy route:', err)
+  }
+}
+
 onMounted(() => {
   fetchRoutes()
+  fetchPbrRoutes()
 })
 </script>

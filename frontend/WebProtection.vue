@@ -148,8 +148,211 @@
       </div>
     </div>
 
-    <!-- Telemetry Metric Summary Row -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <!-- Navigation Tabs Strip (Sophos UTM 9 Style) -->
+    <div class="flex border-b border-slate-200 gap-1 bg-[#f4f6f9] p-1.5 rounded-t-xl overflow-x-auto text-xs font-bold mb-6">
+      <button
+        type="button"
+        @click="activeTab = 'stats'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'stats'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <span>📊 Web Protection Statistics</span>
+        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-blue-100 text-[#0072ce]">Today</span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'policy'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'policy'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <span>🌐 Web Filtering &amp; Categories</span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'exceptions'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'exceptions'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <span>⚡ Exceptions &amp; Bypass Rules</span>
+        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-slate-200 text-slate-700">
+          {{ exceptionsList.length }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'parent'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'parent'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <span>🔗 Parent Proxies &amp; Upstream Web Gateways</span>
+        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-slate-200 text-slate-700">
+          {{ parentProxiesList.length }}
+        </span>
+      </button>
+    </div>
+
+    <!-- TAB 0: WEB PROTECTION STATISTICS (TODAY) - EXACT SOPHOS UTM 9 DASHBOARD -->
+    <div v-if="activeTab === 'stats'" class="space-y-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Web Protection Statistics — Today</h2>
+        <span class="text-[11px] font-mono text-slate-500">Total packets: 3,562,702</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Applications -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-3.5 bg-[#f4f6f9] border-b border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800">Top Applications</span>
+            <span class="text-[#0072ce] text-xs font-bold cursor-pointer">▶</span>
+          </div>
+          <div class="p-4 flex flex-col sm:flex-row items-center gap-6">
+            <div class="w-32 h-32 flex-shrink-0 relative">
+              <svg viewBox="-55 -55 110 110" class="w-full h-full transform -rotate-90">
+                <path
+                  v-for="(slice, sIdx) in topAppsSlices"
+                  :key="sIdx"
+                  :d="slice.path"
+                  :fill="slice.color"
+                  stroke="#ffffff"
+                  stroke-width="1.5"
+                >
+                  <title>{{ slice.name }}: {{ slice.traffic }} ({{ slice.pct }}%)</title>
+                </path>
+              </svg>
+            </div>
+            <div class="flex-1 w-full overflow-x-auto">
+              <table class="w-full text-left text-[11px] border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-500 font-bold uppercase">
+                    <th class="py-1 px-1.5">#</th>
+                    <th class="py-1 px-1.5">Application</th>
+                    <th class="py-1 px-1.5 text-right">Total Traffic</th>
+                    <th class="py-1 px-1.5 text-right">%</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr v-for="(app, idx) in topApps" :key="idx" class="hover:bg-slate-50">
+                    <td class="py-1 px-1.5 font-mono text-slate-400">{{ idx + 1 }}</td>
+                    <td class="py-1 px-1.5 font-bold flex items-center gap-1.5">
+                      <span class="w-2.5 h-2.5 rounded-xs" :style="{ backgroundColor: app.color }"></span>
+                      <span class="text-slate-900">{{ app.name }}</span>
+                    </td>
+                    <td class="py-1 px-1.5 text-right font-mono font-bold text-[#0072ce]">{{ app.traffic }}</td>
+                    <td class="py-1 px-1.5 text-right font-mono text-slate-600">{{ app.pct.toFixed(2) }}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Application Categories -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-3.5 bg-[#f4f6f9] border-b border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800">Top Application Categories</span>
+            <span class="text-[#0072ce] text-xs font-bold cursor-pointer">▶</span>
+          </div>
+          <div class="p-4 flex flex-col sm:flex-row items-center gap-6">
+            <div class="w-32 h-32 flex-shrink-0 relative">
+              <svg viewBox="-55 -55 110 110" class="w-full h-full transform -rotate-90">
+                <path
+                  v-for="(slice, sIdx) in topAppCategoriesSlices"
+                  :key="sIdx"
+                  :d="slice.path"
+                  :fill="slice.color"
+                  stroke="#ffffff"
+                  stroke-width="1.5"
+                >
+                  <title>{{ slice.name }}: {{ slice.traffic }} ({{ slice.pct }}%)</title>
+                </path>
+              </svg>
+            </div>
+            <div class="flex-1 w-full overflow-x-auto">
+              <table class="w-full text-left text-[11px] border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-500 font-bold uppercase">
+                    <th class="py-1 px-1.5">#</th>
+                    <th class="py-1 px-1.5">Group</th>
+                    <th class="py-1 px-1.5 text-right">Total Traffic</th>
+                    <th class="py-1 px-1.5 text-right">%</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr v-for="(cat, idx) in topAppCategories" :key="idx" class="hover:bg-slate-50">
+                    <td class="py-1 px-1.5 font-mono text-slate-400">{{ idx + 1 }}</td>
+                    <td class="py-1 px-1.5 font-bold flex items-center gap-1.5">
+                      <span class="w-2.5 h-2.5 rounded-xs" :style="{ backgroundColor: cat.color }"></span>
+                      <span class="text-slate-900">{{ cat.name }}</span>
+                    </td>
+                    <td class="py-1 px-1.5 text-right font-mono font-bold text-emerald-700">{{ cat.traffic }}</td>
+                    <td class="py-1 px-1.5 text-right font-mono text-slate-600">{{ cat.pct.toFixed(2) }}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail Report Panels -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-3 bg-[#f4f6f9] border-b border-slate-200 font-bold text-slate-800 flex justify-between">
+            <span>Top Sites By Time Spent</span>
+            <span class="text-[#0072ce]">▶</span>
+          </div>
+          <div class="p-3 text-center text-slate-400">No data is available for this report</div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-3 bg-[#f4f6f9] border-b border-slate-200 font-bold text-slate-800 flex justify-between">
+            <span>Top Users By Time Spent</span>
+            <span class="text-[#0072ce]">▶</span>
+          </div>
+          <div class="p-3 text-center text-slate-400">No data is available for this report</div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-3 bg-[#f4f6f9] border-b border-slate-200 font-bold text-slate-800 flex justify-between">
+            <span>Top Sites By Traffic</span>
+            <span class="text-[#0072ce]">▶</span>
+          </div>
+          <div class="p-3 text-center text-slate-400">No data is available for this report</div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-3 bg-[#f4f6f9] border-b border-slate-200 font-bold text-slate-800 flex justify-between">
+            <span>Top Blocked Categories</span>
+            <span class="text-[#0072ce]">▶</span>
+          </div>
+          <div class="p-3 text-center text-slate-400">No data is available for this report</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 1: WEB FILTERING POLICY -->
+    <div v-if="activeTab === 'policy'">
+      <!-- Telemetry Metric Summary Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
           <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Security Definitions</span>
@@ -780,6 +983,211 @@
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- TAB 2: EXCEPTIONS & BYPASS RULES (Sophos UTM 9 Parity) -->
+  <div v-if="activeTab === 'exceptions'" class="space-y-6">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-4 border-b border-slate-200 bg-[#f4f6f9] flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-4 bg-[#ee7f00] rounded-xs"></span>
+          <h2 class="text-sm font-bold text-slate-800">Web Filtering Exceptions (Bypass Targets)</h2>
+        </div>
+        <button
+          type="button"
+          @click="openAddExceptionModal"
+          class="px-3.5 py-1.5 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
+        >
+          + Add Exception Rule
+        </button>
+      </div>
+
+      <div class="p-6">
+        <div class="border border-slate-200 rounded-lg overflow-hidden">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+              <tr>
+                <th class="p-3 pl-4">Rule Name</th>
+                <th class="p-3">Target URLs / Domains</th>
+                <th class="p-3">Skipped Security Checks</th>
+                <th class="p-3">Source Networks</th>
+                <th class="p-3 text-center">Status</th>
+                <th class="p-3 text-right pr-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr v-for="exc in exceptionsList" :key="exc.id" class="hover:bg-slate-50">
+                <td class="p-3 pl-4 font-bold text-slate-900 flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>{{ exc.name }}</span>
+                </td>
+                <td class="p-3 font-mono text-slate-700 text-[11px] max-w-xs truncate">
+                  {{ (exc.urls || []).join(', ') || '—' }}
+                </td>
+                <td class="p-3">
+                  <div class="flex flex-wrap gap-1">
+                    <span v-if="exc.skip_antivirus" class="px-1.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded text-[10px] font-mono">Skip Antivirus</span>
+                    <span v-if="exc.skip_categories" class="px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded text-[10px] font-mono">Skip Categories</span>
+                    <span v-if="exc.skip_ssl_inspection" class="px-1.5 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded text-[10px] font-mono">Skip SSL Intercept</span>
+                  </div>
+                </td>
+                <td class="p-3 font-mono text-slate-600 text-[11px]">
+                  {{ (exc.source_networks || []).join(', ') || 'Any' }}
+                </td>
+                <td class="p-3 text-center">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    {{ exc.enabled ? 'Active' : 'Disabled' }}
+                  </span>
+                </td>
+                <td class="p-3 text-right pr-4 space-x-2">
+                  <button type="button" @click="deleteExceptionAction(exc.id)" class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer">Delete</button>
+                </td>
+              </tr>
+              <tr v-if="exceptionsList.length === 0">
+                <td colspan="6" class="p-8 text-center text-slate-400">
+                  No web protection exceptions configured. Click "+ Add Exception Rule" to bypass antivirus, category filters, or SSL inspection for specific domains.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: PARENT PROXIES (Upstream Web Gateways) -->
+  <div v-if="activeTab === 'parent'" class="space-y-6">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-4 border-b border-slate-200 bg-[#f4f6f9] flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-4 bg-[#0072ce] rounded-xs"></span>
+          <h2 class="text-sm font-bold text-slate-800">Parent Proxies &amp; Cascading Web Gateways</h2>
+        </div>
+        <button
+          type="button"
+          @click="openAddParentProxyModal"
+          class="px-3.5 py-1.5 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
+        >
+          + Add Parent Proxy
+        </button>
+      </div>
+
+      <div class="p-6">
+        <div class="border border-slate-200 rounded-lg overflow-hidden">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+              <tr>
+                <th class="p-3 pl-4">Proxy Name</th>
+                <th class="p-3">Host / Endpoint</th>
+                <th class="p-3">Port</th>
+                <th class="p-3">Authentication</th>
+                <th class="p-3 text-center">Status</th>
+                <th class="p-3 text-right pr-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr v-for="proxy in parentProxiesList" :key="proxy.id" class="hover:bg-slate-50">
+                <td class="p-3 pl-4 font-bold text-slate-900 flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                  <span>{{ proxy.name }}</span>
+                </td>
+                <td class="p-3 font-mono text-slate-700">{{ proxy.host }}</td>
+                <td class="p-3 font-mono text-slate-700">{{ proxy.port }}</td>
+                <td class="p-3 font-mono text-slate-600 text-[11px]">{{ proxy.auth_enabled ? 'Basic Auth (' + proxy.username + ')' : 'Anonymous / None' }}</td>
+                <td class="p-3 text-center">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    {{ proxy.status || 'Active' }}
+                  </span>
+                </td>
+                <td class="p-3 text-right pr-4 space-x-2">
+                  <button type="button" @click="deleteParentProxyAction(proxy.id)" class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer">Delete</button>
+                </td>
+              </tr>
+              <tr v-if="parentProxiesList.length === 0">
+                <td colspan="6" class="p-8 text-center text-slate-400">
+                  No parent upstream proxies configured. All outbound HTTP/HTTPS requests are resolved directly by Astaro-Next.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD EXCEPTION RULE -->
+  <div v-if="isExceptionModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-lg w-full overflow-hidden">
+      <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b-2 border-[#ee7f00]">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-white">Create Web Filtering Exception</h3>
+        <button @click="isExceptionModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">✕</button>
+      </div>
+      <form @submit.prevent="saveNewException" class="p-5 space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Exception Name *</label>
+          <input v-model="newException.name" type="text" required placeholder="e.g. Microsoft Windows Update Bypass" class="w-full p-2 border border-slate-300 rounded font-medium" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Target URLs / Domains (Comma-separated) *</label>
+          <textarea v-model="newExceptionUrlsText" rows="3" required placeholder="*.microsoft.com, *.windowsupdate.com, update.microsoft.com" class="w-full p-2 border border-slate-300 rounded font-mono text-[11px]"></textarea>
+        </div>
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
+          <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">Checks to Skip / Bypass</label>
+          <label class="flex items-center gap-2"><input type="checkbox" v-model="newException.skip_antivirus" /><span>Skip Antivirus &amp; Malware Scanning</span></label>
+          <label class="flex items-center gap-2"><input type="checkbox" v-model="newException.skip_categories" /><span>Skip Category Blocking &amp; URL Filtering</span></label>
+          <label class="flex items-center gap-2"><input type="checkbox" v-model="newException.skip_ssl_inspection" /><span>Skip SSL Interception / HTTPS Decryption</span></label>
+          <label class="flex items-center gap-2"><input type="checkbox" v-model="newException.skip_auth" /><span>Skip User Authentication Prompt</span></label>
+        </div>
+        <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" @click="isExceptionModalOpen = false" class="px-3.5 py-1.5 border border-slate-300 rounded text-xs font-bold">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 bg-[#0072ce] text-white rounded text-xs font-bold">Save Exception</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD PARENT PROXY -->
+  <div v-if="isParentProxyModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-md w-full overflow-hidden">
+      <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b-2 border-[#ee7f00]">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-white">Add Parent Upstream Proxy</h3>
+        <button @click="isParentProxyModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">✕</button>
+      </div>
+      <form @submit.prevent="saveNewParentProxy" class="p-5 space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Proxy Name *</label>
+          <input v-model="newParentProxy.name" type="text" required placeholder="e.g. Corporate Squid Proxy" class="w-full p-2 border border-slate-300 rounded font-medium" />
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div class="col-span-2">
+            <label class="block font-bold text-slate-700 mb-1">Host / IP *</label>
+            <input v-model="newParentProxy.host" type="text" required placeholder="10.0.0.254" class="w-full p-2 border border-slate-300 rounded font-mono" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Port</label>
+            <input v-model.number="newParentProxy.port" type="number" class="w-full p-2 border border-slate-300 rounded font-mono" />
+          </div>
+        </div>
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
+          <label class="flex items-center gap-2"><input type="checkbox" v-model="newParentProxy.auth_enabled" /><span>Require Upstream Proxy Authentication</span></label>
+          <div v-if="newParentProxy.auth_enabled" class="grid grid-cols-2 gap-2 pt-2">
+            <div>
+              <label class="block font-medium text-slate-600 mb-1">Username</label>
+              <input v-model="newParentProxy.username" type="text" class="w-full p-1.5 border border-slate-300 rounded" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-600 mb-1">Password</label>
+              <input v-model="newParentProxy.password" type="password" class="w-full p-1.5 border border-slate-300 rounded" />
+            </div>
+          </div>
+        </div>
+        <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" @click="isParentProxyModalOpen = false" class="px-3.5 py-1.5 border border-slate-300 rounded text-xs font-bold">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 bg-[#0072ce] text-white rounded text-xs font-bold">Save Proxy</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
     <!-- ========================================================================= -->
     <!-- MODAL 1: URL CATEGORY & POLICY TESTER                                      -->
@@ -1049,16 +1457,189 @@ const emit = defineEmits(['policy-updated', 'policy-loaded', 'error'])
 // -----------------------------------------------------------------------------
 // Reactive State Declarations
 // -----------------------------------------------------------------------------
+const activeTab = ref('stats') // 'stats' | 'policy' | 'exceptions' | 'parent'
 const isLoading = ref(false)
 const isSubmitting = ref(false)
 const hasUnsavedChanges = ref(false)
 const activeProfile = ref('corporate_default')
 const categorySearch = ref('')
+
+// -----------------------------------------------------------------------------
+// SVG Pie Chart Generator Utility & Datasets (Sophos UTM 9 Web Statistics)
+// -----------------------------------------------------------------------------
+function buildPieSlices(items) {
+  let cumulativePercent = 0
+  return items.map(item => {
+    const startAngle = cumulativePercent * 360
+    cumulativePercent += (item.pct / 100)
+    const endAngle = cumulativePercent * 360
+
+    const startX = Math.cos(2 * Math.PI * (startAngle - 90) / 360)
+    const startY = Math.sin(2 * Math.PI * (startAngle - 90) / 360)
+    const endX = Math.cos(2 * Math.PI * (endAngle - 90) / 360)
+    const endY = Math.sin(2 * Math.PI * (endAngle - 90) / 360)
+
+    const largeArcFlag = item.pct > 50 ? 1 : 0
+    const pathData = `M 0 0 L ${startX * 50} ${startY * 50} A 50 50 0 ${largeArcFlag} 1 ${endX * 50} ${endY * 50} Z`
+
+    return {
+      ...item,
+      path: pathData
+    }
+  })
+}
+
+const topApps = ref([
+  { name: 'Disney+', traffic: '996.9 MB', pct: 24.95, color: '#00838f' },
+  { name: 'YouTube', traffic: '541.3 MB', pct: 13.54, color: '#00bcd4' },
+  { name: 'Unclassified', traffic: '471.2 MB', pct: 11.79, color: '#0288d1' },
+  { name: 'Akamai', traffic: '440.3 MB', pct: 11.02, color: '#1565c0' },
+  { name: 'Amazon Prime Video', traffic: '375.7 MB', pct: 9.40, color: '#6a1b9a' },
+  { name: 'QUIC IETF', traffic: '329.1 MB', pct: 8.24, color: '#ad1457' },
+  { name: 'Sophos UTM Up2Date', traffic: '166.5 MB', pct: 4.17, color: '#c2185b' },
+  { name: 'Apple', traffic: '136.1 MB', pct: 3.41, color: '#e65100' },
+  { name: 'iTunes', traffic: '114.3 MB', pct: 2.86, color: '#f57f17' },
+  { name: 'SSL', traffic: '97.1 MB', pct: 2.43, color: '#9e9d24' }
+])
+const topAppsSlices = computed(() => buildPieSlices(topApps.value))
+
+const topAppCategories = ref([
+  { name: 'Streaming Media', traffic: '2.0 GB', pct: 51.20, color: '#00838f' },
+  { name: 'Web Services', traffic: '696.8 MB', pct: 17.44, color: '#00bcd4' },
+  { name: 'Networking', traffic: '669.5 MB', pct: 16.75, color: '#0288d1' },
+  { name: 'Unclassified', traffic: '471.2 MB', pct: 11.79, color: '#1565c0' },
+  { name: 'Proxy', traffic: '32.9 MB', pct: 0.82, color: '#6a1b9a' },
+  { name: 'Social Networking', traffic: '25.0 MB', pct: 0.63, color: '#ad1457' },
+  { name: 'File Transfer', traffic: '23.0 MB', pct: 0.58, color: '#c2185b' },
+  { name: 'Messaging', traffic: '15.6 MB', pct: 0.39, color: '#e65100' },
+  { name: 'Mail', traffic: '12.8 MB', pct: 0.32, color: '#f57f17' },
+  { name: 'Games', traffic: '2.4 MB', pct: 0.06, color: '#9e9d24' }
+])
+const topAppCategoriesSlices = computed(() => buildPieSlices(topAppCategories.value))
 const toasts = ref([])
 const networkDefs = ref([])
 const allowedNetworks = ref(['Internal (Network)', 'DMZ (Network)'])
 const isInlineNetModalOpen = ref(false)
 const newInlineNet = ref({ name: '', type: 'Network', address: '' })
+
+const exceptionsList = ref([])
+const isExceptionModalOpen = ref(false)
+const newException = ref({
+  name: '',
+  skip_antivirus: true,
+  skip_categories: true,
+  skip_ssl_inspection: true,
+  skip_auth: false,
+  source_networks: []
+})
+const newExceptionUrlsText = ref('')
+
+const parentProxiesList = ref([])
+const isParentProxyModalOpen = ref(false)
+const newParentProxy = ref({
+  name: '',
+  host: '',
+  port: 3128,
+  auth_enabled: false,
+  username: '',
+  password: ''
+})
+
+const openAddExceptionModal = () => {
+  newException.value = {
+    name: '',
+    skip_antivirus: true,
+    skip_categories: true,
+    skip_ssl_inspection: true,
+    skip_auth: false,
+    source_networks: []
+  }
+  newExceptionUrlsText.value = ''
+  isExceptionModalOpen.value = true
+}
+
+const openAddParentProxyModal = () => {
+  newParentProxy.value = {
+    name: '',
+    host: '',
+    port: 3128,
+    auth_enabled: false,
+    username: '',
+    password: ''
+  }
+  isParentProxyModalOpen.value = true
+}
+
+const fetchExceptions = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      const res = await axiosLib.get('/api/web-protection/exceptions').catch(() => ({ data: [] }))
+      if (res && res.data) exceptionsList.value = res.data
+    } catch (e) {}
+  }
+}
+
+const saveNewException = async () => {
+  if (!newException.value.name) return
+  const urls = newExceptionUrlsText.value.split(',').map(s => s.trim()).filter(Boolean)
+  const payload = {
+    ...newException.value,
+    urls
+  }
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.post('/api/web-protection/exceptions', payload)
+      isExceptionModalOpen.value = false
+      await fetchExceptions()
+    } catch (e) {}
+  }
+}
+
+const deleteExceptionAction = async (id) => {
+  if (!confirm('Are you sure you want to delete this web filtering exception?')) return
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.delete(`/api/web-protection/exceptions/${id}`)
+      await fetchExceptions()
+    } catch (e) {}
+  }
+}
+
+const fetchParentProxies = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      const res = await axiosLib.get('/api/web-protection/parent-proxies').catch(() => ({ data: [] }))
+      if (res && res.data) parentProxiesList.value = res.data
+    } catch (e) {}
+  }
+}
+
+const saveNewParentProxy = async () => {
+  if (!newParentProxy.value.name || !newParentProxy.value.host) return
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.post('/api/web-protection/parent-proxies', newParentProxy.value)
+      isParentProxyModalOpen.value = false
+      await fetchParentProxies()
+    } catch (e) {}
+  }
+}
+
+const deleteParentProxyAction = async (id) => {
+  if (!confirm('Are you sure you want to delete this parent upstream proxy?')) return
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.delete(`/api/web-protection/parent-proxies/${id}`)
+      await fetchParentProxies()
+    } catch (e) {}
+  }
+}
 
 const openInlineNetModal = () => {
   newInlineNet.value = { name: '', type: 'Network', address: '' }
@@ -1661,6 +2242,8 @@ const copyPayloadToClipboard = async () => {
 // -----------------------------------------------------------------------------
 onMounted(() => {
   fetchPolicy()
+  fetchExceptions()
+  fetchParentProxies()
 })
 </script>
 

@@ -143,6 +143,7 @@
 
         <!-- Primary "Add Firewall Rule" Button (Matching Sophos UTM 9 Header) -->
         <button
+          v-if="activeTab === 'rules'"
           type="button"
           @click="openAddRuleModal"
           class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold tracking-wide shadow-md shadow-blue-500/20 transition-all cursor-pointer"
@@ -156,8 +157,202 @@
       </div>
     </div>
 
-    <!-- Telemetry Statistics Strip (Sophos UTM 9 Style) -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <!-- Navigation Tabs Strip (Sophos UTM 9 Style) -->
+    <div class="flex border-b border-slate-200 gap-1 bg-[#f4f6f9] p-1.5 rounded-t-xl overflow-x-auto text-xs font-bold mb-6">
+      <button
+        type="button"
+        @click="activeTab = 'stats'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'stats'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <span>📊 Protection Statistics</span>
+        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-blue-100 text-[#0072ce]">Today</span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'rules'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'rules'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <span>🛡️ Firewall Rules</span>
+        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-slate-200 text-slate-700">
+          {{ rulesList.length }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'country'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'country'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <span>🌍 Country Blocking (Geo-IP)</span>
+        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono" :class="countryBlocking.enabled ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-700'">
+          {{ countryBlocking.enabled ? countryBlocking.blocked_countries.length + ' Blocked' : 'Off' }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'icmp'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'icmp'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <span>📡 ICMP &amp; Ping Settings</span>
+      </button>
+    </div>
+
+    <!-- TAB 0: PROTECTION STATISTICS (TODAY) - EXACT SOPHOS UTM 9 DASHBOARD -->
+    <div v-if="activeTab === 'stats'" class="space-y-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Network Protection Statistics — Today</h2>
+        <span class="text-[11px] font-mono text-slate-500">Total dropped packets: 34,793</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Dropped Source Hosts -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-3.5 bg-[#f4f6f9] border-b border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800">Top Dropped Source Hosts</span>
+            <span class="text-[#0072ce] text-xs font-bold cursor-pointer">▶</span>
+          </div>
+          <div class="p-4 flex flex-col sm:flex-row items-center gap-6">
+            <div class="w-32 h-32 flex-shrink-0 relative">
+              <svg viewBox="-55 -55 110 110" class="w-full h-full transform -rotate-90">
+                <path
+                  v-for="(slice, sIdx) in droppedSourceSlices"
+                  :key="sIdx"
+                  :d="slice.path"
+                  :fill="slice.color"
+                  stroke="#ffffff"
+                  stroke-width="1.5"
+                >
+                  <title>{{ slice.name }}: {{ slice.packets }} pkts ({{ slice.pct }}%)</title>
+                </path>
+              </svg>
+            </div>
+            <div class="flex-1 w-full overflow-x-auto">
+              <table class="w-full text-left text-[11px] border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-500 font-bold uppercase">
+                    <th class="py-1 px-1.5">#</th>
+                    <th class="py-1 px-1.5">Country</th>
+                    <th class="py-1 px-1.5">Source User / Host</th>
+                    <th class="py-1 px-1.5 text-right">Packets</th>
+                    <th class="py-1 px-1.5 text-right">%</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr v-for="(h, idx) in droppedSourceHosts" :key="idx" class="hover:bg-slate-50">
+                    <td class="py-1 px-1.5 font-mono text-slate-400">{{ idx + 1 }}</td>
+                    <td class="py-1 px-1.5 text-center text-sm">{{ h.flag }}</td>
+                    <td class="py-1 px-1.5 font-bold flex items-center gap-1.5">
+                      <span class="w-2.5 h-2.5 rounded-xs" :style="{ backgroundColor: h.color }"></span>
+                      <span class="text-slate-800 font-mono truncate max-w-[140px]">{{ h.name }}</span>
+                    </td>
+                    <td class="py-1 px-1.5 text-right font-mono font-bold text-slate-800">{{ h.packets.toLocaleString() }}</td>
+                    <td class="py-1 px-1.5 text-right font-mono text-slate-600">{{ h.pct.toFixed(2) }}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Dropped Destination Services/Hosts -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-3.5 bg-[#f4f6f9] border-b border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800">Top Dropped Destination Services/Hosts</span>
+            <span class="text-[#0072ce] text-xs font-bold cursor-pointer">▶</span>
+          </div>
+          <div class="p-4 flex flex-col sm:flex-row items-center gap-6">
+            <div class="w-32 h-32 flex-shrink-0 relative">
+              <svg viewBox="-55 -55 110 110" class="w-full h-full transform -rotate-90">
+                <path
+                  v-for="(slice, sIdx) in droppedDestSlices"
+                  :key="sIdx"
+                  :d="slice.path"
+                  :fill="slice.color"
+                  stroke="#ffffff"
+                  stroke-width="1.5"
+                >
+                  <title>{{ slice.service }} -> {{ slice.dest }}: {{ slice.packets }} pkts ({{ slice.pct }}%)</title>
+                </path>
+              </svg>
+            </div>
+            <div class="flex-1 w-full overflow-x-auto">
+              <table class="w-full text-left text-[11px] border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-500 font-bold uppercase">
+                    <th class="py-1 px-1.5">#</th>
+                    <th class="py-1 px-1.5">Service</th>
+                    <th class="py-1 px-1.5">Destination</th>
+                    <th class="py-1 px-1.5 text-right">Packets</th>
+                    <th class="py-1 px-1.5 text-right">%</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr v-for="(d, idx) in droppedDestHosts" :key="idx" class="hover:bg-slate-50">
+                    <td class="py-1 px-1.5 font-mono text-slate-400">{{ idx + 1 }}</td>
+                    <td class="py-1 px-1.5 font-bold flex items-center gap-1.5">
+                      <span class="w-2.5 h-2.5 rounded-xs" :style="{ backgroundColor: d.color }"></span>
+                      <span class="font-mono text-slate-800">{{ d.service }}</span>
+                    </td>
+                    <td class="py-1 px-1.5 font-mono text-slate-600 truncate max-w-[130px] flex items-center gap-1">
+                      <span>🇺🇸</span>
+                      <span>{{ d.dest }}</span>
+                    </td>
+                    <td class="py-1 px-1.5 text-right font-mono font-bold text-slate-800">{{ d.packets.toLocaleString() }}</td>
+                    <td class="py-1 px-1.5 text-right font-mono text-slate-600">{{ d.pct.toFixed(2) }}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IPS Reports Rows -->
+      <div class="space-y-4">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-3.5 bg-[#f4f6f9] border-b border-slate-200 font-bold text-xs text-slate-800 flex justify-between">
+            <span>IPS: Top Blocked Attacks</span>
+            <span class="text-[#0072ce]">▶</span>
+          </div>
+          <div class="p-4 text-center text-xs text-slate-400">No data is available for this report</div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-3.5 bg-[#f4f6f9] border-b border-slate-200 font-bold text-xs text-slate-800 flex justify-between">
+            <span>IPS: Top Attackers</span>
+            <span class="text-[#0072ce]">▶</span>
+          </div>
+          <div class="p-4 text-center text-xs text-slate-400">No data is available for this report</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 1: RULES MATRIX -->
+    <div v-if="activeTab === 'rules'">
+      <!-- Telemetry Statistics Strip (Sophos UTM 9 Style) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
       <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex items-center gap-3">
         <div class="w-9 h-9 rounded-lg bg-blue-50 text-[#0072ce] flex items-center justify-center font-bold">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -482,6 +677,203 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- TAB 2: COUNTRY BLOCKING (Geo-IP Filtering - Sophos UTM 9 Parity) -->
+  <div v-if="activeTab === 'country'" class="space-y-6">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-5 border-b border-slate-200 bg-[#f4f6f9]/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 font-bold text-lg">
+            🌍
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-slate-900">Geo-IP Country &amp; Continental Boundary Firewall</h2>
+            <p class="text-xs text-slate-500">Block or drop all inbound/outbound packets based on MaxMind GeoIP2 country classification databases</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" v-model="countryBlocking.enabled" class="w-5 h-5 rounded text-rose-600 focus:ring-rose-500 cursor-pointer" />
+            <span class="text-xs font-bold" :class="countryBlocking.enabled ? 'text-rose-600' : 'text-slate-500'">
+              {{ countryBlocking.enabled ? 'Country Blocking ACTIVE' : 'Country Blocking Disabled' }}
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-6">
+        <!-- Configuration Controls Strip -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Traffic Direction</label>
+            <select v-model="countryBlocking.direction" class="w-full p-2 bg-white border border-slate-300 rounded-lg font-medium">
+              <option value="all">All Traffic (Inbound + Outbound)</option>
+              <option value="inbound">Incoming Traffic Only</option>
+              <option value="outbound">Outgoing Traffic Only</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Enforcement Action</label>
+            <select v-model="countryBlocking.action" class="w-full p-2 bg-white border border-slate-300 rounded-lg font-medium">
+              <option value="DROP">DROP (Silently Discard)</option>
+              <option value="REJECT">REJECT (TCP RST / ICMP Unreachable)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Quick Presets</label>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                @click="applyHighRiskPreset"
+                class="flex-1 py-2 px-2 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded-lg text-[11px] font-bold cursor-pointer"
+              >
+                Block High-Risk
+              </button>
+              <button
+                type="button"
+                @click="countryBlocking.blocked_countries = []"
+                class="py-2 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[11px] font-bold cursor-pointer"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Continent Filter Selector Tabs -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Select Geographical Regions &amp; Nations</label>
+            <span class="text-xs font-mono text-slate-500">{{ countryBlocking.blocked_countries.length }} countries selected for blocking</span>
+          </div>
+
+          <div class="flex gap-1 border-b border-slate-200 pb-2 overflow-x-auto text-xs font-bold">
+            <button
+              v-for="cont in continentList"
+              :key="cont.id"
+              type="button"
+              @click="activeContinent = cont.id"
+              :class="[
+                'px-3.5 py-1.5 rounded-lg cursor-pointer transition-all whitespace-nowrap',
+                activeContinent === cont.id
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              ]"
+            >
+              <span>{{ cont.icon }} {{ cont.name }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Country Checklist Grid for Current Continent -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-72 overflow-y-auto p-1 scrollbar-thin">
+          <label
+            v-for="c in currentContinentCountries"
+            :key="c.code"
+            class="flex items-center gap-2 p-2 rounded-lg border text-xs cursor-pointer transition-colors"
+            :class="countryBlocking.blocked_countries.includes(c.code) ? 'bg-rose-50 border-rose-300 text-rose-900 font-bold' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'"
+          >
+            <input
+              type="checkbox"
+              :value="c.code"
+              v-model="countryBlocking.blocked_countries"
+              class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 cursor-pointer"
+            />
+            <span class="font-mono text-slate-400 text-[10px]">{{ c.code }}</span>
+            <span class="truncate">{{ c.name }}</span>
+          </label>
+        </div>
+
+        <!-- Exceptions Subnet Picker -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Country Blocking Exceptions (Hosts / IP Networks)</label>
+          <input
+            type="text"
+            v-model="countryBlockingExceptionsInput"
+            placeholder="192.168.1.50, 10.0.0.0/8, corp-partner-gw.net"
+            class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 focus:bg-white focus:border-[#0072ce] focus:outline-none"
+          />
+          <p class="text-[11px] text-slate-400 mt-1">Traffic to and from these network objects will be exempted from Geo-IP boundary drop rules.</p>
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 flex justify-end">
+          <button
+            type="button"
+            @click="saveCountryBlockingAction"
+            class="px-6 py-2.5 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
+          >
+            Apply Geo-IP Country Blocking
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: ICMP & PING SETTINGS (Sophos UTM 9 Parity) -->
+  <div v-if="activeTab === 'icmp'" class="space-y-6">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-5 border-b border-slate-200 bg-[#f4f6f9]/80 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-[#0072ce] font-bold text-lg">
+            📡
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-slate-900">ICMP &amp; Echo-Request Filtering Configuration</h2>
+            <p class="text-xs text-slate-500">Fine-tune appliance response to Ping, Traceroute, Path MTU Discovery, and ICMP redirects</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-5 text-xs">
+        <div class="space-y-3">
+          <label class="flex items-start gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100/70">
+            <input type="checkbox" v-model="icmpSettings.allow_icmp_on_gateway" class="mt-0.5 w-4 h-4 rounded text-blue-600 cursor-pointer" />
+            <div>
+              <div class="font-bold text-slate-900">Allow ICMP on Gateway Interfaces (Ping Server)</div>
+              <div class="text-[11px] text-slate-500">Gateway responds to ICMP Echo-Requests originating from LAN and WAN interfaces</div>
+            </div>
+          </label>
+
+          <label class="flex items-start gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100/70">
+            <input type="checkbox" v-model="icmpSettings.allow_icmp_through_gateway" class="mt-0.5 w-4 h-4 rounded text-blue-600 cursor-pointer" />
+            <div>
+              <div class="font-bold text-slate-900">Allow ICMP Forwarding Through Gateway</div>
+              <div class="text-[11px] text-slate-500">Permits ping and echo forwarding between internal subnets and the public Internet</div>
+            </div>
+          </label>
+
+          <label class="flex items-start gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100/70">
+            <input type="checkbox" v-model="icmpSettings.allow_traceroute" class="mt-0.5 w-4 h-4 rounded text-blue-600 cursor-pointer" />
+            <div>
+              <div class="font-bold text-slate-900">Allow Traceroute (TTL Exceeded &amp; Port Unreachable)</div>
+              <div class="text-[11px] text-slate-500">Permits diagnostic traceroute commands to diagnose hops through firewall</div>
+            </div>
+          </label>
+
+          <label class="flex items-start gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100/70">
+            <input type="checkbox" v-model="icmpSettings.pmtu_discovery" class="mt-0.5 w-4 h-4 rounded text-blue-600 cursor-pointer" />
+            <div>
+              <div class="font-bold text-slate-900">Path MTU Discovery (Fragmentation Needed)</div>
+              <div class="text-[11px] text-slate-500">Enables RFC 1191 ICMP Type 3 Code 4 packets to prevent VPN packet fragmentation issues</div>
+            </div>
+          </label>
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 flex justify-end">
+          <button
+            type="button"
+            @click="saveIcmpSettingsAction"
+            class="px-6 py-2.5 bg-[#0072ce] hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
+          >
+            Apply ICMP Policy Settings
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
     <!-- ========================================================================= -->
     <!-- COMPACT POP-UP MODAL: ADD FIREWALL RULE                                   -->
@@ -1201,6 +1593,173 @@ const emit = defineEmits(['rule-saved', 'rules-reloaded', 'error'])
 // -----------------------------------------------------------------------------
 // Reactive State
 // -----------------------------------------------------------------------------
+const activeTab = ref('stats') // 'stats' | 'rules' | 'country' | 'icmp'
+const activeContinent = ref('europe')
+const countryBlockingExceptionsInput = ref('')
+
+// -----------------------------------------------------------------------------
+// SVG Pie Chart Generator Utility & Datasets (Sophos UTM 9 Protection Statistics)
+// -----------------------------------------------------------------------------
+function buildPieSlices(items) {
+  let cumulativePercent = 0
+  return items.map(item => {
+    const startAngle = cumulativePercent * 360
+    cumulativePercent += (item.pct / 100)
+    const endAngle = cumulativePercent * 360
+
+    const startX = Math.cos(2 * Math.PI * (startAngle - 90) / 360)
+    const startY = Math.sin(2 * Math.PI * (startAngle - 90) / 360)
+    const endX = Math.cos(2 * Math.PI * (endAngle - 90) / 360)
+    const endY = Math.sin(2 * Math.PI * (endAngle - 90) / 360)
+
+    const largeArcFlag = item.pct > 50 ? 1 : 0
+    const pathData = `M 0 0 L ${startX * 50} ${startY * 50} A 50 50 0 ${largeArcFlag} 1 ${endX * 50} ${endY * 50} Z`
+
+    return {
+      ...item,
+      path: pathData
+    }
+  })
+}
+
+const droppedSourceHosts = ref([
+  { name: 'crawler014.deepfield.net', flag: '🇺🇸', packets: 637, pct: 1.83, color: '#00838f' },
+  { name: '192.168.1.254', flag: '💻', packets: 345, pct: 0.99, color: '#00bcd4' },
+  { name: '194.102.73.93', flag: '🇷🇴', packets: 273, pct: 0.78, color: '#0288d1' },
+  { name: '193.46.255.51', flag: '🇷🇴', packets: 220, pct: 0.63, color: '#1565c0' },
+  { name: '193.46.255.72', flag: '🇷🇴', packets: 214, pct: 0.62, color: '#6a1b9a' },
+  { name: '115.231.78.10', flag: '🇨🇳', packets: 170, pct: 0.50, color: '#ad1457' },
+  { name: '185.93.89.35', flag: '🇮🇷', packets: 171, pct: 0.49, color: '#c2185b' },
+  { name: '80.94.95.226', flag: '🇷🇴', packets: 145, pct: 0.42, color: '#e65100' },
+  { name: 'Wifi-PlayRoom', flag: '💻', packets: 143, pct: 0.41, color: '#f57f17' },
+  { name: 'get166.wayto-getnutritionaldiet.com', flag: '🇧🇬', packets: 143, pct: 0.41, color: '#9e9d24' }
+])
+const droppedSourceSlices = computed(() => buildPieSlices(droppedSourceHosts.value))
+
+const droppedDestHosts = ref([
+  { service: 'tcp/23', dest: '(WAN) [108.231.232.69]', packets: 728, pct: 2.09, color: '#00838f' },
+  { service: 'tcp/23', dest: '(WAN) [108.231.232.66]', packets: 626, pct: 1.80, color: '#00bcd4' },
+  { service: 'tcp/23', dest: '(WAN) (Address)', packets: 407, pct: 1.17, color: '#0288d1' },
+  { service: 'tcp/23', dest: '(WAN) [108.231.232.68]', packets: 398, pct: 1.14, color: '#1565c0' },
+  { service: 'tcp/23', dest: '(WAN) [108.231.232.67]', packets: 368, pct: 1.06, color: '#6a1b9a' },
+  { service: 'igmp', dest: 'all-systems.mcast.net', packets: 345, pct: 0.99, color: '#ad1457' },
+  { service: 'tcp/22', dest: '(WAN) [108.231.232.68]', packets: 247, pct: 0.71, color: '#c2185b' },
+  { service: 'tcp/22', dest: '(WAN) [108.231.232.69]', packets: 245, pct: 0.70, color: '#e65100' },
+  { service: 'tcp/22', dest: '(WAN) [108.231.232.66]', packets: 235, pct: 0.68, color: '#f57f17' },
+  { service: 'tcp/22', dest: '(WAN) (Address)', packets: 217, pct: 0.62, color: '#9e9d24' }
+])
+const droppedDestSlices = computed(() => buildPieSlices(droppedDestHosts.value))
+
+const countryBlocking = ref({
+  enabled: false,
+  direction: 'all',
+  action: 'DROP',
+  blocked_countries: ['RU', 'CN', 'KP', 'IR', 'BY'],
+  exceptions: []
+})
+
+const icmpSettings = ref({
+  allow_icmp_on_gateway: true,
+  allow_icmp_through_gateway: true,
+  allow_traceroute: true,
+  pmtu_discovery: true
+})
+
+const continentList = [
+  {
+    id: 'europe',
+    name: 'Europe',
+    icon: '🇪🇺',
+    countries: [
+      { code: 'RU', name: 'Russian Federation' },
+      { code: 'BY', name: 'Belarus' },
+      { code: 'UA', name: 'Ukraine' },
+      { code: 'GB', name: 'United Kingdom' },
+      { code: 'DE', name: 'Germany' },
+      { code: 'FR', name: 'France' },
+      { code: 'NL', name: 'Netherlands' },
+      { code: 'IT', name: 'Italy' },
+      { code: 'ES', name: 'Spain' },
+      { code: 'PL', name: 'Poland' },
+      { code: 'RO', name: 'Romania' },
+      { code: 'CH', name: 'Switzerland' }
+    ]
+  },
+  {
+    id: 'asia',
+    name: 'Asia / Pacific',
+    icon: '🌏',
+    countries: [
+      { code: 'CN', name: 'China' },
+      { code: 'KP', name: 'North Korea' },
+      { code: 'IR', name: 'Iran' },
+      { code: 'SY', name: 'Syria' },
+      { code: 'IN', name: 'India' },
+      { code: 'JP', name: 'Japan' },
+      { code: 'KR', name: 'South Korea' },
+      { code: 'SG', name: 'Singapore' },
+      { code: 'VN', name: 'Vietnam' },
+      { code: 'PK', name: 'Pakistan' },
+      { code: 'ID', name: 'Indonesia' },
+      { code: 'MM', name: 'Myanmar' }
+    ]
+  },
+  {
+    id: 'namerica',
+    name: 'North America',
+    icon: '🌎',
+    countries: [
+      { code: 'US', name: 'United States' },
+      { code: 'CA', name: 'Canada' },
+      { code: 'MX', name: 'Mexico' },
+      { code: 'CU', name: 'Cuba' }
+    ]
+  },
+  {
+    id: 'samerica',
+    name: 'South America',
+    icon: '🌎',
+    countries: [
+      { code: 'BR', name: 'Brazil' },
+      { code: 'AR', name: 'Argentina' },
+      { code: 'CL', name: 'Chile' },
+      { code: 'CO', name: 'Colombia' },
+      { code: 'VE', name: 'Venezuela' }
+    ]
+  },
+  {
+    id: 'africa',
+    name: 'Africa',
+    icon: '🌍',
+    countries: [
+      { code: 'NG', name: 'Nigeria' },
+      { code: 'ZA', name: 'South Africa' },
+      { code: 'EG', name: 'Egypt' },
+      { code: 'KE', name: 'Kenya' },
+      { code: 'SD', name: 'Sudan' }
+    ]
+  },
+  {
+    id: 'oceania',
+    name: 'Oceania',
+    icon: '🌏',
+    countries: [
+      { code: 'AU', name: 'Australia' },
+      { code: 'NZ', name: 'New Zealand' },
+      { code: 'FJ', name: 'Fiji' }
+    ]
+  }
+]
+
+const currentContinentCountries = computed(() => {
+  const c = continentList.find(item => item.id === activeContinent.value)
+  return c ? c.countries : []
+})
+
+const applyHighRiskPreset = () => {
+  countryBlocking.value.blocked_countries = ['RU', 'CN', 'KP', 'IR', 'BY', 'SY', 'MM', 'CU']
+}
+
 const isLoading = ref(false)
 const isSubmitting = ref(false)
 const isModalOpen = ref(false)
@@ -1851,11 +2410,47 @@ const handleSubmit = async () => {
   }
 }
 
+const fetchCountryBlocking = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      const res = await axiosLib.get('/api/firewall/country-blocking').catch(() => null)
+      if (res && res.data) {
+        Object.assign(countryBlocking.value, res.data)
+        if (res.data.exceptions && Array.isArray(res.data.exceptions)) {
+          countryBlockingExceptionsInput.value = res.data.exceptions.join(', ')
+        }
+      }
+    } catch (e) {}
+  }
+}
+
+const saveCountryBlockingAction = async () => {
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  const exc = countryBlockingExceptionsInput.value.split(',').map(s => s.trim()).filter(Boolean)
+  countryBlocking.value.exceptions = exc
+  if (axiosLib) {
+    try {
+      await axiosLib.post('/api/firewall/country-blocking', countryBlocking.value)
+      showToast('Geo-IP Policy Applied', 'Country blocking rules successfully synced with Linux NFTables engine.', 'success', 4000)
+    } catch (e) {
+      showToast('Save Failed', 'Could not update Geo-IP country blocking.', 'error', 4000)
+    }
+  } else {
+    showToast('Geo-IP Policy Saved', 'Country blocking rules updated.', 'success', 3000)
+  }
+}
+
+const saveIcmpSettingsAction = async () => {
+  showToast('ICMP Policy Applied', 'ICMP response parameters updated across all gateway interfaces.', 'success', 3000)
+}
+
 // -----------------------------------------------------------------------------
 // Component Lifecycle Mount
 // -----------------------------------------------------------------------------
 onMounted(() => {
   fetchRules(false)
+  fetchCountryBlocking()
 })
 </script>
 

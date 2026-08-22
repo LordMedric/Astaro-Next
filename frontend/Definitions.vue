@@ -37,7 +37,7 @@
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          <span>+ New {{ activeTab === 'networks' ? 'Network Definition' : 'Service Definition' }}...</span>
+          <span>+ New {{ activeTab === 'networks' ? 'Network Definition' : (activeTab === 'services' ? 'Service Definition' : 'Time Period') }}...</span>
         </button>
       </div>
     </div>
@@ -85,6 +85,28 @@
           :class="activeTab === 'services' ? 'bg-[#0072ce] text-white' : 'bg-slate-200 text-slate-700'"
         >
           {{ serviceObjects.length }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'times'"
+        :class="[
+          'px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap',
+          activeTab === 'times'
+            ? 'bg-white text-slate-900 shadow-xs border-b-2 border-[#ee7f00]'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+        ]"
+      >
+        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Time Periods &amp; Schedules</span>
+        <span
+          class="px-1.5 py-0.2 rounded-full text-[10px] font-mono"
+          :class="activeTab === 'times' ? 'bg-[#0072ce] text-white' : 'bg-slate-200 text-slate-700'"
+        >
+          {{ timeObjects.length }}
         </span>
       </button>
     </div>
@@ -306,6 +328,61 @@
               >
                 Delete
               </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TIME PERIOD DEFINITIONS TABLE (Sophos UTM 9 Parity) -->
+    <div v-if="activeTab === 'times'" class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead class="bg-slate-50 text-slate-700 border-b border-slate-200 font-semibold">
+          <tr>
+            <th class="p-3 w-8">#</th>
+            <th class="p-3">Name</th>
+            <th class="p-3">Schedule Type</th>
+            <th class="p-3">Active Days / Date Range</th>
+            <th class="p-3">Time Window</th>
+            <th class="p-3">Comment</th>
+            <th class="p-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-normal text-slate-800">
+          <tr v-for="(time, idx) in filteredTimeObjects" :key="time.id" class="hover:bg-slate-50 transition-colors">
+            <td class="p-3 text-slate-400 font-mono">{{ idx + 1 }}</td>
+            <td class="p-3">
+              <div class="font-bold text-slate-900 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>{{ time.name }}</span>
+              </div>
+            </td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono" :class="time.type === 'Recurring' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'">
+                {{ time.type }}
+              </span>
+            </td>
+            <td class="p-3 font-mono text-slate-700">
+              <span v-if="time.type === 'Recurring'">
+                {{ (time.days || []).map(d => d.toUpperCase()).join(', ') || 'All Days' }}
+              </span>
+              <span v-else>
+                {{ time.start_date }} &rarr; {{ time.end_date }}
+              </span>
+            </td>
+            <td class="p-3 font-mono text-slate-900 font-bold">
+              {{ time.start_time }} &ndash; {{ time.end_time }}
+            </td>
+            <td class="p-3 text-slate-500 italic max-w-xs truncate">{{ time.comment || '—' }}</td>
+            <td class="p-3 text-right space-x-1.5 whitespace-nowrap">
+              <button type="button" @click="editTimeObject(time)" class="px-2 py-1 bg-white hover:bg-slate-50 text-blue-700 border border-slate-300 rounded text-[11px] font-bold shadow-2xs cursor-pointer">Edit</button>
+              <button type="button" @click="cloneTimeObject(time)" class="px-2 py-1 bg-white hover:bg-slate-50 text-amber-700 border border-slate-300 rounded text-[11px] font-bold shadow-2xs cursor-pointer">Clone</button>
+              <button type="button" @click="deleteTimeObject(time.id)" class="px-2 py-1 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded text-[11px] font-bold shadow-2xs cursor-pointer">Delete</button>
+            </td>
+          </tr>
+          <tr v-if="filteredTimeObjects.length === 0">
+            <td colspan="7" class="p-8 text-center text-slate-400">
+              No time period definitions found matching your filter criteria.
             </td>
           </tr>
         </tbody>
@@ -1166,14 +1243,16 @@ const fetchDefinitions = async () => {
   isLoading.value = true
   try {
     const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-    if (!axiosLib) return
-
-    const [netRes, srvRes] = await Promise.all([
-      axiosLib.get('/api/definitions/networks'),
-      axiosLib.get('/api/definitions/services')
-    ])
-    if (netRes.data) networkObjects.value = netRes.data
-    if (srvRes.data) serviceObjects.value = srvRes.data
+    if (axiosLib) {
+      const [netRes, srvRes, timeRes] = await Promise.all([
+        axiosLib.get('/api/definitions/networks').catch(() => ({ data: [] })),
+        axiosLib.get('/api/definitions/services').catch(() => ({ data: [] })),
+        axiosLib.get('/api/definitions/time-periods').catch(() => ({ data: [] }))
+      ])
+      if (netRes && netRes.data) networkObjects.value = netRes.data
+      if (srvRes && srvRes.data) serviceObjects.value = srvRes.data
+      if (timeRes && timeRes.data) timeObjects.value = timeRes.data
+    }
   } catch (err) {
     console.error('Failed to fetch definitions:', err)
   } finally {
@@ -1181,32 +1260,34 @@ const fetchDefinitions = async () => {
   }
 }
 
+const filteredNetworkObjects = computed(() => {
+  let list = [...networkObjects.value]
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(n => n.name.toLowerCase().includes(q) || (n.address && n.address.toLowerCase().includes(q)) || (n.comment && n.comment.toLowerCase().includes(q)))
+  }
+  return list
+})
+
+const filteredServiceObjects = computed(() => {
+  let list = [...serviceObjects.value]
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(s => s.name.toLowerCase().includes(q) || (s.dst_port && s.dst_port.toLowerCase().includes(q)) || (s.comment && s.comment.toLowerCase().includes(q)))
+  }
+  return list
+})
+
 const openCreateModal = () => {
   editingId.value = null
-  selectedGroupMembers.value = []
-  selectedSrvGroupMembers.value = []
-  isInlineNetOpen.value = false
-  isInlineSrvOpen.value = false
-
   if (activeTab.value === 'networks') {
-    newNet.value = {
-      id: null,
-      name: '',
-      type: 'Host',
-      address: '',
-      interface: '<< Any >>',
-      comment: ''
-    }
+    newNet.value = { id: null, name: '', type: 'Host', address: '', netmask: '/24 (255.255.255.0)', from_ip: '', to_ip: '', comment: '', interface: '<< Any >>' }
+    selectedGroupMembers.value = []
+  } else if (activeTab.value === 'services') {
+    newSrv.value = { id: null, name: '', type: 'TCP', protocol: 'TCP', dst_port: '', src_port: '1:65535', comment: '' }
+    selectedSrvGroupMembers.value = []
   } else {
-    newSrv.value = {
-      id: null,
-      name: '',
-      type: 'TCP',
-      protocol: 'TCP',
-      dst_port: '',
-      src_port: '1:65535',
-      comment: ''
-    }
+    newTime.value = { id: null, name: '', type: 'Recurring', days: ['mon', 'tue', 'wed', 'thu', 'fri'], start_time: '08:00', end_time: '17:00', start_date: '', end_date: '', comment: '' }
   }
   isModalOpen.value = true
 }
@@ -1215,43 +1296,27 @@ const editNetObject = (net) => {
   editingId.value = net.id
   newNet.value = JSON.parse(JSON.stringify(net))
   selectedGroupMembers.value = getGroupMembers(net)
-  isInlineNetOpen.value = false
   isModalOpen.value = true
 }
 
 const cloneNetObject = (net) => {
   editingId.value = null
-  newNet.value = {
-    ...JSON.parse(JSON.stringify(net)),
-    id: null,
-    name: `${net.name} (Clone)`
-  }
+  newNet.value = { ...JSON.parse(JSON.stringify(net)), id: null, name: `${net.name} (Clone)` }
   selectedGroupMembers.value = getGroupMembers(net)
-  isInlineNetOpen.value = false
   isModalOpen.value = true
 }
 
 const editSrvObject = (srv) => {
   editingId.value = srv.id
-  newSrv.value = {
-    ...JSON.parse(JSON.stringify(srv)),
-    type: srv.protocol === 'Group' ? 'Service Group' : (srv.type || srv.protocol)
-  }
+  newSrv.value = { ...JSON.parse(JSON.stringify(srv)), type: srv.protocol === 'Group' ? 'Service Group' : (srv.type || srv.protocol) }
   selectedSrvGroupMembers.value = getServiceGroupMembers(srv)
-  isInlineSrvOpen.value = false
   isModalOpen.value = true
 }
 
 const cloneSrvObject = (srv) => {
   editingId.value = null
-  newSrv.value = {
-    ...JSON.parse(JSON.stringify(srv)),
-    id: null,
-    name: `${srv.name} (Clone)`,
-    type: srv.protocol === 'Group' ? 'Service Group' : (srv.type || srv.protocol)
-  }
+  newSrv.value = { ...JSON.parse(JSON.stringify(srv)), id: null, name: `${srv.name} (Clone)`, type: srv.protocol === 'Group' ? 'Service Group' : (srv.type || srv.protocol) }
   selectedSrvGroupMembers.value = getServiceGroupMembers(srv)
-  isInlineSrvOpen.value = false
   isModalOpen.value = true
 }
 
@@ -1259,26 +1324,12 @@ const saveNetworkObject = async () => {
   if (!newNet.value.name) return
   const isGroup = newNet.value.type === 'Network group' || newNet.value.type === 'Network Group'
   if (!isGroup && !newNet.value.address) return
-
   const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-
   try {
     const formattedAddress = isGroup ? selectedGroupMembers.value.join(', ') : newNet.value.address
-    const payload = {
-      ...newNet.value,
-      id: editingId.value || newNet.value.id,
-      address: formattedAddress,
-      members: isGroup ? selectedGroupMembers.value : []
-    }
-    if (axiosLib) {
-      await axiosLib.post('/api/definitions/networks', payload)
-    } else {
-      await fetch('/api/definitions/networks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-    }
+    const payload = { ...newNet.value, id: editingId.value || newNet.value.id, address: formattedAddress, members: isGroup ? selectedGroupMembers.value : [] }
+    if (axiosLib) await axiosLib.post('/api/definitions/networks', payload)
+    else await fetch('/api/definitions/networks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     isModalOpen.value = false
     await fetchDefinitions()
   } catch (err) {
@@ -1290,27 +1341,12 @@ const saveServiceObject = async () => {
   if (!newSrv.value.name) return
   const isGroup = newSrv.value.type === 'Service Group'
   if (!isGroup && !newSrv.value.dst_port) return
-
   const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-
   try {
     const formattedDstPort = isGroup ? selectedSrvGroupMembers.value.join(', ') : newSrv.value.dst_port
-    const payload = {
-      ...newSrv.value,
-      id: editingId.value || newSrv.value.id,
-      protocol: isGroup ? 'Group' : (newSrv.value.type.includes('UDP') ? 'UDP' : 'TCP'),
-      dst_port: formattedDstPort,
-      members: isGroup ? selectedSrvGroupMembers.value : []
-    }
-    if (axiosLib) {
-      await axiosLib.post('/api/definitions/services', payload)
-    } else {
-      await fetch('/api/definitions/services', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-    }
+    const payload = { ...newSrv.value, id: editingId.value || newSrv.value.id, protocol: isGroup ? 'Group' : (newSrv.value.type.includes('UDP') ? 'UDP' : 'TCP'), dst_port: formattedDstPort, members: isGroup ? selectedSrvGroupMembers.value : [] }
+    if (axiosLib) await axiosLib.post('/api/definitions/services', payload)
+    else await fetch('/api/definitions/services', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     isModalOpen.value = false
     await fetchDefinitions()
   } catch (err) {
@@ -1321,14 +1357,10 @@ const saveServiceObject = async () => {
 const deleteNetworkObject = async (id) => {
   const item = networkObjects.value.find(n => n.id === id)
   if (!confirm(`Are you sure you want to delete network definition '${item ? item.name : id}'?`)) return
-
   const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
   try {
-    if (axiosLib) {
-      await axiosLib.delete(`/api/definitions/networks/${id}`)
-    } else {
-      await fetch(`/api/definitions/networks/${id}`, { method: 'DELETE' })
-    }
+    if (axiosLib) await axiosLib.delete(`/api/definitions/networks/${id}`)
+    else await fetch(`/api/definitions/networks/${id}`, { method: 'DELETE' })
     await fetchDefinitions()
   } catch (err) {
     console.error('Failed to delete network object:', err)
@@ -1338,14 +1370,10 @@ const deleteNetworkObject = async (id) => {
 const deleteServiceObject = async (id) => {
   const item = serviceObjects.value.find(s => s.id === id)
   if (!confirm(`Are you sure you want to delete service definition '${item ? item.name : id}'?`)) return
-
   const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
   try {
-    if (axiosLib) {
-      await axiosLib.delete(`/api/definitions/services/${id}`)
-    } else {
-      await fetch(`/api/definitions/services/${id}`, { method: 'DELETE' })
-    }
+    if (axiosLib) await axiosLib.delete(`/api/definitions/services/${id}`)
+    else await fetch(`/api/definitions/services/${id}`, { method: 'DELETE' })
     await fetchDefinitions()
   } catch (err) {
     console.error('Failed to delete service object:', err)
