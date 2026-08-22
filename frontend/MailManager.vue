@@ -563,10 +563,19 @@
               </div>
 
               <!-- Quick Host Definition Browser Dropdown -->
-              <div v-if="isBrowsingHostDefs" class="p-2 bg-amber-50 border-x border-b border-amber-200 text-xs space-y-1.5">
+              <div v-if="isBrowsingHostDefs" class="p-2.5 bg-amber-50 border-x border-b border-amber-200 text-xs space-y-2">
                 <div class="font-bold text-amber-900 flex items-center justify-between">
                   <span>Select from Host Definitions</span>
-                  <button type="button" @click="isBrowsingHostDefs = false" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      @click="openInlineNetModal('host')"
+                      class="px-2 py-0.5 bg-white hover:bg-amber-100 text-amber-800 border border-amber-300 rounded text-[11px] font-bold cursor-pointer"
+                    >
+                      + New Host Object...
+                    </button>
+                    <button type="button" @click="isBrowsingHostDefs = false" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                  </div>
                 </div>
                 <div class="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
                   <button
@@ -814,7 +823,16 @@
 
             <!-- Select from Existing Network Definitions -->
             <div class="space-y-1.5">
-              <label class="block font-bold text-slate-700">Add Network Object to Allowed Relaying:</label>
+              <div class="flex items-center justify-between">
+                <label class="block font-bold text-slate-700">Add Network Object to Allowed Relaying:</label>
+                <button
+                  type="button"
+                  @click="openInlineNetModal('relay_network')"
+                  class="text-[10px] text-[#005299] hover:underline font-bold cursor-pointer"
+                >
+                  + New Network Definition
+                </button>
+              </div>
               <select
                 @change="onAddRelayNetworkSelect"
                 class="w-full p-2 border border-slate-300 rounded-lg bg-white text-xs font-mono"
@@ -2246,6 +2264,57 @@
         </div>
       </div>
     </div>
+
+    <!-- INLINE SUB-MODAL: CREATE NEW NETWORK / HOST DEFINITION FOR MAIL ROUTING & RELAY -->
+    <transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div
+        v-if="isInlineNetModalOpen"
+        class="fixed inset-0 z-[100] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4"
+        @keydown.esc="isInlineNetModalOpen = false"
+      >
+        <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col">
+          <div class="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#ee7f00]"></span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-white">
+                {{ inlineNetTarget === 'host' ? 'Add Mail Host Definition' : 'Add Allowed Network Definition' }}
+              </h3>
+            </div>
+            <button @click="isInlineNetModalOpen = false" class="text-slate-400 hover:text-white cursor-pointer font-bold text-base">&times;</button>
+          </div>
+          <form @submit.prevent="saveInlineNet" class="p-5 space-y-3.5 text-xs text-slate-800">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Name *</label>
+              <input type="text" required v-model="newInlineNet.name" placeholder="e.g. Exchange Server 01 or Internal Subnet" class="w-full p-2 border border-slate-300 rounded font-medium focus:border-[#005299] focus:outline-none" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Type</label>
+              <select v-model="newInlineNet.type" class="w-full p-2 border border-slate-300 rounded bg-white font-bold text-slate-800">
+                <option value="Host">Host (Single IP)</option>
+                <option value="Network">Network (CIDR)</option>
+                <option value="DNS host">DNS host (FQDN)</option>
+                <option value="Network group">Network group</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">IPv4 Address / FQDN *</label>
+              <input type="text" required v-model="newInlineNet.address" placeholder="e.g. 192.168.1.50 or mail.company.com" class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#005299] focus:outline-none" />
+            </div>
+            <div class="pt-3 border-t border-slate-200 flex justify-between">
+              <button type="button" @click="isInlineNetModalOpen = false" class="px-3.5 py-1.5 border border-slate-300 rounded text-slate-700 hover:bg-slate-50 cursor-pointer">Cancel</button>
+              <button type="submit" class="px-4 py-1.5 bg-[#005299] text-white font-bold rounded shadow-xs cursor-pointer">Save &amp; Use</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -2863,7 +2932,47 @@ const fetchQuarantine = (isManual = false) => {
 
 const networkDefs = ref([])
 const isBrowsingHostDefs = ref(false)
+const isInlineNetModalOpen = ref(false)
+const inlineNetTarget = ref('host')
+const newInlineNet = ref({ name: '', type: 'Host', address: '' })
 const allowedRelayNetworks = ref(['Internal (Network)', 'DMZ (Network)'])
+
+const openInlineNetModal = (target = 'host') => {
+  inlineNetTarget.value = target
+  newInlineNet.value = {
+    name: '',
+    type: target === 'host' ? 'Host' : 'Network',
+    address: ''
+  }
+  isInlineNetModalOpen.value = true
+}
+
+const saveInlineNet = async () => {
+  if (!newInlineNet.value.name || !newInlineNet.value.address) return
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.post('/api/definitions/networks', newInlineNet.value)
+      await fetchRoutingConfig()
+    } catch (e) {
+      console.error('Failed to create network definition in MailManager:', e)
+    }
+  }
+
+  const selectedVal = newInlineNet.value.address || newInlineNet.value.name
+  if (inlineNetTarget.value === 'host') {
+    if (!routingConfig.value.host_list.includes(selectedVal)) {
+      routingConfig.value.host_list.push(selectedVal)
+    }
+    isBrowsingHostDefs.value = false
+  } else if (inlineNetTarget.value === 'relay_network') {
+    if (!allowedRelayNetworks.value.includes(newInlineNet.value.name)) {
+      allowedRelayNetworks.value.push(newInlineNet.value.name)
+    }
+  }
+
+  isInlineNetModalOpen.value = false
+}
 
 const selectHostDefForRouting = (net) => {
   const target = net.name || net.address

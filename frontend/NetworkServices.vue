@@ -621,26 +621,49 @@
             </h3>
             <button @click="isReservationModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">&times;</button>
           </div>
-          <form @submit.prevent="saveReservation" class="p-5 space-y-3 text-xs">
+          <form @submit.prevent="saveReservation" class="p-5 space-y-3.5 text-xs">
+            <!-- Host Definition Quick Picker -->
+            <div v-if="networkDefs.length > 0" class="p-2.5 bg-blue-50/60 rounded-xl border border-blue-200/80 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-800 text-[11px]">Choose from Existing Host Definitions</span>
+                <button
+                  type="button"
+                  @click="openInlineHostModal('reservation')"
+                  class="text-[10px] text-[#0072ce] hover:underline font-bold cursor-pointer"
+                >
+                  + New Host Object...
+                </button>
+              </div>
+              <select
+                @change="onSelectHostForReservation"
+                class="w-full p-1.5 border border-slate-300 rounded bg-white text-xs font-mono"
+              >
+                <option value="">-- Autofill from Host Object --</option>
+                <option v-for="net in networkDefs" :key="'res-net-' + net.id" :value="net.address + '|' + net.name">
+                  🖥️ {{ net.name }} ({{ net.address }})
+                </option>
+              </select>
+            </div>
+
             <div>
               <label class="block font-bold text-slate-700 mb-1">Hostname / Device Name *</label>
-              <input type="text" required v-model="formRes.hostname" placeholder="e.g. synology-nas" class="w-full p-2 border border-slate-300 rounded" />
+              <input type="text" required v-model="formRes.hostname" placeholder="e.g. synology-nas" class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none" />
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-1">MAC Address *</label>
-              <input type="text" required v-model="formRes.mac" placeholder="e.g. 00:11:32:4A:BC:88" class="w-full p-2 border border-slate-300 rounded font-mono" />
+              <input type="text" required v-model="formRes.mac" placeholder="e.g. 00:11:32:4A:BC:88" class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none" />
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-1">Reserved IPv4 Address *</label>
-              <input type="text" required v-model="formRes.ip" placeholder="e.g. 192.168.1.10" class="w-full p-2 border border-slate-300 rounded font-mono" />
+              <input type="text" required v-model="formRes.ip" placeholder="e.g. 192.168.1.10" class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none" />
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-1">Comment</label>
-              <input type="text" v-model="formRes.comment" placeholder="Optional notes" class="w-full p-2 border border-slate-300 rounded" />
+              <input type="text" v-model="formRes.comment" placeholder="Optional notes" class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none" />
             </div>
             <div class="pt-3 border-t border-slate-200 flex justify-between">
-              <button type="button" @click="isReservationModalOpen = false" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
-              <button type="submit" class="px-4 py-1.5 bg-[#0072ce] text-white font-bold rounded shadow-xs cursor-pointer">Save Reservation</button>
+              <button type="button" @click="isReservationModalOpen = false" class="px-3.5 py-1.5 border border-slate-300 rounded text-slate-700 hover:bg-slate-50 cursor-pointer">Cancel</button>
+              <button type="submit" class="px-4 py-1.5 bg-[#0072ce] hover:bg-blue-700 text-white font-bold rounded shadow-xs cursor-pointer">Save Reservation</button>
             </div>
           </form>
         </div>
@@ -668,22 +691,85 @@
             </h3>
             <button @click="isDnsModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer">&times;</button>
           </div>
-          <form @submit.prevent="saveDnsRecord" class="p-5 space-y-3 text-xs">
+          <form @submit.prevent="saveDnsRecord" class="p-5 space-y-3.5 text-xs">
+            <!-- Host Definition Quick Picker -->
+            <div v-if="networkDefs.length > 0" class="p-2.5 bg-blue-50/60 rounded-xl border border-blue-200/80 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-800 text-[11px]">Choose from Existing Host Definitions</span>
+                <button
+                  type="button"
+                  @click="openInlineHostModal('dns')"
+                  class="text-[10px] text-[#0072ce] hover:underline font-bold cursor-pointer"
+                >
+                  + New Host Object...
+                </button>
+              </div>
+              <select
+                @change="onSelectHostForDns"
+                class="w-full p-1.5 border border-slate-300 rounded bg-white text-xs font-mono"
+              >
+                <option value="">-- Autofill from Host Object --</option>
+                <option v-for="net in networkDefs" :key="'dns-net-' + net.id" :value="net.address">
+                  🖥️ {{ net.name }} ({{ net.address }})
+                </option>
+              </select>
+            </div>
+
             <div>
               <label class="block font-bold text-slate-700 mb-1">FQDN / Hostname *</label>
-              <input type="text" required v-model="formDns.hostname" placeholder="e.g. app.internal.medric.net" class="w-full p-2 border border-slate-300 rounded font-mono" />
+              <input type="text" required v-model="formDns.hostname" placeholder="e.g. app.internal.medric.net" class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none" />
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-1">Target IP Address *</label>
-              <input type="text" required v-model="formDns.ip" placeholder="e.g. 192.168.1.50" class="w-full p-2 border border-slate-300 rounded font-mono" />
+              <input type="text" required v-model="formDns.ip" placeholder="e.g. 192.168.1.50" class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none" />
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-1">Description</label>
-              <input type="text" v-model="formDns.description" placeholder="Optional notes" class="w-full p-2 border border-slate-300 rounded" />
+              <input type="text" v-model="formDns.description" placeholder="Optional notes" class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none" />
             </div>
             <div class="pt-3 border-t border-slate-200 flex justify-between">
-              <button type="button" @click="isDnsModalOpen = false" class="px-3.5 py-1.5 border rounded text-slate-700 cursor-pointer">Cancel</button>
-              <button type="submit" class="px-4 py-1.5 bg-[#0072ce] text-white font-bold rounded shadow-xs cursor-pointer">Save Record</button>
+              <button type="button" @click="isDnsModalOpen = false" class="px-3.5 py-1.5 border border-slate-300 rounded text-slate-700 hover:bg-slate-50 cursor-pointer">Cancel</button>
+              <button type="submit" class="px-4 py-1.5 bg-[#0072ce] hover:bg-blue-700 text-white font-bold rounded shadow-xs cursor-pointer">Save Record</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- INLINE SUB-MODAL: CREATE NEW HOST DEFINITION -->
+    <transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div
+        v-if="isInlineHostModalOpen"
+        class="fixed inset-0 z-[100] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4"
+        @keydown.esc="isInlineHostModalOpen = false"
+      >
+        <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col">
+          <div class="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#ee7f00]"></span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-white">Add Host Definition</h3>
+            </div>
+            <button @click="isInlineHostModalOpen = false" class="text-slate-400 hover:text-white cursor-pointer font-bold text-base">&times;</button>
+          </div>
+          <form @submit.prevent="saveInlineHost" class="p-5 space-y-3.5 text-xs text-slate-800">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Host Name *</label>
+              <input type="text" required v-model="newInlineHost.name" placeholder="e.g. synology-nas" class="w-full p-2 border border-slate-300 rounded font-medium focus:border-[#0072ce] focus:outline-none" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">IPv4 Address *</label>
+              <input type="text" required v-model="newInlineHost.address" placeholder="e.g. 192.168.1.10" class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none" />
+            </div>
+            <div class="pt-3 border-t border-slate-200 flex justify-between">
+              <button type="button" @click="isInlineHostModalOpen = false" class="px-3.5 py-1.5 border border-slate-300 rounded text-slate-700 hover:bg-slate-50 cursor-pointer">Cancel</button>
+              <button type="submit" class="px-4 py-1.5 bg-[#0072ce] text-white font-bold rounded shadow-xs cursor-pointer">Save &amp; Use</button>
             </div>
           </form>
         </div>
@@ -711,8 +797,78 @@ const isDnsModalOpen = ref(false)
 const editingResId = ref(null)
 const editingDnsId = ref(null)
 
+const networkDefs = ref([])
+const isInlineHostModalOpen = ref(false)
+const inlineHostTarget = ref('reservation')
+const newInlineHost = ref({ name: '', address: '' })
+
 const formRes = ref({ hostname: '', mac: '', ip: '', comment: '' })
 const formDns = ref({ hostname: '', ip: '', description: '' })
+
+const loadNetworkDefs = async () => {
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      const res = await axiosLib.get('/api/definitions/networks').catch(() => null)
+      if (res && res.data) {
+        networkDefs.value = res.data
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load network definitions in NetworkServices:', e)
+  }
+}
+
+const openInlineHostModal = (target = 'reservation') => {
+  inlineHostTarget.value = target
+  newInlineHost.value = { name: '', address: '' }
+  isInlineHostModalOpen.value = true
+}
+
+const saveInlineHost = async () => {
+  if (!newInlineHost.value.name || !newInlineHost.value.address) return
+  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+  if (axiosLib) {
+    try {
+      await axiosLib.post('/api/definitions/networks', {
+        name: newInlineHost.value.name,
+        type: 'Host',
+        address: newInlineHost.value.address
+      })
+      await loadNetworkDefs()
+    } catch (e) {
+      console.error('Failed to create host definition:', e)
+    }
+  }
+
+  if (inlineHostTarget.value === 'reservation') {
+    formRes.value.hostname = newInlineHost.value.name
+    formRes.value.ip = newInlineHost.value.address
+  } else if (inlineHostTarget.value === 'dns') {
+    formDns.value.hostname = `${newInlineHost.value.name}.internal.medric.net`
+    formDns.value.ip = newInlineHost.value.address
+  }
+
+  isInlineHostModalOpen.value = false
+}
+
+const onSelectHostForReservation = (e) => {
+  const val = e.target.value
+  if (val) {
+    const [ip, name] = val.split('|')
+    formRes.value.ip = ip || ''
+    formRes.value.hostname = name || ''
+  }
+  e.target.value = ''
+}
+
+const onSelectHostForDns = (e) => {
+  const val = e.target.value
+  if (val) {
+    formDns.value.ip = val
+  }
+  e.target.value = ''
+}
 
 // Tab icons
 const DhcpIcon = {
@@ -985,4 +1141,8 @@ const forceDyndnsUpdate = () => {
 const syncNtpNow = () => {
   alert('Synchronized hardware RTC and system clock with NTP pool.')
 }
+
+onMounted(() => {
+  loadNetworkDefs()
+})
 </script>
