@@ -19,7 +19,7 @@ echo "          Astaro-Next Next-Gen Firewall OS Installer               "
 echo "===================================================================="
 
 # 1. Update and install system dependencies
-echo "[+] Step 1/5: Cleaning apt sources and installing Linux packages..."
+echo "[+] Step 1/5: Configuring APT sources and installing packages..."
 export DEBIAN_FRONTEND=noninteractive
 
 # Automatically purge any cdrom sources leftover from offline installer ISO
@@ -36,7 +36,18 @@ if [ -d /etc/apt/sources.list.d ]; then
   done
 fi
 
-apt-get update -y
+# Detect Debian / Ubuntu distribution codename
+CODENAME=$(grep -oP 'VERSION_CODENAME=\K\w+' /etc/os-release 2>/dev/null || echo "bookworm")
+
+# Enable backports if on Debian to provide Suricata and modern networking packages
+if [ -f /etc/debian_version ] && [ ! -f /etc/apt/sources.list.d/astaro-backports.list ]; then
+  echo "deb http://deb.debian.org/debian ${CODENAME}-backports main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/astaro-backports.list 2>/dev/null || true
+fi
+
+apt-get update -y || true
+
+# 1a. Core mandatory runtime packages (always required for WebAdmin & firewall core)
+echo "    Installing core Linux networking & runtime dependencies..."
 apt-get install -y --no-install-recommends \
   curl \
   wget \
@@ -47,27 +58,29 @@ apt-get install -y --no-install-recommends \
   python3-venv \
   nftables \
   iptables \
-  ipset \
   conntrack \
   wireguard \
   wireguard-tools \
   nginx \
   postfix \
-  rspamd \
-  fetchmail \
-  suricata \
-  clamav \
-  clamav-daemon \
-  squid \
-  dnsmasq \
-  unbound \
-  chrony \
-  fail2ban \
   iproute2 \
   net-tools \
   ethtool \
   ca-certificates \
   sqlite3
+
+# 1b. UTM security & networking daemons (installed gracefully with backports fallback)
+echo "    Installing UTM security and protection engine packages..."
+UTM_PACKAGES=(suricata rspamd fetchmail clamav clamav-daemon squid dnsmasq unbound chrony fail2ban ipset)
+for pkg in "${UTM_PACKAGES[@]}"; do
+  if apt-get install -y --no-install-recommends "$pkg" >/dev/null 2>&1; then
+    echo "    [✓] Engine package '$pkg' installed."
+  elif apt-get install -y --no-install-recommends -t "${CODENAME}-backports" "$pkg" >/dev/null 2>&1; then
+    echo "    [✓] Engine package '$pkg' installed from ${CODENAME}-backports."
+  else
+    echo "    [i] Optional engine '$pkg' skipped (will run via standalone microservice or container)."
+  fi
+done
 
 # 2. Deploy repository to /opt/astaro
 INSTALL_DIR="/opt/astaro"
