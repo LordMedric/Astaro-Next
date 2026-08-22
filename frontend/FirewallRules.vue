@@ -958,16 +958,52 @@
             </div>
 
             <!-- Type: Network group / DNS group / Availability Group / Multicast group -->
-            <div v-else-if="newInlineObj.type === 'Network group' || newInlineObj.type === 'DNS group' || newInlineObj.type === 'Availability Group' || newInlineObj.type === 'Multicast group'" class="space-y-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+            <div v-else-if="newInlineObj.type === 'Network group' || newInlineObj.type === 'DNS group' || newInlineObj.type === 'Availability Group' || newInlineObj.type === 'Multicast group'" class="space-y-2.5 p-3 bg-purple-50 rounded-xl border border-purple-200">
               <div class="flex items-center justify-between">
-                <label class="block font-bold text-purple-900">Members: *</label>
-                <span class="text-[10px] text-purple-700 font-mono">Comma-separated</span>
+                <label class="block font-bold text-purple-900">Group Members: *</label>
+                <button
+                  type="button"
+                  @click="isInlineSubNetOpen = !isInlineSubNetOpen"
+                  class="text-[10px] bg-white border border-purple-300 text-purple-800 px-2 py-0.5 rounded font-bold cursor-pointer hover:bg-purple-100"
+                >
+                  {{ isInlineSubNetOpen ? '▲ Close Sub-Creator' : '+ Create New Object' }}
+                </button>
               </div>
+
+              <!-- Quick Sub-Creator for nested object inside group -->
+              <div v-if="isInlineSubNetOpen" class="p-2.5 bg-white rounded-lg border border-purple-300 space-y-2 text-[11px]">
+                <div class="font-bold text-purple-950">Add New Object to this Group</div>
+                <div class="grid grid-cols-2 gap-2">
+                  <input v-model="inlineSubNet.name" placeholder="Object Name (e.g. Server01)" class="p-1 border rounded" />
+                  <input v-model="inlineSubNet.address" placeholder="IP / Subnet (e.g. 192.168.1.50)" class="p-1 border rounded font-mono" />
+                </div>
+                <div class="flex justify-end gap-1.5">
+                  <button type="button" @click="isInlineSubNetOpen = false" class="px-2 py-0.5 border rounded text-[10px]">Cancel</button>
+                  <button type="button" @click="addSubObjectToGroup" class="px-2 py-0.5 bg-purple-700 text-white rounded font-bold text-[10px]">Add to Group</button>
+                </div>
+              </div>
+
+              <!-- Select from existing definitions if available -->
+              <div v-if="availableNetDefs.length > 0" class="space-y-1">
+                <span class="text-[10px] text-slate-500 font-bold">Pick from existing network objects:</span>
+                <div class="flex flex-wrap gap-1 max-h-24 overflow-y-auto p-1.5 bg-white rounded border border-purple-200">
+                  <span
+                    v-for="def in availableNetDefs"
+                    :key="def.id || def.name"
+                    @click="toggleInlineGroupMember(def.name)"
+                    class="px-2 py-0.5 rounded text-[10px] font-bold border cursor-pointer select-none transition-colors"
+                    :class="newInlineObj.address.includes(def.name) ? 'bg-purple-600 text-white border-purple-700' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-purple-100'"
+                  >
+                    + {{ def.name }}
+                  </span>
+                </div>
+              </div>
+
               <textarea
                 v-model="newInlineObj.address"
-                rows="3"
+                rows="2"
                 placeholder="192.168.1.10, 192.168.2.0/24, (Internal Servers)"
-                class="w-full p-2 border border-purple-300 rounded font-mono bg-white text-slate-900 focus:outline-none"
+                class="w-full p-2 border border-purple-300 rounded font-mono bg-white text-slate-900 focus:outline-none text-[11px]"
               ></textarea>
             </div>
 
@@ -1179,6 +1215,10 @@ const toasts = ref([])
 const isInlineObjectModalOpen = ref(false)
 const isInlineServiceModalOpen = ref(false)
 const inlineObjectTarget = ref('source') // 'source' | 'dest'
+const availableNetDefs = ref([])
+const isInlineSubNetOpen = ref(false)
+const inlineSubNet = ref({ name: '', address: '' })
+
 const newInlineObj = ref({
   name: '',
   type: 'Host',
@@ -1192,8 +1232,66 @@ const newInlineSrv = ref({
   comment: ''
 })
 
+const fetchAvailableNetDefs = async () => {
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      const res = await axiosLib.get('/api/definitions/networks').catch(() => null)
+      if (res && res.data) {
+        availableNetDefs.value = res.data
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load definitions for firewall:', e)
+  }
+}
+
+const toggleInlineGroupMember = (name) => {
+  let parts = newInlineObj.value.address ? newInlineObj.value.address.split(',').map(s => s.trim()).filter(Boolean) : []
+  const idx = parts.indexOf(name)
+  if (idx > -1) {
+    parts.splice(idx, 1)
+  } else {
+    parts.push(name)
+  }
+  newInlineObj.value.address = parts.join(', ')
+}
+
+const addSubObjectToGroup = async () => {
+  if (!inlineSubNet.value.name.trim() || !inlineSubNet.value.address.trim()) {
+    alert('Please enter a name and address for the object.')
+    return
+  }
+  const objName = inlineSubNet.value.name.trim()
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      await axiosLib.post('/api/definitions/networks', {
+        name: objName,
+        type: 'Host',
+        address: inlineSubNet.value.address.trim(),
+        comment: 'Created in group'
+      })
+      availableNetDefs.value.push({
+        id: `net-${Date.now()}`,
+        name: objName,
+        type: 'Host',
+        address: inlineSubNet.value.address.trim()
+      })
+    }
+  } catch (e) {
+    console.error(e)
+  }
+
+  toggleInlineGroupMember(objName)
+  inlineSubNet.value = { name: '', address: '' }
+  isInlineSubNetOpen.value = false
+}
+
 const openInlineObjectModal = (target) => {
   inlineObjectTarget.value = target
+  fetchAvailableNetDefs()
+  isInlineSubNetOpen.value = false
   newInlineObj.value = {
     name: '',
     type: 'Host',

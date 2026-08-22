@@ -326,30 +326,33 @@
         class="fixed inset-0 z-40 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
         @keydown.esc="isModalOpen = false"
       >
-        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden flex flex-col my-6">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full overflow-hidden flex flex-col my-6">
           <!-- Modal Header -->
           <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
             <div class="flex items-center gap-2.5">
               <div class="w-8 h-8 rounded-lg bg-[#ee7f00] flex items-center justify-center text-white font-bold text-xs shadow-md">
                 OBJ
               </div>
-              <h3 class="text-xs font-bold uppercase tracking-wider text-white">
-                {{ editingId ? 'Edit Object' : 'Create New' }} ({{ activeTab === 'networks' ? 'Network' : 'Service' }})
-              </h3>
+              <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-white">
+                  {{ editingId ? 'Edit Object' : 'Create New' }} ({{ activeTab === 'networks' ? 'Network' : 'Service' }})
+                </h3>
+                <p class="text-[10px] text-slate-400">Sophos UTM Reusable Definition &amp; Object Store</p>
+              </div>
             </div>
             <button @click="isModalOpen = false" class="text-slate-400 hover:text-white font-bold cursor-pointer text-base leading-none">&times;</button>
           </div>
 
           <!-- Network Object Form -->
-          <form v-if="activeTab === 'networks'" @submit.prevent="saveNetworkObject" class="p-5 space-y-4 text-xs">
+          <form v-if="activeTab === 'networks'" @submit.prevent="saveNetworkObject" class="p-5 space-y-4 text-xs max-h-[80vh] overflow-y-auto">
             <div>
               <label class="block font-bold text-slate-700 mb-1">Name *</label>
               <input
                 v-model="newNet.name"
                 type="text"
                 required
-                placeholder="e.g. DMZ Subnet, DNS Server, Gateway IP"
-                class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none"
+                placeholder="e.g. DMZ Subnet, Web Servers Group, Gateway IP"
+                class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0072ce] focus:outline-none"
               />
             </div>
 
@@ -358,7 +361,7 @@
                 <label class="block font-bold text-slate-700 mb-1">Type</label>
                 <select
                   v-model="newNet.type"
-                  class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none bg-white font-medium"
+                  class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0072ce] focus:outline-none bg-white font-medium"
                 >
                   <option value="Host">Host (Single IP / FQDN)</option>
                   <option value="Network">Network (CIDR Subnet)</option>
@@ -374,7 +377,7 @@
                 <label class="block font-bold text-slate-700 mb-1">Interface Binding</label>
                 <select
                   v-model="newNet.interface"
-                  class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none bg-white font-medium"
+                  class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0072ce] focus:outline-none bg-white font-medium"
                 >
                   <option value="<< Any >>">&lt;&lt; Any &gt;&gt;</option>
                   <option value="eth0 (WAN)">eth0 (WAN)</option>
@@ -384,16 +387,209 @@
               </div>
             </div>
 
-            <!-- Value / Address / Group Members -->
-            <div v-if="newNet.type === 'Network group'">
-              <label class="block font-bold text-slate-700 mb-1">Group Members (Comma-separated or Pick)</label>
-              <input
-                v-model="newNet.address"
-                type="text"
-                placeholder="e.g. 192.168.1.50, 10.0.0.1, DMZ_Web01"
-                class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none"
-              />
+            <!-- NETWORK GROUP MEMBERSHIP & INLINE OBJECT CREATION -->
+            <div v-if="newNet.type === 'Network group' || newNet.type === 'Network Group'" class="space-y-3 pt-1">
+              <!-- Selected Group Members Container -->
+              <div class="p-3.5 bg-purple-50/60 rounded-xl border border-purple-200 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-purple-600"></span>
+                    <span class="font-bold text-purple-950 text-xs">Selected Group Members ({{ selectedGroupMembers.length }})</span>
+                  </div>
+                  <button
+                    v-if="selectedGroupMembers.length > 0"
+                    type="button"
+                    @click="selectedGroupMembers = []"
+                    class="text-[10px] text-purple-700 hover:text-rose-600 font-bold cursor-pointer"
+                  >
+                    Clear All
+                  </button>
+                </div>
+
+                <!-- Members Pills -->
+                <div class="flex flex-wrap gap-1.5 min-h-8 p-2 bg-white rounded-lg border border-purple-200">
+                  <span
+                    v-for="(member, mIdx) in selectedGroupMembers"
+                    :key="mIdx"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-purple-100 text-purple-900 border border-purple-300 shadow-2xs"
+                  >
+                    <span>{{ getObjectIcon(member) }}</span>
+                    <span>{{ member }}</span>
+                    <button
+                      type="button"
+                      @click="removeGroupMember(mIdx)"
+                      class="text-purple-500 hover:text-rose-600 font-bold ml-0.5 cursor-pointer leading-none"
+                      title="Remove member"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                  <span v-if="selectedGroupMembers.length === 0" class="text-slate-400 text-[11px] italic py-0.5">
+                    No members selected yet. Choose from existing objects below or create a new one.
+                  </span>
+                </div>
+              </div>
+
+              <!-- Available Objects Selector & Inline Creator Bar -->
+              <div class="border border-slate-200 rounded-xl p-3.5 bg-white space-y-3 shadow-2xs">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                  <span class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                    <span>📚</span>
+                    <span>Choose Existing Network Objects</span>
+                  </span>
+                  <button
+                    type="button"
+                    @click="isInlineNetOpen = !isInlineNetOpen"
+                    class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-md font-bold text-[11px] flex items-center gap-1 shadow-2xs cursor-pointer transition-colors"
+                  >
+                    <span>{{ isInlineNetOpen ? '▲ Close Creator' : '+ Create New Network Object...' }}</span>
+                  </button>
+                </div>
+
+                <!-- INLINE NEW OBJECT CREATION FORM (EMBEDDED IN SAME WINDOW) -->
+                <div v-if="isInlineNetOpen" class="p-3.5 bg-emerald-50/50 rounded-xl border border-emerald-200 space-y-3">
+                  <div class="flex items-center justify-between border-b border-emerald-200/60 pb-1.5">
+                    <span class="font-bold text-emerald-900 text-xs flex items-center gap-1.5">
+                      <span>✨</span>
+                      <span>New Network Object Definition (Created &amp; Added to Group)</span>
+                    </span>
+                    <button type="button" @click="isInlineNetOpen = false" class="text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Object Name *</label>
+                      <input
+                        v-model="inlineNet.name"
+                        type="text"
+                        placeholder="e.g. DMZ_DB_01"
+                        class="w-full p-1.5 border border-slate-300 rounded-md bg-white font-medium focus:border-emerald-600 focus:outline-none text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Type</label>
+                      <select
+                        v-model="inlineNet.type"
+                        class="w-full p-1.5 border border-slate-300 rounded-md bg-white font-medium focus:border-emerald-600 focus:outline-none text-xs"
+                      >
+                        <option value="Host">Host (Single IP)</option>
+                        <option value="Network">Network (CIDR Subnet)</option>
+                        <option value="Range">IP Range</option>
+                        <option value="DNS host">DNS host (FQDN)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">IPv4 / Subnet / FQDN *</label>
+                      <input
+                        v-model="inlineNet.address"
+                        type="text"
+                        :placeholder="inlineNet.type === 'Host' ? '192.168.1.50' : (inlineNet.type === 'Network' ? '192.168.1.0/24' : '192.168.1.10 - 192.168.1.50')"
+                        class="w-full p-1.5 border border-slate-300 rounded-md bg-white font-mono focus:border-emerald-600 focus:outline-none text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Interface Binding</label>
+                      <select
+                        v-model="inlineNet.interface"
+                        class="w-full p-1.5 border border-slate-300 rounded-md bg-white font-medium focus:border-emerald-600 focus:outline-none text-xs"
+                      >
+                        <option value="<< Any >>">&lt;&lt; Any &gt;&gt;</option>
+                        <option value="eth0 (WAN)">eth0 (WAN)</option>
+                        <option value="eth1 (LAN)">eth1 (LAN)</option>
+                        <option value="eth2 (DMZ)">eth2 (DMZ)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Comment</label>
+                      <input
+                        v-model="inlineNet.comment"
+                        type="text"
+                        placeholder="Optional notes"
+                        class="w-full p-1.5 border border-slate-300 rounded-md bg-white font-medium focus:border-emerald-600 focus:outline-none text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="flex justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      @click="isInlineNetOpen = false"
+                      class="px-3 py-1 rounded border border-slate-300 bg-white text-slate-700 text-[11px] font-bold hover:bg-slate-50 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      @click="createInlineNetworkObject"
+                      class="px-3.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-xs cursor-pointer"
+                    >
+                      ✔ Save &amp; Add to Group
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Search & Filter Controls -->
+                <div class="flex items-center gap-2">
+                  <div class="relative flex-1">
+                    <input
+                      v-model="existingNetSearch"
+                      type="text"
+                      placeholder="Search existing objects by name, IP, or type..."
+                      class="w-full pl-7 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-[#0072ce] focus:outline-none"
+                    />
+                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <select v-model="existingNetTypeFilter" class="p-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-bold">
+                    <option value="ALL">All Types</option>
+                    <option value="Host">Hosts</option>
+                    <option value="Network">Networks</option>
+                    <option value="Range">Ranges</option>
+                    <option value="DNS host">DNS Hosts</option>
+                  </select>
+                </div>
+
+                <!-- Existing Objects Selectable Grid -->
+                <div class="border border-slate-200 rounded-lg max-h-44 overflow-y-auto divide-y divide-slate-100 bg-[#fbfcfd]">
+                  <div
+                    v-for="obj in filteredAvailableNetObjects"
+                    :key="obj.id || obj.name"
+                    @click="toggleGroupMember(obj.name)"
+                    class="p-2 flex items-center justify-between hover:bg-blue-50/60 cursor-pointer transition-colors"
+                    :class="selectedGroupMembers.includes(obj.name) ? 'bg-purple-50/70' : ''"
+                  >
+                    <div class="flex items-center gap-2.5">
+                      <input
+                        type="checkbox"
+                        :checked="selectedGroupMembers.includes(obj.name)"
+                        @click.stop="toggleGroupMember(obj.name)"
+                        class="w-3.5 h-3.5 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+                      />
+                      <div>
+                        <div class="font-bold text-slate-900 flex items-center gap-1.5 text-[11px]">
+                          <span>{{ getObjectIcon(obj.name, obj.type) }}</span>
+                          <span>{{ obj.name }}</span>
+                        </div>
+                        <div class="text-[10px] font-mono text-slate-500">{{ obj.address }}</div>
+                      </div>
+                    </div>
+                    <span class="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase font-mono bg-slate-100 text-slate-700 border border-slate-200">
+                      {{ obj.type }}
+                    </span>
+                  </div>
+
+                  <div v-if="filteredAvailableNetObjects.length === 0" class="p-4 text-center text-slate-400 text-[11px]">
+                    No network objects found. Use the creator above to add one on the fly.
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <!-- Standard Address Field for Non-Group Objects -->
             <div v-else>
               <label class="block font-bold text-slate-700 mb-1">IPv4 / IPv6 Address *</label>
               <input
@@ -401,7 +597,7 @@
                 type="text"
                 required
                 :placeholder="newNet.type === 'Host' ? '192.168.1.50' : (newNet.type === 'Network' ? '192.168.1.0/24' : '192.168.1.10 - 192.168.1.50')"
-                class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none"
+                class="w-full p-2 border border-slate-300 rounded-lg font-mono focus:border-[#0072ce] focus:outline-none"
               />
             </div>
 
@@ -411,7 +607,7 @@
                 v-model="newNet.comment"
                 type="text"
                 placeholder="Optional notes"
-                class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none"
+                class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0072ce] focus:outline-none"
               />
             </div>
 
@@ -419,13 +615,13 @@
               <button
                 type="button"
                 @click="isModalOpen = false"
-                class="px-3.5 py-1.5 rounded border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                class="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                class="px-4 py-1.5 rounded bg-[#0072ce] hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                class="px-5 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer"
               >
                 {{ editingId ? 'Update Definition' : 'Save Definition' }}
               </button>
@@ -433,15 +629,15 @@
           </form>
 
           <!-- Service Object Form -->
-          <form v-else @submit.prevent="saveServiceObject" class="p-5 space-y-4 text-xs">
+          <form v-else @submit.prevent="saveServiceObject" class="p-5 space-y-4 text-xs max-h-[80vh] overflow-y-auto">
             <div>
               <label class="block font-bold text-slate-700 mb-1">Service Name *</label>
               <input
                 v-model="newSrv.name"
                 type="text"
                 required
-                placeholder="e.g. HTTPS, WireGuard UDP, Custom App 8080"
-                class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none"
+                placeholder="e.g. HTTPS, Web Services Group, Custom App 8080"
+                class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0072ce] focus:outline-none"
               />
             </div>
 
@@ -450,7 +646,7 @@
                 <label class="block font-bold text-slate-700 mb-1">Protocol / Type</label>
                 <select
                   v-model="newSrv.type"
-                  class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none bg-white font-medium"
+                  class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0072ce] focus:outline-none bg-white font-medium"
                 >
                   <option value="TCP">TCP</option>
                   <option value="UDP">UDP</option>
@@ -460,25 +656,201 @@
                   <option value="Service Group">Service Group</option>
                 </select>
               </div>
-              <div>
+              <div v-if="newSrv.type !== 'Service Group'">
                 <label class="block font-bold text-slate-700 mb-1">Destination Port *</label>
                 <input
                   v-model="newSrv.dst_port"
                   type="text"
                   required
                   placeholder="e.g. 443, 80:90, or HTTP, HTTPS"
-                  class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none"
+                  class="w-full p-2 border border-slate-300 rounded-lg font-mono focus:border-[#0072ce] focus:outline-none"
                 />
+              </div>
+              <div v-else>
+                <label class="block font-bold text-slate-700 mb-1">Group Type</label>
+                <div class="p-2 bg-amber-50 rounded-lg border border-amber-200 font-bold text-amber-900">
+                  Multiple Services
+                </div>
               </div>
             </div>
 
-            <div>
+            <!-- SERVICE GROUP MEMBERSHIP & INLINE SERVICE CREATION -->
+            <div v-if="newSrv.type === 'Service Group'" class="space-y-3 pt-1">
+              <!-- Selected Service Group Members Container -->
+              <div class="p-3.5 bg-amber-50/60 rounded-xl border border-amber-200 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-[#ee7f00]"></span>
+                    <span class="font-bold text-amber-950 text-xs">Selected Service Members ({{ selectedSrvGroupMembers.length }})</span>
+                  </div>
+                  <button
+                    v-if="selectedSrvGroupMembers.length > 0"
+                    type="button"
+                    @click="selectedSrvGroupMembers = []"
+                    class="text-[10px] text-amber-800 hover:text-rose-600 font-bold cursor-pointer"
+                  >
+                    Clear All
+                  </button>
+                </div>
+
+                <!-- Service Members Pills -->
+                <div class="flex flex-wrap gap-1.5 min-h-8 p-2 bg-white rounded-lg border border-amber-200">
+                  <span
+                    v-for="(member, mIdx) in selectedSrvGroupMembers"
+                    :key="mIdx"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs"
+                  >
+                    <span>⚡</span>
+                    <span>{{ member }}</span>
+                    <button
+                      type="button"
+                      @click="removeSrvGroupMember(mIdx)"
+                      class="text-amber-600 hover:text-rose-600 font-bold ml-0.5 cursor-pointer leading-none"
+                      title="Remove member"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                  <span v-if="selectedSrvGroupMembers.length === 0" class="text-slate-400 text-[11px] italic py-0.5">
+                    No services selected yet. Choose from existing definitions below or create a new one.
+                  </span>
+                </div>
+              </div>
+
+              <!-- Available Services Selector & Inline Creator Bar -->
+              <div class="border border-slate-200 rounded-xl p-3.5 bg-white space-y-3 shadow-2xs">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                  <span class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                    <span>🔌</span>
+                    <span>Choose Existing Service Definitions</span>
+                  </span>
+                  <button
+                    type="button"
+                    @click="isInlineSrvOpen = !isInlineSrvOpen"
+                    class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-md font-bold text-[11px] flex items-center gap-1 shadow-2xs cursor-pointer transition-colors"
+                  >
+                    <span>{{ isInlineSrvOpen ? '▲ Close Creator' : '+ Create New Service Definition...' }}</span>
+                  </button>
+                </div>
+
+                <!-- INLINE NEW SERVICE CREATION FORM -->
+                <div v-if="isInlineSrvOpen" class="p-3.5 bg-amber-50/50 rounded-xl border border-amber-200 space-y-3">
+                  <div class="flex items-center justify-between border-b border-amber-200/60 pb-1.5">
+                    <span class="font-bold text-amber-900 text-xs flex items-center gap-1.5">
+                      <span>✨</span>
+                      <span>New Service Definition (Created &amp; Added to Group)</span>
+                    </span>
+                    <button type="button" @click="isInlineSrvOpen = false" class="text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Service Name *</label>
+                      <input
+                        v-model="inlineSrv.name"
+                        type="text"
+                        placeholder="e.g. MySQL Port 3306"
+                        class="w-full p-1.5 border border-slate-300 rounded-md bg-white font-medium focus:border-amber-600 focus:outline-none text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Protocol</label>
+                      <select
+                        v-model="inlineSrv.type"
+                        class="w-full p-1.5 border border-slate-300 rounded-md bg-white font-medium focus:border-amber-600 focus:outline-none text-xs"
+                      >
+                        <option value="TCP">TCP</option>
+                        <option value="UDP">UDP</option>
+                        <option value="TCP/UDP">TCP/UDP</option>
+                        <option value="ICMP">ICMP</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Destination Port *</label>
+                      <input
+                        v-model="inlineSrv.dst_port"
+                        type="text"
+                        placeholder="e.g. 3306 or 8080:8090"
+                        class="w-full p-1.5 border border-slate-300 rounded-md bg-white font-mono focus:border-amber-600 focus:outline-none text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="flex justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      @click="isInlineSrvOpen = false"
+                      class="px-3 py-1 rounded border border-slate-300 bg-white text-slate-700 text-[11px] font-bold hover:bg-slate-50 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      @click="createInlineServiceObject"
+                      class="px-3.5 py-1 rounded bg-[#ee7f00] hover:bg-amber-600 text-white text-[11px] font-bold shadow-xs cursor-pointer"
+                    >
+                      ✔ Save &amp; Add to Group
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Search & Filter Controls -->
+                <div class="flex items-center gap-2">
+                  <div class="relative flex-1">
+                    <input
+                      v-model="existingSrvSearch"
+                      type="text"
+                      placeholder="Search existing services by name, port, or protocol..."
+                      class="w-full pl-7 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-[#0072ce] focus:outline-none"
+                    />
+                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Existing Services Selectable Grid -->
+                <div class="border border-slate-200 rounded-lg max-h-44 overflow-y-auto divide-y divide-slate-100 bg-[#fbfcfd]">
+                  <div
+                    v-for="srv in filteredAvailableSrvObjects"
+                    :key="srv.id || srv.name"
+                    @click="toggleSrvGroupMember(srv.name)"
+                    class="p-2 flex items-center justify-between hover:bg-amber-50/60 cursor-pointer transition-colors"
+                    :class="selectedSrvGroupMembers.includes(srv.name) ? 'bg-amber-50/80' : ''"
+                  >
+                    <div class="flex items-center gap-2.5">
+                      <input
+                        type="checkbox"
+                        :checked="selectedSrvGroupMembers.includes(srv.name)"
+                        @click.stop="toggleSrvGroupMember(srv.name)"
+                        class="w-3.5 h-3.5 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                      />
+                      <div>
+                        <div class="font-bold text-slate-900 text-[11px]">
+                          {{ srv.name }}
+                        </div>
+                        <div class="text-[10px] font-mono text-slate-500">Port: {{ srv.dst_port }}</div>
+                      </div>
+                    </div>
+                    <span class="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase font-mono bg-slate-100 text-slate-700 border border-slate-200">
+                      {{ srv.protocol || srv.type }}
+                    </span>
+                  </div>
+
+                  <div v-if="filteredAvailableSrvObjects.length === 0" class="p-4 text-center text-slate-400 text-[11px]">
+                    No service definitions found. Use the creator above to add one on the fly.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="newSrv.type !== 'Service Group'">
               <label class="block font-bold text-slate-700 mb-1">Source Port Range</label>
               <input
                 v-model="newSrv.src_port"
                 type="text"
                 placeholder="1:65535 (Default)"
-                class="w-full p-2 border border-slate-300 rounded font-mono focus:border-[#0072ce] focus:outline-none"
+                class="w-full p-2 border border-slate-300 rounded-lg font-mono focus:border-[#0072ce] focus:outline-none"
               />
             </div>
 
@@ -488,7 +860,7 @@
                 v-model="newSrv.comment"
                 type="text"
                 placeholder="Optional notes"
-                class="w-full p-2 border border-slate-300 rounded focus:border-[#0072ce] focus:outline-none"
+                class="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0072ce] focus:outline-none"
               />
             </div>
 
@@ -496,13 +868,13 @@
               <button
                 type="button"
                 @click="isModalOpen = false"
-                class="px-3.5 py-1.5 rounded border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                class="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                class="px-4 py-1.5 rounded bg-[#0072ce] hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                class="px-5 py-2 rounded-lg bg-[#0072ce] hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer"
               >
                 {{ editingId ? 'Update Service' : 'Save Service' }}
               </button>
@@ -533,6 +905,33 @@ const editingId = ref(null)
 
 const networkObjects = ref([])
 const serviceObjects = ref([])
+
+// Group Members selections
+const selectedGroupMembers = ref([])
+const selectedSrvGroupMembers = ref([])
+
+// Inline Network Object Creator State (Embedded in Same Window)
+const isInlineNetOpen = ref(false)
+const inlineNet = ref({
+  name: '',
+  type: 'Host',
+  address: '',
+  interface: '<< Any >>',
+  comment: ''
+})
+const existingNetSearch = ref('')
+const existingNetTypeFilter = ref('ALL')
+
+// Inline Service Definition Creator State (Embedded in Same Window)
+const isInlineSrvOpen = ref(false)
+const inlineSrv = ref({
+  name: '',
+  type: 'TCP',
+  dst_port: '',
+  src_port: '1:65535',
+  comment: ''
+})
+const existingSrvSearch = ref('')
 
 const newNet = ref({
   id: null,
@@ -587,12 +986,61 @@ const filteredServiceObjects = computed(() => {
   return list
 })
 
+const filteredAvailableNetObjects = computed(() => {
+  let list = networkObjects.value.filter(n =>
+    n.type !== 'Network group' &&
+    n.type !== 'Network Group' &&
+    n.id !== editingId.value &&
+    n.name !== newNet.value.name
+  )
+  if (existingNetTypeFilter.value !== 'ALL') {
+    list = list.filter(n => n.type.toLowerCase() === existingNetTypeFilter.value.toLowerCase())
+  }
+  if (existingNetSearch.value.trim()) {
+    const q = existingNetSearch.value.toLowerCase()
+    list = list.filter(n =>
+      n.name.toLowerCase().includes(q) ||
+      (n.address && n.address.toLowerCase().includes(q)) ||
+      (n.type && n.type.toLowerCase().includes(q))
+    )
+  }
+  return list
+})
+
+const filteredAvailableSrvObjects = computed(() => {
+  let list = serviceObjects.value.filter(s =>
+    s.protocol !== 'Group' &&
+    s.type !== 'Service Group' &&
+    s.id !== editingId.value &&
+    s.name !== newSrv.value.name
+  )
+  if (existingSrvSearch.value.trim()) {
+    const q = existingSrvSearch.value.toLowerCase()
+    list = list.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      (s.dst_port && s.dst_port.toLowerCase().includes(q)) ||
+      (s.protocol && s.protocol.toLowerCase().includes(q))
+    )
+  }
+  return list
+})
+
 const filteredItemsCount = computed(() => {
   return activeTab.value === 'networks' ? filteredNetworkObjects.value.length : filteredServiceObjects.value.length
 })
 
+const getObjectIcon = (name, type = '') => {
+  const match = networkObjects.value.find(n => n.name === name)
+  const t = (type || (match ? match.type : '')).toLowerCase()
+  if (t.includes('host')) return '🖥️'
+  if (t.includes('network')) return '🌐'
+  if (t.includes('range')) return '🔀'
+  if (t.includes('dns')) return '📡'
+  return '📦'
+}
+
 const getGroupMembers = (net) => {
-  if (Array.isArray(net.members)) return net.members
+  if (Array.isArray(net.members) && net.members.length > 0) return net.members
   if (typeof net.address === 'string' && net.address.includes(',')) {
     return net.address.split(',').map(s => s.trim()).filter(Boolean)
   }
@@ -600,11 +1048,118 @@ const getGroupMembers = (net) => {
 }
 
 const getServiceGroupMembers = (srv) => {
-  if (Array.isArray(srv.members)) return srv.members
+  if (Array.isArray(srv.members) && srv.members.length > 0) return srv.members
   if (typeof srv.dst_port === 'string' && srv.dst_port.includes(',')) {
     return srv.dst_port.split(',').map(s => s.trim()).filter(Boolean)
   }
   return []
+}
+
+const toggleGroupMember = (name) => {
+  const idx = selectedGroupMembers.value.indexOf(name)
+  if (idx > -1) {
+    selectedGroupMembers.value.splice(idx, 1)
+  } else {
+    selectedGroupMembers.value.push(name)
+  }
+}
+
+const removeGroupMember = (idx) => {
+  selectedGroupMembers.value.splice(idx, 1)
+}
+
+const toggleSrvGroupMember = (name) => {
+  const idx = selectedSrvGroupMembers.value.indexOf(name)
+  if (idx > -1) {
+    selectedSrvGroupMembers.value.splice(idx, 1)
+  } else {
+    selectedSrvGroupMembers.value.push(name)
+  }
+}
+
+const removeSrvGroupMember = (idx) => {
+  selectedSrvGroupMembers.value.splice(idx, 1)
+}
+
+const createInlineNetworkObject = async () => {
+  if (!inlineNet.value.name.trim() || !inlineNet.value.address.trim()) {
+    alert('Please provide an Object Name and Address/Subnet.')
+    return
+  }
+
+  const payload = {
+    name: inlineNet.value.name.trim(),
+    type: inlineNet.value.type,
+    address: inlineNet.value.address.trim(),
+    interface: inlineNet.value.interface || '<< Any >>',
+    comment: inlineNet.value.comment ? `${inlineNet.value.comment} (Created in Group)` : 'Created in Group Modal'
+  }
+
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      const res = await axiosLib.post('/api/definitions/networks', payload)
+      if (res.data && res.data.object) {
+        networkObjects.value.push(res.data.object)
+      } else {
+        networkObjects.value.push({ id: `net-${Date.now()}`, ...payload })
+      }
+    } else {
+      networkObjects.value.push({ id: `net-${Date.now()}`, ...payload })
+    }
+
+    // Automatically select the newly created object into the group!
+    if (!selectedGroupMembers.value.includes(payload.name)) {
+      selectedGroupMembers.value.push(payload.name)
+    }
+
+    // Reset inline form and close
+    inlineNet.value = { name: '', type: 'Host', address: '', interface: '<< Any >>', comment: '' }
+    isInlineNetOpen.value = false
+  } catch (err) {
+    console.error('Failed to create inline network object:', err)
+  }
+}
+
+const createInlineServiceObject = async () => {
+  if (!inlineSrv.value.name.trim() || !inlineSrv.value.dst_port.trim()) {
+    alert('Please provide a Service Name and Destination Port.')
+    return
+  }
+
+  const payload = {
+    name: inlineSrv.value.name.trim(),
+    type: inlineSrv.value.type,
+    protocol: inlineSrv.value.type,
+    dst_port: inlineSrv.value.dst_port.trim(),
+    src_port: inlineSrv.value.src_port || '1:65535',
+    comment: inlineSrv.value.comment ? `${inlineSrv.value.comment} (Created in Group)` : 'Created in Group Modal'
+  }
+
+  try {
+    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
+    if (axiosLib) {
+      const res = await axiosLib.post('/api/definitions/services', payload)
+      if (res.data && res.data.object) {
+        serviceObjects.value.push(res.data.object)
+      } else {
+        serviceObjects.value.push({ id: `srv-${Date.now()}`, ...payload })
+      }
+    } else {
+      serviceObjects.value.push({ id: `srv-${Date.now()}`, ...payload })
+    }
+
+    // Automatically select the newly created service into the group!
+    if (!selectedSrvGroupMembers.value.includes(payload.name)) {
+      selectedSrvGroupMembers.value.push(payload.name)
+    }
+
+    // Reset inline form and close
+    inlineSrv.value = { name: '', type: 'TCP', dst_port: '', src_port: '1:65535', comment: '' }
+    isInlineSrvOpen.value = false
+  } catch (err) {
+    console.error('Failed to create inline service object:', err)
+  }
 }
 
 const fetchDefinitions = async () => {
@@ -628,6 +1183,11 @@ const fetchDefinitions = async () => {
 
 const openCreateModal = () => {
   editingId.value = null
+  selectedGroupMembers.value = []
+  selectedSrvGroupMembers.value = []
+  isInlineNetOpen.value = false
+  isInlineSrvOpen.value = false
+
   if (activeTab.value === 'networks') {
     newNet.value = {
       id: null,
@@ -654,6 +1214,8 @@ const openCreateModal = () => {
 const editNetObject = (net) => {
   editingId.value = net.id
   newNet.value = JSON.parse(JSON.stringify(net))
+  selectedGroupMembers.value = getGroupMembers(net)
+  isInlineNetOpen.value = false
   isModalOpen.value = true
 }
 
@@ -664,6 +1226,8 @@ const cloneNetObject = (net) => {
     id: null,
     name: `${net.name} (Clone)`
   }
+  selectedGroupMembers.value = getGroupMembers(net)
+  isInlineNetOpen.value = false
   isModalOpen.value = true
 }
 
@@ -673,6 +1237,8 @@ const editSrvObject = (srv) => {
     ...JSON.parse(JSON.stringify(srv)),
     type: srv.protocol === 'Group' ? 'Service Group' : (srv.type || srv.protocol)
   }
+  selectedSrvGroupMembers.value = getServiceGroupMembers(srv)
+  isInlineSrvOpen.value = false
   isModalOpen.value = true
 }
 
@@ -684,20 +1250,35 @@ const cloneSrvObject = (srv) => {
     name: `${srv.name} (Clone)`,
     type: srv.protocol === 'Group' ? 'Service Group' : (srv.type || srv.protocol)
   }
+  selectedSrvGroupMembers.value = getServiceGroupMembers(srv)
+  isInlineSrvOpen.value = false
   isModalOpen.value = true
 }
 
 const saveNetworkObject = async () => {
-  if (!newNet.value.name || !newNet.value.address) return
+  if (!newNet.value.name) return
+  const isGroup = newNet.value.type === 'Network group' || newNet.value.type === 'Network Group'
+  if (!isGroup && !newNet.value.address) return
+
   const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-  if (!axiosLib) return
 
   try {
+    const formattedAddress = isGroup ? selectedGroupMembers.value.join(', ') : newNet.value.address
     const payload = {
       ...newNet.value,
-      id: editingId.value || newNet.value.id
+      id: editingId.value || newNet.value.id,
+      address: formattedAddress,
+      members: isGroup ? selectedGroupMembers.value : []
     }
-    await axiosLib.post('/api/definitions/networks', payload)
+    if (axiosLib) {
+      await axiosLib.post('/api/definitions/networks', payload)
+    } else {
+      await fetch('/api/definitions/networks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+    }
     isModalOpen.value = false
     await fetchDefinitions()
   } catch (err) {
@@ -706,17 +1287,30 @@ const saveNetworkObject = async () => {
 }
 
 const saveServiceObject = async () => {
-  if (!newSrv.value.name || !newSrv.value.dst_port) return
+  if (!newSrv.value.name) return
+  const isGroup = newSrv.value.type === 'Service Group'
+  if (!isGroup && !newSrv.value.dst_port) return
+
   const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-  if (!axiosLib) return
 
   try {
+    const formattedDstPort = isGroup ? selectedSrvGroupMembers.value.join(', ') : newSrv.value.dst_port
     const payload = {
       ...newSrv.value,
       id: editingId.value || newSrv.value.id,
-      protocol: newSrv.value.type === 'Service Group' ? 'Group' : (newSrv.value.type.includes('UDP') ? 'UDP' : 'TCP')
+      protocol: isGroup ? 'Group' : (newSrv.value.type.includes('UDP') ? 'UDP' : 'TCP'),
+      dst_port: formattedDstPort,
+      members: isGroup ? selectedSrvGroupMembers.value : []
     }
-    await axiosLib.post('/api/definitions/services', payload)
+    if (axiosLib) {
+      await axiosLib.post('/api/definitions/services', payload)
+    } else {
+      await fetch('/api/definitions/services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+    }
     isModalOpen.value = false
     await fetchDefinitions()
   } catch (err) {
@@ -729,9 +1323,12 @@ const deleteNetworkObject = async (id) => {
   if (!confirm(`Are you sure you want to delete network definition '${item ? item.name : id}'?`)) return
 
   const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-  if (!axiosLib) return
   try {
-    await axiosLib.delete(`/api/definitions/networks/${id}`)
+    if (axiosLib) {
+      await axiosLib.delete(`/api/definitions/networks/${id}`)
+    } else {
+      await fetch(`/api/definitions/networks/${id}`, { method: 'DELETE' })
+    }
     await fetchDefinitions()
   } catch (err) {
     console.error('Failed to delete network object:', err)
@@ -743,9 +1340,12 @@ const deleteServiceObject = async (id) => {
   if (!confirm(`Are you sure you want to delete service definition '${item ? item.name : id}'?`)) return
 
   const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-  if (!axiosLib) return
   try {
-    await axiosLib.delete(`/api/definitions/services/${id}`)
+    if (axiosLib) {
+      await axiosLib.delete(`/api/definitions/services/${id}`)
+    } else {
+      await fetch(`/api/definitions/services/${id}`, { method: 'DELETE' })
+    }
     await fetchDefinitions()
   } catch (err) {
     console.error('Failed to delete service object:', err)
