@@ -606,9 +606,9 @@ const navGroups = [
       },
       {
         id: 'atp',
-        aliases: ['advanced_threat', 'sandstorm', 'botnet_protection', 'c2_protection'],
+        aliases: ['advanced_threat', 'cape_sandbox', 'cape', 'botnet_protection', 'c2_protection', 'sandbox'],
         label: 'Advanced Threat (ATP)',
-        badge: 'Sandstorm',
+        badge: 'CAPE Sandbox',
         icon: IpsIcon
       }
     ]

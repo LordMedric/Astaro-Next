@@ -609,6 +609,26 @@ def _seed_initial_defaults(conn: sqlite3.Connection):
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, default_email_certs)
 
+    # Seed CAPE Sandbox Settings (Open-source automated malware analysis)
+    cursor.execute("SELECT COUNT(*) FROM key_value_store WHERE section = 'cape_sandbox_settings'")
+    if cursor.fetchone()[0] == 0:
+        cape_defaults = {
+            "enabled": True,
+            "api_url": "http://127.0.0.1:8000",
+            "api_token": "cape_sec_token_991823716",
+            "verify_ssl": False,
+            "timeout_seconds": 120,
+            "score_threshold_block": 7.0,
+            "auto_submit_email": True,
+            "auto_submit_web": True,
+            "auto_submit_executables": True,
+            "auto_submit_documents": True,
+            "default_vm_tag": "win10_x64",
+            "action_on_malicious": "DROP_AND_QUARANTINE"
+        }
+        for k, v in cape_defaults.items():
+            cursor.execute("INSERT OR REPLACE INTO key_value_store (section, key, value_json) VALUES ('cape_sandbox_settings', ?, ?)", (k, json.dumps(v)))
+
     conn.commit()
 
 # =============================================================================
