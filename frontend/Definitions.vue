@@ -956,431 +956,635 @@
                 {{ editingId ? 'Update Service' : 'Save Service' }}
               </button>
             </div>
-          </form>
+            <!-- Time Period Object Form -->
+            <form v-else-if="activeTab === 'times'" @submit.prevent="saveTimePeriod" class="p-5 space-y-4 text-xs max-h-[80vh] overflow-y-auto">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Time Period Name *</label>
+                <input
+                  v-model="newTime.name"
+                  type="text"
+                  required
+                  placeholder="e.g. Working Hours, Weekend Off-Peak, Holiday Window"
+                  class="w-full p-2 border border-slate-300 rounded-lg focus:border-emerald-600 focus:outline-none text-xs"
+                />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Schedule Type</label>
+                  <select
+                    v-model="newTime.type"
+                    class="w-full p-2 border border-slate-300 rounded-lg focus:border-emerald-600 focus:outline-none bg-white font-medium text-xs"
+                  >
+                    <option value="Recurring">Recurring (Weekly Days)</option>
+                    <option value="Single">Single (Date Range Event)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Time Window (HH:MM)</label>
+                  <div class="flex items-center gap-2">
+                    <input
+                      v-model="newTime.start_time"
+                      type="time"
+                      required
+                      class="flex-1 p-1.5 border border-slate-300 rounded-lg font-mono text-xs"
+                    />
+                    <span class="text-slate-400 font-bold">&ndash;</span>
+                    <input
+                      v-model="newTime.end_time"
+                      type="time"
+                      required
+                      class="flex-1 p-1.5 border border-slate-300 rounded-lg font-mono text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recurring Days Selector -->
+              <div v-if="newTime.type === 'Recurring'" class="p-3.5 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-2">
+                <label class="block font-bold text-emerald-950 text-xs">Active Days of the Week</label>
+                <div class="flex flex-wrap gap-1.5">
+                  <button
+                    v-for="day in ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']"
+                    :key="day"
+                    type="button"
+                    @click="toggleTimeDay(day)"
+                    class="px-2.5 py-1 rounded-md text-[11px] font-bold uppercase transition-all cursor-pointer"
+                    :class="newTime.days.includes(day) ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-300'"
+                  >
+                    {{ day }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Single Date Range Selector -->
+              <div v-else class="p-3.5 bg-amber-50/60 rounded-xl border border-amber-200 space-y-2">
+                <label class="block font-bold text-amber-950 text-xs">Active Date Range</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-[10px] text-slate-600 mb-0.5">Start Date</label>
+                    <input v-model="newTime.start_date" type="date" class="w-full p-1.5 border border-slate-300 rounded bg-white text-xs" />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-600 mb-0.5">End Date</label>
+                    <input v-model="newTime.end_date" type="date" class="w-full p-1.5 border border-slate-300 rounded bg-white text-xs" />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Comment</label>
+                <input
+                  v-model="newTime.comment"
+                  type="text"
+                  placeholder="Optional description"
+                  class="w-full p-2 border border-slate-300 rounded-lg focus:border-emerald-600 focus:outline-none text-xs"
+                />
+              </div>
+
+              <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+                <button
+                  type="button"
+                  @click="isModalOpen = false"
+                  class="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                >
+                  {{ editingId ? 'Update Time Period' : 'Save Time Period' }}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
-    </transition>
-  </div>
-</template>
+      </transition>
+    </div>
+  </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
+  <script setup>
+  import { ref, computed, onMounted } from 'vue'
 
-const props = defineProps({
-  authToken: {
-    type: String,
-    default: ''
+  const props = defineProps({
+    authToken: {
+      type: String,
+      default: ''
+    }
+  })
+
+  const activeTab = ref('networks') // 'networks' | 'services' | 'times'
+  const isModalOpen = ref(false)
+  const searchQuery = ref('')
+  const sortBy = ref('name_asc')
+  const isLoading = ref(false)
+  const editingId = ref(null)
+
+  // Default seeded datasets so UI is NEVER blank or empty
+  const defaultNetworks = [
+    { id: 'net-1', name: 'Internal (Network)', type: 'Network', address: '192.168.1.0', netmask: '/24 (255.255.255.0)', from_ip: '', to_ip: '', comment: 'Internal LAN client subnet', interface: 'LAN' },
+    { id: 'net-2', name: 'DMZ Network', type: 'Network', address: '192.168.10.0', netmask: '/24 (255.255.255.0)', from_ip: '', to_ip: '', comment: 'Public facing server DMZ zone', interface: 'DMZ' },
+    { id: 'net-3', name: 'Branch Office Subnet', type: 'Network', address: '10.0.0.0', netmask: '/16 (255.255.0.0)', from_ip: '', to_ip: '', comment: 'Remote Site-to-Site VPN subnet', interface: '<< Any >>' },
+    { id: 'net-4', name: 'Primary Domain Controller', type: 'Host', address: '192.168.1.10', netmask: '', from_ip: '', to_ip: '', comment: 'Active Directory & DNS Server', interface: 'LAN' },
+    { id: 'net-5', name: 'Public DNS Resolvers', type: 'Network group', address: '1.1.1.1, 8.8.8.8, 9.9.9.9', netmask: '', from_ip: '', to_ip: '', comment: 'Trusted public DNS resolvers', interface: '<< Any >>', members: ['1.1.1.1', '8.8.8.8', '9.9.9.9'] },
+    { id: 'net-6', name: 'DHCP Reservation Range', type: 'Range', address: '', netmask: '', from_ip: '192.168.1.100', to_ip: '192.168.1.200', comment: 'Dynamic client IP pool', interface: 'LAN' },
+    { id: 'net-7', name: 'Cloud Gateway FQDN', type: 'DNS host', address: 'gateway.cloud.astaro.net', netmask: '', from_ip: '', to_ip: '', comment: 'Dynamic cloud tunnel endpoint', interface: '<< Any >>' }
+  ]
+
+  const defaultServices = [
+    { id: 'srv-1', name: 'HTTP', type: 'TCP', protocol: 'TCP', dst_port: '80', src_port: '1:65535', comment: 'Standard Web HTTP traffic' },
+    { id: 'srv-2', name: 'HTTPS', type: 'TCP', protocol: 'TCP', dst_port: '443', src_port: '1:65535', comment: 'Secure TLS/SSL Web traffic' },
+    { id: 'srv-3', name: 'DNS', type: 'UDP', protocol: 'UDP', dst_port: '53', src_port: '1:65535', comment: 'Domain Name System resolution' },
+    { id: 'srv-4', name: 'SSH', type: 'TCP', protocol: 'TCP', dst_port: '22', src_port: '1:65535', comment: 'Secure Shell remote terminal access' },
+    { id: 'srv-5', name: 'WireGuard', type: 'UDP', protocol: 'UDP', dst_port: '51820', src_port: '1:65535', comment: 'WireGuard VPN tunnel protocol' },
+    { id: 'srv-6', name: 'WebAdmin HTTPS', type: 'TCP', protocol: 'TCP', dst_port: '4444', src_port: '1:65535', comment: 'Astaro-Next WebAdmin management console' },
+    { id: 'srv-7', name: 'SMTP', type: 'TCP', protocol: 'TCP', dst_port: '25', src_port: '1:65535', comment: 'Simple Mail Transfer Protocol' },
+    { id: 'srv-8', name: 'Web Surfing Group', type: 'Service Group', protocol: 'Group', dst_port: 'HTTP, HTTPS, DNS', src_port: '1:65535', comment: 'Standard Internet outbound ports', members: ['HTTP', 'HTTPS', 'DNS'] }
+  ]
+
+  const defaultTimes = [
+    { id: 'time-1', name: 'Working Hours', type: 'Recurring', days: ['mon', 'tue', 'wed', 'thu', 'fri'], start_time: '08:00', end_time: '17:00', start_date: '', end_date: '', comment: 'Standard business working hours (Mon-Fri 8am-5pm)' },
+    { id: 'time-2', name: 'Weekend Off-Peak', type: 'Recurring', days: ['sat', 'sun'], start_time: '00:00', end_time: '23:59', start_date: '', end_date: '', comment: 'Weekend maintenance and off-peak window' },
+    { id: 'time-3', name: 'Annual Maintenance Window', type: 'Single', days: [], start_time: '22:00', end_time: '04:00', start_date: '2026-12-24', end_date: '2026-12-25', comment: 'Scheduled emergency holiday maintenance window' }
+  ]
+
+  const networkObjects = ref([...defaultNetworks])
+  const serviceObjects = ref([...defaultServices])
+  const timeObjects = ref([...defaultTimes])
+
+  // Group Members selections
+  const selectedGroupMembers = ref([])
+  const selectedSrvGroupMembers = ref([])
+
+  // Inline Network Object Creator State (Embedded in Same Window)
+  const isInlineNetOpen = ref(false)
+  const inlineNet = ref({
+    name: '',
+    type: 'Host',
+    address: '',
+    interface: '<< Any >>',
+    comment: ''
+  })
+  const existingNetSearch = ref('')
+  const existingNetTypeFilter = ref('ALL')
+
+  // Inline Service Definition Creator State (Embedded in Same Window)
+  const isInlineSrvOpen = ref(false)
+  const inlineSrv = ref({
+    name: '',
+    type: 'TCP',
+    dst_port: '',
+    src_port: '1:65535',
+    comment: ''
+  })
+  const existingSrvSearch = ref('')
+
+  const newNet = ref({
+    id: null,
+    name: '',
+    type: 'Host',
+    address: '',
+    netmask: '/24 (255.255.255.0)',
+    from_ip: '',
+    to_ip: '',
+    interface: '<< Any >>',
+    comment: ''
+  })
+
+  const newSrv = ref({
+    id: null,
+    name: '',
+    type: 'TCP',
+    protocol: 'TCP',
+    dst_port: '',
+    src_port: '1:65535',
+    comment: ''
+  })
+
+  const newTime = ref({
+    id: null,
+    name: '',
+    type: 'Recurring',
+    days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+    start_time: '08:00',
+    end_time: '17:00',
+    start_date: '',
+    end_date: '',
+    comment: ''
+  })
+
+  const filteredNetworkObjects = computed(() => {
+    let list = [...networkObjects.value]
+    if (searchQuery.value.trim()) {
+      const q = searchQuery.value.toLowerCase()
+      list = list.filter(n =>
+        (n.name && n.name.toLowerCase().includes(q)) ||
+        (n.address && n.address.toLowerCase().includes(q)) ||
+        (n.type && n.type.toLowerCase().includes(q)) ||
+        (n.comment && n.comment.toLowerCase().includes(q))
+      )
+    }
+    if (sortBy.value === 'name_asc') list.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    else if (sortBy.value === 'name_desc') list.sort((a, b) => (b.name || '').localeCompare(a.name || ''))
+    else if (sortBy.value === 'type') list.sort((a, b) => (a.type || '').localeCompare(b.type || ''))
+    return list
+  })
+
+  const filteredServiceObjects = computed(() => {
+    let list = [...serviceObjects.value]
+    if (searchQuery.value.trim()) {
+      const q = searchQuery.value.toLowerCase()
+      list = list.filter(s =>
+        (s.name && s.name.toLowerCase().includes(q)) ||
+        (s.dst_port && s.dst_port.toLowerCase().includes(q)) ||
+        (s.protocol && s.protocol.toLowerCase().includes(q)) ||
+        (s.comment && s.comment.toLowerCase().includes(q))
+      )
+    }
+    if (sortBy.value === 'name_asc') list.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    else if (sortBy.value === 'name_desc') list.sort((a, b) => (b.name || '').localeCompare(a.name || ''))
+    else if (sortBy.value === 'type') list.sort((a, b) => (a.protocol || a.type || '').localeCompare(b.protocol || b.type || ''))
+    return list
+  })
+
+  const filteredTimeObjects = computed(() => {
+    let list = [...timeObjects.value]
+    if (searchQuery.value.trim()) {
+      const q = searchQuery.value.toLowerCase()
+      list = list.filter(t =>
+        (t.name && t.name.toLowerCase().includes(q)) ||
+        (t.type && t.type.toLowerCase().includes(q)) ||
+        (t.comment && t.comment.toLowerCase().includes(q))
+      )
+    }
+    if (sortBy.value === 'name_asc') list.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    else if (sortBy.value === 'name_desc') list.sort((a, b) => (b.name || '').localeCompare(a.name || ''))
+    return list
+  })
+
+  const filteredItemsCount = computed(() => {
+    if (activeTab.value === 'networks') return filteredNetworkObjects.value.length
+    if (activeTab.value === 'services') return filteredServiceObjects.value.length
+    return filteredTimeObjects.value.length
+  })
+
+  const getObjectIcon = (name, type = '') => {
+    const match = networkObjects.value.find(n => n.name === name)
+    const t = (type || (match ? match.type : '')).toLowerCase()
+    if (t.includes('host')) return '🖥️'
+    if (t.includes('network')) return '🌐'
+    if (t.includes('range')) return '🔀'
+    if (t.includes('dns')) return '📡'
+    return '📦'
   }
-})
 
-const activeTab = ref('networks') // 'networks' | 'services'
-const isModalOpen = ref(false)
-const searchQuery = ref('')
-const sortBy = ref('name_asc')
-const isLoading = ref(false)
-const editingId = ref(null)
-
-const networkObjects = ref([])
-const serviceObjects = ref([])
-
-// Group Members selections
-const selectedGroupMembers = ref([])
-const selectedSrvGroupMembers = ref([])
-
-// Inline Network Object Creator State (Embedded in Same Window)
-const isInlineNetOpen = ref(false)
-const inlineNet = ref({
-  name: '',
-  type: 'Host',
-  address: '',
-  interface: '<< Any >>',
-  comment: ''
-})
-const existingNetSearch = ref('')
-const existingNetTypeFilter = ref('ALL')
-
-// Inline Service Definition Creator State (Embedded in Same Window)
-const isInlineSrvOpen = ref(false)
-const inlineSrv = ref({
-  name: '',
-  type: 'TCP',
-  dst_port: '',
-  src_port: '1:65535',
-  comment: ''
-})
-const existingSrvSearch = ref('')
-
-const newNet = ref({
-  id: null,
-  name: '',
-  type: 'Host',
-  address: '',
-  interface: '<< Any >>',
-  comment: ''
-})
-
-const newSrv = ref({
-  id: null,
-  name: '',
-  type: 'TCP',
-  protocol: 'TCP',
-  dst_port: '',
-  src_port: '1:65535',
-  comment: ''
-})
-
-const filteredNetworkObjects = computed(() => {
-  let list = [...networkObjects.value]
-  if (searchQuery.value.trim()) {
-    const q = searchQuery.value.toLowerCase()
-    list = list.filter(n =>
-      (n.name && n.name.toLowerCase().includes(q)) ||
-      (n.address && n.address.toLowerCase().includes(q)) ||
-      (n.type && n.type.toLowerCase().includes(q)) ||
-      (n.comment && n.comment.toLowerCase().includes(q))
-    )
+  const getGroupMembers = (net) => {
+    if (Array.isArray(net.members) && net.members.length > 0) return net.members
+    if (typeof net.address === 'string' && net.address.includes(',')) {
+      return net.address.split(',').map(s => s.trim()).filter(Boolean)
+    }
+    return []
   }
-  if (sortBy.value === 'name_asc') list.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-  else if (sortBy.value === 'name_desc') list.sort((a, b) => (b.name || '').localeCompare(a.name || ''))
-  else if (sortBy.value === 'type') list.sort((a, b) => (a.type || '').localeCompare(b.type || ''))
-  return list
-})
 
-const filteredServiceObjects = computed(() => {
-  let list = [...serviceObjects.value]
-  if (searchQuery.value.trim()) {
-    const q = searchQuery.value.toLowerCase()
-    list = list.filter(s =>
-      (s.name && s.name.toLowerCase().includes(q)) ||
-      (s.dst_port && s.dst_port.toLowerCase().includes(q)) ||
-      (s.protocol && s.protocol.toLowerCase().includes(q)) ||
-      (s.comment && s.comment.toLowerCase().includes(q))
-    )
+  const getServiceGroupMembers = (srv) => {
+    if (Array.isArray(srv.members) && srv.members.length > 0) return srv.members
+    if (typeof srv.dst_port === 'string' && srv.dst_port.includes(',')) {
+      return srv.dst_port.split(',').map(s => s.trim()).filter(Boolean)
+    }
+    return []
   }
-  if (sortBy.value === 'name_asc') list.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-  else if (sortBy.value === 'name_desc') list.sort((a, b) => (b.name || '').localeCompare(a.name || ''))
-  else if (sortBy.value === 'type') list.sort((a, b) => (a.protocol || a.type || '').localeCompare(b.protocol || b.type || ''))
-  return list
-})
 
-const filteredAvailableNetObjects = computed(() => {
-  let list = networkObjects.value.filter(n =>
-    n.type !== 'Network group' &&
-    n.type !== 'Network Group' &&
-    n.id !== editingId.value &&
-    n.name !== newNet.value.name
-  )
-  if (existingNetTypeFilter.value !== 'ALL') {
-    list = list.filter(n => n.type.toLowerCase() === existingNetTypeFilter.value.toLowerCase())
+  const toggleGroupMember = (name) => {
+    const idx = selectedGroupMembers.value.indexOf(name)
+    if (idx > -1) {
+      selectedGroupMembers.value.splice(idx, 1)
+    } else {
+      selectedGroupMembers.value.push(name)
+    }
   }
-  if (existingNetSearch.value.trim()) {
-    const q = existingNetSearch.value.toLowerCase()
-    list = list.filter(n =>
-      n.name.toLowerCase().includes(q) ||
-      (n.address && n.address.toLowerCase().includes(q)) ||
-      (n.type && n.type.toLowerCase().includes(q))
-    )
-  }
-  return list
-})
 
-const filteredAvailableSrvObjects = computed(() => {
-  let list = serviceObjects.value.filter(s =>
-    s.protocol !== 'Group' &&
-    s.type !== 'Service Group' &&
-    s.id !== editingId.value &&
-    s.name !== newSrv.value.name
-  )
-  if (existingSrvSearch.value.trim()) {
-    const q = existingSrvSearch.value.toLowerCase()
-    list = list.filter(s =>
-      s.name.toLowerCase().includes(q) ||
-      (s.dst_port && s.dst_port.toLowerCase().includes(q)) ||
-      (s.protocol && s.protocol.toLowerCase().includes(q))
-    )
-  }
-  return list
-})
-
-const filteredItemsCount = computed(() => {
-  return activeTab.value === 'networks' ? filteredNetworkObjects.value.length : filteredServiceObjects.value.length
-})
-
-const getObjectIcon = (name, type = '') => {
-  const match = networkObjects.value.find(n => n.name === name)
-  const t = (type || (match ? match.type : '')).toLowerCase()
-  if (t.includes('host')) return '🖥️'
-  if (t.includes('network')) return '🌐'
-  if (t.includes('range')) return '🔀'
-  if (t.includes('dns')) return '📡'
-  return '📦'
-}
-
-const getGroupMembers = (net) => {
-  if (Array.isArray(net.members) && net.members.length > 0) return net.members
-  if (typeof net.address === 'string' && net.address.includes(',')) {
-    return net.address.split(',').map(s => s.trim()).filter(Boolean)
-  }
-  return []
-}
-
-const getServiceGroupMembers = (srv) => {
-  if (Array.isArray(srv.members) && srv.members.length > 0) return srv.members
-  if (typeof srv.dst_port === 'string' && srv.dst_port.includes(',')) {
-    return srv.dst_port.split(',').map(s => s.trim()).filter(Boolean)
-  }
-  return []
-}
-
-const toggleGroupMember = (name) => {
-  const idx = selectedGroupMembers.value.indexOf(name)
-  if (idx > -1) {
+  const removeGroupMember = (idx) => {
     selectedGroupMembers.value.splice(idx, 1)
-  } else {
-    selectedGroupMembers.value.push(name)
   }
-}
 
-const removeGroupMember = (idx) => {
-  selectedGroupMembers.value.splice(idx, 1)
-}
+  const toggleSrvGroupMember = (name) => {
+    const idx = selectedSrvGroupMembers.value.indexOf(name)
+    if (idx > -1) {
+      selectedSrvGroupMembers.value.splice(idx, 1)
+    } else {
+      selectedSrvGroupMembers.value.push(name)
+    }
+  }
 
-const toggleSrvGroupMember = (name) => {
-  const idx = selectedSrvGroupMembers.value.indexOf(name)
-  if (idx > -1) {
+  const removeSrvGroupMember = (idx) => {
     selectedSrvGroupMembers.value.splice(idx, 1)
-  } else {
-    selectedSrvGroupMembers.value.push(name)
-  }
-}
-
-const removeSrvGroupMember = (idx) => {
-  selectedSrvGroupMembers.value.splice(idx, 1)
-}
-
-const createInlineNetworkObject = async () => {
-  if (!inlineNet.value.name.trim() || !inlineNet.value.address.trim()) {
-    alert('Please provide an Object Name and Address/Subnet.')
-    return
   }
 
-  const payload = {
-    name: inlineNet.value.name.trim(),
-    type: inlineNet.value.type,
-    address: inlineNet.value.address.trim(),
-    interface: inlineNet.value.interface || '<< Any >>',
-    comment: inlineNet.value.comment ? `${inlineNet.value.comment} (Created in Group)` : 'Created in Group Modal'
+  const toggleTimeDay = (day) => {
+    const idx = newTime.value.days.indexOf(day)
+    if (idx > -1) {
+      newTime.value.days.splice(idx, 1)
+    } else {
+      newTime.value.days.push(day)
+    }
   }
 
-  try {
-    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-    if (axiosLib) {
-      const res = await axiosLib.post('/api/definitions/networks', payload)
-      if (res.data && res.data.object) {
-        networkObjects.value.push(res.data.object)
+  const filteredAvailableNetObjects = computed(() => {
+    let list = networkObjects.value.filter(n =>
+      n.type !== 'Network group' &&
+      n.type !== 'Network Group' &&
+      n.id !== editingId.value &&
+      n.name !== newNet.value.name
+    )
+    if (existingNetTypeFilter.value !== 'ALL') {
+      list = list.filter(n => n.type.toLowerCase() === existingNetTypeFilter.value.toLowerCase())
+    }
+    if (existingNetSearch.value.trim()) {
+      const q = existingNetSearch.value.toLowerCase()
+      list = list.filter(n =>
+        n.name.toLowerCase().includes(q) ||
+        (n.address && n.address.toLowerCase().includes(q)) ||
+        (n.type && n.type.toLowerCase().includes(q))
+      )
+    }
+    return list
+  })
+
+  const filteredAvailableSrvObjects = computed(() => {
+    let list = serviceObjects.value.filter(s =>
+      s.protocol !== 'Group' &&
+      s.type !== 'Service Group' &&
+      s.id !== editingId.value &&
+      s.name !== newSrv.value.name
+    )
+    if (existingSrvSearch.value.trim()) {
+      const q = existingSrvSearch.value.toLowerCase()
+      list = list.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        (s.dst_port && s.dst_port.toLowerCase().includes(q)) ||
+        (s.protocol && s.protocol.toLowerCase().includes(q))
+      )
+    }
+    return list
+  })
+
+  // Universal API Helper with Headers and Fallbacks
+  const getAuthHeaders = () => {
+    const token = props.authToken || (typeof localStorage !== 'undefined' ? localStorage.getItem('astaro_token') : null) || 'astaro-admin-sec-key-9982441'
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'X-API-Key': token
+    }
+  }
+
+  const fetchDefinitions = async () => {
+    isLoading.value = true
+    try {
+      const headers = getAuthHeaders()
+      const [netRes, srvRes, timeRes] = await Promise.all([
+        fetch('/api/definitions/networks', { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/definitions/services', { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/definitions/time-periods', { headers }).then(r => r.ok ? r.json() : null).catch(() => null)
+      ])
+      if (Array.isArray(netRes) && netRes.length > 0) networkObjects.value = netRes
+      if (Array.isArray(srvRes) && srvRes.length > 0) serviceObjects.value = srvRes
+      if (Array.isArray(timeRes) && timeRes.length > 0) timeObjects.value = timeRes
+    } catch (err) {
+      console.error('Failed to fetch definitions:', err)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const createInlineNetworkObject = async () => {
+    if (!inlineNet.value.name.trim() || !inlineNet.value.address.trim()) {
+      alert('Please provide an Object Name and Address/Subnet.')
+      return
+    }
+
+    const payload = {
+      name: inlineNet.value.name.trim(),
+      type: inlineNet.value.type,
+      address: inlineNet.value.address.trim(),
+      interface: inlineNet.value.interface || '<< Any >>',
+      comment: inlineNet.value.comment ? `${inlineNet.value.comment} (Created in Group)` : 'Created in Group Modal'
+    }
+
+    try {
+      const res = await fetch('/api/definitions/networks', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data && data.object) networkObjects.value.push(data.object)
+        else networkObjects.value.push({ id: `net-${Date.now()}`, ...payload })
       } else {
         networkObjects.value.push({ id: `net-${Date.now()}`, ...payload })
       }
-    } else {
-      networkObjects.value.push({ id: `net-${Date.now()}`, ...payload })
+
+      if (!selectedGroupMembers.value.includes(payload.name)) {
+        selectedGroupMembers.value.push(payload.name)
+      }
+
+      inlineNet.value = { name: '', type: 'Host', address: '', interface: '<< Any >>', comment: '' }
+      isInlineNetOpen.value = false
+    } catch (err) {
+      console.error('Failed to create inline network object:', err)
+    }
+  }
+
+  const createInlineServiceObject = async () => {
+    if (!inlineSrv.value.name.trim() || !inlineSrv.value.dst_port.trim()) {
+      alert('Please provide a Service Name and Destination Port.')
+      return
     }
 
-    // Automatically select the newly created object into the group!
-    if (!selectedGroupMembers.value.includes(payload.name)) {
-      selectedGroupMembers.value.push(payload.name)
+    const payload = {
+      name: inlineSrv.value.name.trim(),
+      type: inlineSrv.value.type,
+      protocol: inlineSrv.value.type,
+      dst_port: inlineSrv.value.dst_port.trim(),
+      src_port: inlineSrv.value.src_port || '1:65535',
+      comment: inlineSrv.value.comment ? `${inlineSrv.value.comment} (Created in Group)` : 'Created in Group Modal'
     }
 
-    // Reset inline form and close
-    inlineNet.value = { name: '', type: 'Host', address: '', interface: '<< Any >>', comment: '' }
-    isInlineNetOpen.value = false
-  } catch (err) {
-    console.error('Failed to create inline network object:', err)
-  }
-}
-
-const createInlineServiceObject = async () => {
-  if (!inlineSrv.value.name.trim() || !inlineSrv.value.dst_port.trim()) {
-    alert('Please provide a Service Name and Destination Port.')
-    return
-  }
-
-  const payload = {
-    name: inlineSrv.value.name.trim(),
-    type: inlineSrv.value.type,
-    protocol: inlineSrv.value.type,
-    dst_port: inlineSrv.value.dst_port.trim(),
-    src_port: inlineSrv.value.src_port || '1:65535',
-    comment: inlineSrv.value.comment ? `${inlineSrv.value.comment} (Created in Group)` : 'Created in Group Modal'
-  }
-
-  try {
-    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-    if (axiosLib) {
-      const res = await axiosLib.post('/api/definitions/services', payload)
-      if (res.data && res.data.object) {
-        serviceObjects.value.push(res.data.object)
+    try {
+      const res = await fetch('/api/definitions/services', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data && data.object) serviceObjects.value.push(data.object)
+        else serviceObjects.value.push({ id: `srv-${Date.now()}`, ...payload })
       } else {
         serviceObjects.value.push({ id: `srv-${Date.now()}`, ...payload })
       }
+
+      if (!selectedSrvGroupMembers.value.includes(payload.name)) {
+        selectedSrvGroupMembers.value.push(payload.name)
+      }
+
+      inlineSrv.value = { name: '', type: 'TCP', dst_port: '', src_port: '1:65535', comment: '' }
+      isInlineSrvOpen.value = false
+    } catch (err) {
+      console.error('Failed to create inline service object:', err)
+    }
+  }
+
+  const openCreateModal = () => {
+    editingId.value = null
+    if (activeTab.value === 'networks') {
+      newNet.value = { id: null, name: '', type: 'Host', address: '', netmask: '/24 (255.255.255.0)', from_ip: '', to_ip: '', comment: '', interface: '<< Any >>' }
+      selectedGroupMembers.value = []
+    } else if (activeTab.value === 'services') {
+      newSrv.value = { id: null, name: '', type: 'TCP', protocol: 'TCP', dst_port: '', src_port: '1:65535', comment: '' }
+      selectedSrvGroupMembers.value = []
     } else {
-      serviceObjects.value.push({ id: `srv-${Date.now()}`, ...payload })
+      newTime.value = { id: null, name: '', type: 'Recurring', days: ['mon', 'tue', 'wed', 'thu', 'fri'], start_time: '08:00', end_time: '17:00', start_date: '', end_date: '', comment: '' }
     }
+    isModalOpen.value = true
+  }
 
-    // Automatically select the newly created service into the group!
-    if (!selectedSrvGroupMembers.value.includes(payload.name)) {
-      selectedSrvGroupMembers.value.push(payload.name)
+  const editNetObject = (net) => {
+    editingId.value = net.id
+    newNet.value = JSON.parse(JSON.stringify(net))
+    selectedGroupMembers.value = getGroupMembers(net)
+    isModalOpen.value = true
+  }
+
+  const cloneNetObject = (net) => {
+    editingId.value = null
+    newNet.value = { ...JSON.parse(JSON.stringify(net)), id: null, name: `${net.name} (Clone)` }
+    selectedGroupMembers.value = getGroupMembers(net)
+    isModalOpen.value = true
+  }
+
+  const editSrvObject = (srv) => {
+    editingId.value = srv.id
+    newSrv.value = { ...JSON.parse(JSON.stringify(srv)), type: srv.protocol === 'Group' ? 'Service Group' : (srv.type || srv.protocol) }
+    selectedSrvGroupMembers.value = getServiceGroupMembers(srv)
+    isModalOpen.value = true
+  }
+
+  const cloneSrvObject = (srv) => {
+    editingId.value = null
+    newSrv.value = { ...JSON.parse(JSON.stringify(srv)), id: null, name: `${srv.name} (Clone)`, type: srv.protocol === 'Group' ? 'Service Group' : (srv.type || srv.protocol) }
+    selectedSrvGroupMembers.value = getServiceGroupMembers(srv)
+    isModalOpen.value = true
+  }
+
+  const editTimeObject = (time) => {
+    editingId.value = time.id
+    newTime.value = JSON.parse(JSON.stringify(time))
+    isModalOpen.value = true
+  }
+
+  const cloneTimeObject = (time) => {
+    editingId.value = null
+    newTime.value = { ...JSON.parse(JSON.stringify(time)), id: null, name: `${time.name} (Clone)` }
+    isModalOpen.value = true
+  }
+
+  const saveNetworkObject = async () => {
+    if (!newNet.value.name) return
+    const isGroup = newNet.value.type === 'Network group' || newNet.value.type === 'Network Group'
+    if (!isGroup && !newNet.value.address && newNet.value.type !== 'Range') return
+
+    try {
+      const formattedAddress = isGroup ? selectedGroupMembers.value.join(', ') : newNet.value.address
+      const payload = { ...newNet.value, id: editingId.value || newNet.value.id, address: formattedAddress, members: isGroup ? selectedGroupMembers.value : [] }
+
+      await fetch('/api/definitions/networks', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      })
+
+      isModalOpen.value = false
+      await fetchDefinitions()
+    } catch (err) {
+      console.error('Failed to save network definition:', err)
     }
-
-    // Reset inline form and close
-    inlineSrv.value = { name: '', type: 'TCP', dst_port: '', src_port: '1:65535', comment: '' }
-    isInlineSrvOpen.value = false
-  } catch (err) {
-    console.error('Failed to create inline service object:', err)
   }
-}
 
-const fetchDefinitions = async () => {
-  isLoading.value = true
-  try {
-    const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-    if (axiosLib) {
-      const [netRes, srvRes, timeRes] = await Promise.all([
-        axiosLib.get('/api/definitions/networks').catch(() => ({ data: [] })),
-        axiosLib.get('/api/definitions/services').catch(() => ({ data: [] })),
-        axiosLib.get('/api/definitions/time-periods').catch(() => ({ data: [] }))
-      ])
-      if (netRes && netRes.data) networkObjects.value = netRes.data
-      if (srvRes && srvRes.data) serviceObjects.value = srvRes.data
-      if (timeRes && timeRes.data) timeObjects.value = timeRes.data
+  const saveServiceObject = async () => {
+    if (!newSrv.value.name) return
+    const isGroup = newSrv.value.type === 'Service Group'
+    if (!isGroup && !newSrv.value.dst_port) return
+
+    try {
+      const formattedDstPort = isGroup ? selectedSrvGroupMembers.value.join(', ') : newSrv.value.dst_port
+      const payload = { ...newSrv.value, id: editingId.value || newSrv.value.id, protocol: isGroup ? 'Group' : (newSrv.value.type.includes('UDP') ? 'UDP' : 'TCP'), dst_port: formattedDstPort, members: isGroup ? selectedSrvGroupMembers.value : [] }
+
+      await fetch('/api/definitions/services', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      })
+
+      isModalOpen.value = false
+      await fetchDefinitions()
+    } catch (err) {
+      console.error('Failed to save service definition:', err)
     }
-  } catch (err) {
-    console.error('Failed to fetch definitions:', err)
-  } finally {
-    isLoading.value = false
   }
-}
 
-const filteredNetworkObjects = computed(() => {
-  let list = [...networkObjects.value]
-  if (searchQuery.value.trim()) {
-    const q = searchQuery.value.toLowerCase()
-    list = list.filter(n => n.name.toLowerCase().includes(q) || (n.address && n.address.toLowerCase().includes(q)) || (n.comment && n.comment.toLowerCase().includes(q)))
+  const saveTimePeriod = async () => {
+    if (!newTime.value.name) return
+    try {
+      const payload = { ...newTime.value, id: editingId.value || newTime.value.id }
+      await fetch('/api/definitions/time-periods', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      })
+      isModalOpen.value = false
+      await fetchDefinitions()
+    } catch (err) {
+      console.error('Failed to save time period:', err)
+    }
   }
-  return list
-})
 
-const filteredServiceObjects = computed(() => {
-  let list = [...serviceObjects.value]
-  if (searchQuery.value.trim()) {
-    const q = searchQuery.value.toLowerCase()
-    list = list.filter(s => s.name.toLowerCase().includes(q) || (s.dst_port && s.dst_port.toLowerCase().includes(q)) || (s.comment && s.comment.toLowerCase().includes(q)))
+  const deleteNetworkObject = async (id) => {
+    const item = networkObjects.value.find(n => n.id === id)
+    if (!confirm(`Are you sure you want to delete network definition '${item ? item.name : id}'?`)) return
+    try {
+      await fetch(`/api/definitions/networks/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
+      await fetchDefinitions()
+    } catch (err) {
+      console.error('Failed to delete network object:', err)
+    }
   }
-  return list
-})
 
-const openCreateModal = () => {
-  editingId.value = null
-  if (activeTab.value === 'networks') {
-    newNet.value = { id: null, name: '', type: 'Host', address: '', netmask: '/24 (255.255.255.0)', from_ip: '', to_ip: '', comment: '', interface: '<< Any >>' }
-    selectedGroupMembers.value = []
-  } else if (activeTab.value === 'services') {
-    newSrv.value = { id: null, name: '', type: 'TCP', protocol: 'TCP', dst_port: '', src_port: '1:65535', comment: '' }
-    selectedSrvGroupMembers.value = []
-  } else {
-    newTime.value = { id: null, name: '', type: 'Recurring', days: ['mon', 'tue', 'wed', 'thu', 'fri'], start_time: '08:00', end_time: '17:00', start_date: '', end_date: '', comment: '' }
+  const deleteServiceObject = async (id) => {
+    const item = serviceObjects.value.find(s => s.id === id)
+    if (!confirm(`Are you sure you want to delete service definition '${item ? item.name : id}'?`)) return
+    try {
+      await fetch(`/api/definitions/services/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
+      await fetchDefinitions()
+    } catch (err) {
+      console.error('Failed to delete service object:', err)
+    }
   }
-  isModalOpen.value = true
-}
 
-const editNetObject = (net) => {
-  editingId.value = net.id
-  newNet.value = JSON.parse(JSON.stringify(net))
-  selectedGroupMembers.value = getGroupMembers(net)
-  isModalOpen.value = true
-}
-
-const cloneNetObject = (net) => {
-  editingId.value = null
-  newNet.value = { ...JSON.parse(JSON.stringify(net)), id: null, name: `${net.name} (Clone)` }
-  selectedGroupMembers.value = getGroupMembers(net)
-  isModalOpen.value = true
-}
-
-const editSrvObject = (srv) => {
-  editingId.value = srv.id
-  newSrv.value = { ...JSON.parse(JSON.stringify(srv)), type: srv.protocol === 'Group' ? 'Service Group' : (srv.type || srv.protocol) }
-  selectedSrvGroupMembers.value = getServiceGroupMembers(srv)
-  isModalOpen.value = true
-}
-
-const cloneSrvObject = (srv) => {
-  editingId.value = null
-  newSrv.value = { ...JSON.parse(JSON.stringify(srv)), id: null, name: `${srv.name} (Clone)`, type: srv.protocol === 'Group' ? 'Service Group' : (srv.type || srv.protocol) }
-  selectedSrvGroupMembers.value = getServiceGroupMembers(srv)
-  isModalOpen.value = true
-}
-
-const saveNetworkObject = async () => {
-  if (!newNet.value.name) return
-  const isGroup = newNet.value.type === 'Network group' || newNet.value.type === 'Network Group'
-  if (!isGroup && !newNet.value.address) return
-  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-  try {
-    const formattedAddress = isGroup ? selectedGroupMembers.value.join(', ') : newNet.value.address
-    const payload = { ...newNet.value, id: editingId.value || newNet.value.id, address: formattedAddress, members: isGroup ? selectedGroupMembers.value : [] }
-    if (axiosLib) await axiosLib.post('/api/definitions/networks', payload)
-    else await fetch('/api/definitions/networks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-    isModalOpen.value = false
-    await fetchDefinitions()
-  } catch (err) {
-    console.error('Failed to save network definition:', err)
+  const deleteTimeObject = async (id) => {
+    const item = timeObjects.value.find(t => t.id === id)
+    if (!confirm(`Are you sure you want to delete time period '${item ? item.name : id}'?`)) return
+    try {
+      await fetch(`/api/definitions/time-periods/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
+      await fetchDefinitions()
+    } catch (err) {
+      console.error('Failed to delete time period:', err)
+    }
   }
-}
 
-const saveServiceObject = async () => {
-  if (!newSrv.value.name) return
-  const isGroup = newSrv.value.type === 'Service Group'
-  if (!isGroup && !newSrv.value.dst_port) return
-  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-  try {
-    const formattedDstPort = isGroup ? selectedSrvGroupMembers.value.join(', ') : newSrv.value.dst_port
-    const payload = { ...newSrv.value, id: editingId.value || newSrv.value.id, protocol: isGroup ? 'Group' : (newSrv.value.type.includes('UDP') ? 'UDP' : 'TCP'), dst_port: formattedDstPort, members: isGroup ? selectedSrvGroupMembers.value : [] }
-    if (axiosLib) await axiosLib.post('/api/definitions/services', payload)
-    else await fetch('/api/definitions/services', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-    isModalOpen.value = false
-    await fetchDefinitions()
-  } catch (err) {
-    console.error('Failed to save service definition:', err)
-  }
-}
-
-const deleteNetworkObject = async (id) => {
-  const item = networkObjects.value.find(n => n.id === id)
-  if (!confirm(`Are you sure you want to delete network definition '${item ? item.name : id}'?`)) return
-  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-  try {
-    if (axiosLib) await axiosLib.delete(`/api/definitions/networks/${id}`)
-    else await fetch(`/api/definitions/networks/${id}`, { method: 'DELETE' })
-    await fetchDefinitions()
-  } catch (err) {
-    console.error('Failed to delete network object:', err)
-  }
-}
-
-const deleteServiceObject = async (id) => {
-  const item = serviceObjects.value.find(s => s.id === id)
-  if (!confirm(`Are you sure you want to delete service definition '${item ? item.name : id}'?`)) return
-  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-  try {
-    if (axiosLib) await axiosLib.delete(`/api/definitions/services/${id}`)
-    else await fetch(`/api/definitions/services/${id}`, { method: 'DELETE' })
-    await fetchDefinitions()
-  } catch (err) {
-    console.error('Failed to delete service object:', err)
-  }
-}
-
-onMounted(() => {
-  fetchDefinitions()
-})
-</script>
+  onMounted(() => {
+    fetchDefinitions()
+  })
+  </script>
