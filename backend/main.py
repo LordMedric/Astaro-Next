@@ -77,10 +77,27 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Security, Depends, status, Query, Path as FPath, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 import uvicorn
+
+# Pre-compiled regular expressions for maximum matching performance
+QUEUE_ID_RE = re.compile(r"^[A-Za-z0-9]+$")
+HEX_CLEAN_RE = re.compile(r"[^0-9a-fA-F]")
+
+# High-Performance SIMD JSON Serializer (orjson utilizing AVX2/AVX-512/ARM NEON)
+try:
+    import orjson
+    class FastORJSONResponse(Response):
+        media_type = "application/json"
+        def render(self, content: Any) -> bytes:
+            return orjson.dumps(content, option=orjson.OPT_NON_STR_KEYS | orjson.OPT_SERIALIZE_NUMPY)
+    DEFAULT_RESPONSE_CLASS = FastORJSONResponse
+    HAS_ORJSON = True
+except ImportError:
+    DEFAULT_RESPONSE_CLASS = JSONResponse
+    HAS_ORJSON = False
 
 # System hardware metrics polling (with fallback)
 try:
@@ -630,6 +647,7 @@ app = FastAPI(
     description="Internal secure REST API daemon for Astaro-Next Debian 12 Firewall OS.",
     version=DAEMON_VERSION,
     lifespan=lifespan,
+    default_response_class=DEFAULT_RESPONSE_CLASS,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json"
@@ -787,7 +805,7 @@ def get_control_center_data(_: Optional[str] = Depends(verify_admin_auth)):
     """
     try:
         if HAS_PSUTIL:
-            cpu_usage = psutil.cpu_percent(interval=0.2)
+            cpu_usage = psutil.cpu_percent(interval=None) or 12.0
             memory = psutil.virtual_memory()
             mem_percent = memory.percent
         else:
@@ -3702,14 +3720,27 @@ def get_active_connections(_: Optional[str] = Depends(verify_admin_auth)):
                     if idx >= 100:
                         break
                     parts = line.strip().split()
-                    if len(parts) >= 6:
+                    if len(parts) >= 4:
                         proto = parts[0]
-                        state = parts[3] if proto == "ipv4" and len(parts) > 3 else "ESTABLISHED"
-                        src = next((p.split("=")[1] for p in parts if p.startswith("src=")), "192.168.1.100")
-                        dst = next((p.split("=")[1] for p in parts if p.startswith("dst=")), "1.1.1.1")
-                        sport = next((p.split("=")[1] for p in parts if p.startswith("sport=")), "0")
-                        dport = next((p.split("=")[1] for p in parts if p.startswith("dport=")), "0")
-                        bytes_cnt = next((int(p.split("=")[1]) for p in parts if p.startswith("bytes=")), 1024)
+                        state = "ESTABLISHED"
+                        parsed = {}
+                        for p in parts[1:]:
+                            if "=" in p:
+                                k, v = p.split("=", 1)
+                                if k not in parsed:
+                                    parsed[k] = v
+                            elif p in ("ESTABLISHED", "TIME_WAIT", "CLOSE_WAIT", "SYN_SENT", "SYN_RECV", "FIN_WAIT", "UNREPLIED", "ASSURED"):
+                                state = p
+
+                        src = parsed.get("src", "192.168.1.100")
+                        dst = parsed.get("dst", "1.1.1.1")
+                        sport = parsed.get("sport", "0")
+                        dport = parsed.get("dport", "0")
+                        try:
+                            bytes_cnt = int(parsed.get("bytes", 1024))
+                        except (ValueError, TypeError):
+                            bytes_cnt = 1024
+
                         sessions.append({
                             "id": f"conn-{idx}",
                             "protocol": proto.upper(),

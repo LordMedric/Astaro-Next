@@ -69,14 +69,14 @@ apt-get install -y --no-install-recommends \
   ca-certificates \
   sqlite3
 
-# 1b. UTM security & networking daemons (installed gracefully with backports fallback)
-echo "    Installing UTM security and protection engine packages..."
-UTM_PACKAGES=(suricata rspamd fetchmail clamav clamav-daemon squid dnsmasq unbound chrony fail2ban ipset)
+# 1b. UTM security & networking daemons + SIMD acceleration libraries
+echo "    Installing UTM security, protection engines & SIMD acceleration libraries..."
+UTM_PACKAGES=(suricata rspamd fetchmail clamav clamav-daemon squid dnsmasq unbound chrony fail2ban ipset libhyperscan5 libvectorscan5 libpcre2-8-0 build-essential)
 for pkg in "${UTM_PACKAGES[@]}"; do
   if apt-get install -y --no-install-recommends "$pkg" >/dev/null 2>&1; then
-    echo "    [✓] Engine package '$pkg' installed."
+    echo "    [✓] Engine / SIMD package '$pkg' installed."
   elif apt-get install -y --no-install-recommends -t "${CODENAME}-backports" "$pkg" >/dev/null 2>&1; then
-    echo "    [✓] Engine package '$pkg' installed from ${CODENAME}-backports."
+    echo "    [✓] Engine / SIMD package '$pkg' installed from ${CODENAME}-backports."
   else
     echo "    [i] Optional engine '$pkg' skipped (will run via standalone microservice or container)."
   fi

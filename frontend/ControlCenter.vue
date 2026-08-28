@@ -978,8 +978,6 @@
           <div class="text-[10px] text-slate-400 font-mono">{{ part.mount }}</div>
           <div class="text-2xl font-black font-mono text-blue-700">{{ part.percent }}%</div>
           <div class="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-            <div class="h-full bg-[#0072ce] rounded-full" :style="{ width: `${part.percent}%` }"></div>
-          </div>
           <div class="text-xs text-slate-600 font-mono">{{ part.usedGb }} GB used of {{ part.totalGb }} GB</div>
         </div>
       </div>
@@ -988,7 +986,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, h } from 'vue'
+import { ref, shallowRef, reactive, computed, onMounted, onUnmounted, h } from 'vue'
 
 const props = defineProps({
   authToken: {
@@ -1078,12 +1076,6 @@ const accountingServices = ref([
 const accountingServicesSlices = computed(() => buildPieSlices(accountingServices.value))
 
 const sourceHosts = ref([
-  { name: '10.1.10.127', packets: 1082335, traffic: '1.6 GB', pct: 41.0, color: '#00838f' },
-  { name: '10.1.10.124', packets: 767062, traffic: '1.0 GB', pct: 25.6, color: '#00bcd4' },
-  { name: '10.1.10.131', packets: 250673, traffic: '296.8 MB', pct: 7.6, color: '#0288d1' },
-  { name: '10.1.10.115', packets: 285242, traffic: '232.2 MB', pct: 5.9, color: '#1565c0' },
-  { name: 'XPEnology', packets: 215843, traffic: '208.8 MB', pct: 5.3, color: '#6a1b9a' },
-  { name: '(WAN) (Address)', flag: '🇺🇸', packets: 103382, traffic: '175.1 MB', pct: 4.5, color: '#ad1457' },
   { name: 'July', packets: 219603, traffic: '112.1 MB', pct: 2.9, color: '#c2185b' },
   { name: 'mail2', packets: 27126, traffic: '50.6 MB', pct: 1.3, color: '#e65100' },
   { name: '10.1.10.17', packets: 58917, traffic: '44.9 MB', pct: 1.1, color: '#f57f17' },

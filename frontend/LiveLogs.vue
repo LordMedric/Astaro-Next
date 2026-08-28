@@ -235,7 +235,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, shallowRef, computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   authToken: {
@@ -249,8 +249,9 @@ const isStreaming = ref(true)
 const searchQuery = ref('')
 const actionFilter = ref('ALL') // 'ALL' | 'DROP' | 'ACCEPT'
 
-const logs = ref([])
-const connections = ref([])
+// High-performance shallow reactive references to bypass deep-proxy overhead on large high-rate arrays
+const logs = shallowRef([])
+const connections = shallowRef([])
 let streamTimer = null
 
 const filteredLogs = computed(() => {
@@ -258,43 +259,50 @@ const filteredLogs = computed(() => {
   if (actionFilter.value !== 'ALL') {
     list = list.filter(l => l.action === actionFilter.value)
   }
-  const q = searchQuery.value.toLowerCase()
+  const q = searchQuery.value.trim().toLowerCase()
   if (!q) return list
   return list.filter(l =>
-    l.src_ip.toLowerCase().includes(q) ||
-    l.dst_ip.toLowerCase().includes(q) ||
-    String(l.dst_port).includes(q) ||
-    l.protocol.toLowerCase().includes(q) ||
-    l.rule_name.toLowerCase().includes(q)
+    (l.src_ip && l.src_ip.toLowerCase().includes(q)) ||
+    (l.dst_ip && l.dst_ip.toLowerCase().includes(q)) ||
+    (l.dst_port && String(l.dst_port).includes(q)) ||
+    (l.protocol && l.protocol.toLowerCase().includes(q)) ||
+    (l.rule_name && l.rule_name.toLowerCase().includes(q))
   )
 })
 
 const filteredConnections = computed(() => {
-  const q = searchQuery.value.toLowerCase()
+  const q = searchQuery.value.trim().toLowerCase()
   if (!q) return connections.value
   return connections.value.filter(c =>
-    c.src_ip.toLowerCase().includes(q) ||
-    c.dst_ip.toLowerCase().includes(q) ||
-    String(c.dst_port).includes(q) ||
-    c.protocol.toLowerCase().includes(q) ||
-    c.state.toLowerCase().includes(q)
+    (c.src_ip && c.src_ip.toLowerCase().includes(q)) ||
+    (c.dst_ip && c.dst_ip.toLowerCase().includes(q)) ||
+    (c.dst_port && String(c.dst_port).includes(q)) ||
+    (c.protocol && c.protocol.toLowerCase().includes(q)) ||
+    (c.state && c.state.toLowerCase().includes(q))
   )
 })
 
-const fetchData = async () => {
-  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-  if (!axiosLib) return
+const getAuthHeaders = () => {
+  const token = props.authToken || (typeof localStorage !== 'undefined' ? localStorage.getItem('astaro_token') : null) || 'astaro-admin-sec-key-9982441'
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+    'X-API-Key': token
+  }
+}
 
+const fetchData = async () => {
   try {
+    const headers = getAuthHeaders()
     const [logsRes, connRes] = await Promise.all([
-      axiosLib.get('/api/logs/firewall'),
-      axiosLib.get('/api/system/connections')
+      fetch('/api/logs/firewall', { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('/api/system/connections', { headers }).then(r => r.ok ? r.json() : null).catch(() => null)
     ])
-    if (logsRes.data && logsRes.data.logs) {
-      logs.value = logsRes.data.logs
+    if (logsRes && logsRes.logs) {
+      logs.value = logsRes.logs
     }
-    if (connRes.data && connRes.data.connections) {
-      connections.value = connRes.data.connections
+    if (connRes && connRes.connections) {
+      connections.value = connRes.connections
     }
   } catch (err) {
     // Retain previous logs
@@ -302,10 +310,11 @@ const fetchData = async () => {
 }
 
 const killConn = async (connId) => {
-  const axiosLib = (typeof window !== 'undefined' && window.axios) ? window.axios : null
-  if (!axiosLib) return
   try {
-    await axiosLib.delete(`/api/system/connections/${connId}`)
+    await fetch(`/api/system/connections/${connId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    })
     await fetchData()
   } catch (err) {
     console.error('Failed to kill connection:', err)

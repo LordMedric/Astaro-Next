@@ -35,11 +35,15 @@ except Exception:
     DB_PATH = Path("astaro_config.db")
 
 def get_db_connection() -> sqlite3.Connection:
-    """Create and return a thread-safe connection with row_factory set to sqlite3.Row."""
+    """Create and return an optimized thread-safe connection with memory-mapped I/O and WAL mode."""
     conn = sqlite3.connect(str(DB_PATH), timeout=10.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA temp_store=MEMORY;")
+    conn.execute("PRAGMA mmap_size=268435456;")  # 256MB memory-mapped zero-copy I/O
+    conn.execute("PRAGMA cache_size=-64000;")     # 64MB memory page cache
+    conn.execute("PRAGMA busy_timeout=5000;")
     return conn
 
 def init_database():
@@ -353,6 +357,17 @@ def init_database():
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Performance Indexes for Fast Lookups
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_kv_key ON key_value_store(key);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_fw_seq ON firewall_rules(seq_order, enabled);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_nat_type ON nat_rules(type, enabled);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_net_name ON network_objects(name, type);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_srv_name ON service_objects(name, protocol);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_routes_dest ON routes(destination, metric);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_uname ON users(username);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_time_name ON time_objects(name, type);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_smtp_email ON smtp_profiles(sender_email);")
 
         conn.commit()
         _seed_initial_defaults(conn)
